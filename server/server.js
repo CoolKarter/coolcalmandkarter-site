@@ -112,8 +112,8 @@ app.post('/create-checkout-session', async (req, res) => {
         },
       ],
       customer_email: req.body.email || undefined, // Optional field to pass email
-      success_url: 'https://coolcalmandkarter.netlify.app/confirmation.html',
-      cancel_url: https://coolcalmandkarter.netlify.app/cart.html',
+      success_url: 'https://coolcalmandkarter.netlify.app/success.html',
+      cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
     });
 
     res.json({ id: session.id });
