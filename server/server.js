@@ -10,15 +10,33 @@ const mongoose = require('mongoose');
 
 const app = express(); // ✅ Define the app BEFORE using it
 
+// ✅ CORS configuration to allow multiple origins
+const allowedOrigins = [
+  'http://127.0.0.1:5500', // for local testing from your file system
+  'http://localhost:3000', // optional if using React
+  'https://coolcalmandkarter.netlify.app', // your live frontend
+];
+
 app.use(cors({
-  origin: 'https://coolcalmandkarter.netlify.app',
-  methods: ['GET', 'POST'],
-  credentials: true
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`Blocked CORS request from: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
+
+
+// ✅ Handle preflight OPTIONS requests
+app.options('*', cors(corsOptions));
 
 // ✅ Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
-
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 }).then(() => {
   console.log('✅ Connected to MongoDB');
 }).catch(err => {
@@ -111,7 +129,6 @@ app.post('/create-checkout-session', async (req, res) => {
           quantity: 1,
         },
       ],
-      customer_email: req.body.email || undefined, // Optional field to pass email
       success_url: 'https://coolcalmandkarter.netlify.app/success.html',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
     });
@@ -159,6 +176,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
+
 app.get('/api/orders', async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
