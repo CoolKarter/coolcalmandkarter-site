@@ -9,21 +9,68 @@
 
   <body>
     <h1>Your Cart</h1>
-    <p>Book: <strong>And Baby Sleeps</strong></p>
-    <p>Price: $9.99</p>
+
+    <!-- Book selector -->
+    <label for="bookSelect"><strong>Select Book:</strong></label>
+    <select id="bookSelect">
+      <option value="Florida, Beach & Baby">Florida, Beach & Baby</option>
+      <option value="Black, Beautiful & Baby">Black, Beautiful & Baby</option>
+      <option value="Adventure, Fun & Baby">Adventure, Fun & Baby</option>
+      <option value="Black, Puerto Rican & Baby">Black, Puerto Rican & Baby</option>
+      <option value="Go To Sleep, Karter!">Go To Sleep, Karter!</option>
+    </select>
+
+    <!-- Quantity selector -->
+    <br /><br />
+    <label for="quantity"><strong>Quantity:</strong></label>
+    <select id="quantity">
+      <option value="1" selected>1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+    </select>
+
+    <p id="priceDisplay"><strong>Price: $9.99</strong></p>
 
     <button id="checkout-button">Place Order</button>
 
     <script>
       const stripe = Stripe('pk_live_51ROvCtGhPxJaSGWSMQuaM8xMO7qdlR6JjDG6cG3QgYpn4u8wpN9yEANE15wIiUrNYMUml5cFfHfQxxjjx4e619Xs00BmupSz5n');
 
+      // Book price map (all $9.99 = 999 cents)
+      const books = {
+        "Florida, Beach & Baby": 999,
+        "Black, Beautiful & Baby": 999,
+        "Adventure, Fun & Baby": 999,
+        "Black, Puerto Rican & Baby": 999,
+        "Go To Sleep, Karter!": 999
+      };
+
+      // Update price display when book or quantity changes
+      const updatePriceDisplay = () => {
+        const book = document.getElementById('bookSelect').value;
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const total = (books[book] * quantity) / 100;
+        document.getElementById('priceDisplay').innerHTML = `<strong>Total: $${total.toFixed(2)}</strong>`;
+      };
+
+      document.getElementById('bookSelect').addEventListener('change', updatePriceDisplay);
+      document.getElementById('quantity').addEventListener('change', updatePriceDisplay);
+
+      updatePriceDisplay(); // initialize
+
       document.getElementById('checkout-button').addEventListener('click', () => {
+        const selectedBook = document.getElementById('bookSelect').value;
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const totalAmount = books[selectedBook] * quantity;
+
         fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            bookTitle: 'And Baby Sleeps',
-            amount: 999 // $9.99 in cents
+            bookTitle: selectedBook,
+            amount: totalAmount
           })
         })
         .then(res => {
@@ -33,7 +80,7 @@
           return res.json();
         })
         .then(data => {
-          console.log("Stripe Session ID:", data.id); // log for debugging
+          console.log("Stripe Session ID:", data.id);
           if (data.id) {
             stripe.redirectToCheckout({ sessionId: data.id });
           } else {
