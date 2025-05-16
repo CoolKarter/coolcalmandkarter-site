@@ -52,7 +52,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
     const customerEmail = session.customer_details?.email || 'no-email';
     const customerName = session.customer_details?.name || 'Customer';
     const amount = session.amount_total || 0;
-    const bookTitle = 'And Baby Sleeps'; // Hardcoded title
+    const bookTitle = session.metadata?.bookTitle || 'Unknown Book'; // ✅ dynamic title
 
     console.log(`✅ Saving order for ${customerName} (${customerEmail})`);
 
@@ -135,6 +135,9 @@ app.post('/create-checkout-session', async (req, res) => {
           quantity: 1,
         },
       ],
+      metadata: {
+        bookTitle: req.body.bookTitle, // ✅ passed to Stripe
+      },
       success_url: 'https://coolcalmandkarter.netlify.app/success.html',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
     });
