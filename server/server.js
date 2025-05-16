@@ -6,6 +6,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
 const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
+const { Parser } = require('json2csv'); // ✅ CSV export support
 
 const app = express(); // ✅ Define the app BEFORE using it
 
@@ -184,6 +185,24 @@ app.get('/api/orders', async (req, res) => {
   } catch (err) {
     console.error('❌ Failed to fetch orders:', err);
     res.status(500).json({ error: 'Failed to retrieve orders' });
+  }
+});
+
+// ✅ Export Orders as CSV route
+app.get('/api/orders/export', async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ date: -1 });
+
+    const fields = ['name', 'email', 'bookTitle', 'amount', 'date'];
+    const parser = new Parser({ fields });
+    const csv = parser.parse(orders);
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment('orders.csv');
+    return res.send(csv);
+  } catch (err) {
+    console.error('❌ Failed to export orders:', err);
+    res.status(500).json({ error: 'Could not export orders' });
   }
 });
 
