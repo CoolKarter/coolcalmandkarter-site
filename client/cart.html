@@ -10,7 +10,7 @@
   <body>
     <h1>Your Cart</h1>
     <p>Book: <strong>And Baby Sleeps</strong></p>
-    <p>Price: $00.50</p>
+    <p>Price: $9.99</p>
 
     <button id="checkout-button">Place Order</button>
 
@@ -23,7 +23,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             bookTitle: 'And Baby Sleeps',
-           
+            amount: 999 // $9.99 in cents
           })
         })
         .then(res => {

@@ -130,7 +130,7 @@ app.post('/create-checkout-session', async (req, res) => {
             product_data: {
               name: req.body.bookTitle,
             },
-            unit_amount: 50, // NOT using req.body.amount
+            unit_amount: req.body.amount, // allows frontend to send 999
           },
           quantity: 1,
         },
