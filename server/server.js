@@ -112,8 +112,8 @@ app.post('/create-checkout-session', async (req, res) => {
         },
       ],
       customer_email: req.body.email || undefined, // Optional field to pass email
-      success_url: 'http://localhost:3000/confirmation.html',
-      cancel_url: 'http://localhost:3000/cart.html',
+      success_url: 'https://coolcalmandkarter.netlify.app/confirmation.html',
+      cancel_url: https://coolcalmandkarter.netlify.app/cart.html',
     });
 
     res.json({ id: session.id });
