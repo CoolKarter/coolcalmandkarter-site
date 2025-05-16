@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cart - Cool, Calm & Karter</title>
+    <script src="https://js.stripe.com/v3/"></script>
+  </head>
+
+  <body>
+    <h1>Your Cart</h1>
+    <p>Book: <strong>And Baby Sleeps</strong></p>
+    <p>Price: $15.00</p>
+
+    <button id="checkout-button">Place Order</button>
+
+    <script>
+      const stripe = Stripe('pk_test_51ROvD22fCucagZmrMTnwvM7AtzzW4xn7qtfitm7C3knY06r2s8Pz0OrCAx9uFbgj9qQrwaqVtY8inniZLEZzhZJJ00VkVz4fyo');
+
+      document.getElementById('checkout-button').addEventListener('click', () => {
+        fetch('/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bookTitle: 'And Baby Sleeps',
+            amount: 1500
+          })
+        })
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Server responded with status ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log("Stripe Session ID:", data.id); // log for debugging
+          if (data.id) {
+            stripe.redirectToCheckout({ sessionId: data.id });
+          } else {
+            alert("Checkout session could not be created.");
+          }
+        })
+        .catch(err => {
+          console.error('Stripe Checkout Error:', err);
+          alert("There was an issue starting checkout. Check the console for details.");
+        });
+      });
+    </script>
+  </body>
+</html>

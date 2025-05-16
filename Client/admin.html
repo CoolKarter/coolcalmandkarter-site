@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Orders</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      background: #f9f9f9;
+    }
+    h1 {
+      color: #2b3d6c;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #2b3d6c;
+      color: white;
+    }
+    .controls {
+      margin-bottom: 20px;
+    }
+    .controls input, .controls button {
+      padding: 8px;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>All Orders</h1>
+
+  <div class="controls">
+    <input type="text" id="filterInput" placeholder="Search by book title or email" />
+    <button onclick="applyFilter()">Filter</button>
+    <button onclick="exportCSV()">Export CSV</button>
+  </div>
+
+  <table id="ordersTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Book</th>
+        <th>Amount</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    window.onload = () => {
+      const ADMIN_PASSWORD = "Vbaby123!";
+      const entered = prompt("Enter admin password:");
+
+      if (entered !== ADMIN_PASSWORD) {
+        alert("Access denied.");
+        window.location.href = "/";
+        return;
+      }
+
+      fetchOrders();
+    };
+
+    function fetchOrders() {
+      fetch('/api/orders')
+        .then(res => res.json())
+        .then(orders => {
+          window.allOrders = orders;
+          renderTable(orders);
+        })
+        .catch(err => {
+          console.error('Failed to load orders:', err);
+          alert('Unable to fetch orders.');
+        });
+    }
+
+    function renderTable(orders) {
+      const tbody = document.querySelector('#ordersTable tbody');
+      tbody.innerHTML = "";
+
+      orders.forEach(order => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${order.name}</td>
+          <td>${order.email}</td>
+          <td>${order.bookTitle}</td>
+          <td>$${(order.amount / 100).toFixed(2)}</td>
+          <td>${new Date(order.date).toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function applyFilter() {
+      const query = document.getElementById('filterInput').value.toLowerCase();
+      const filtered = window.allOrders.filter(order =>
+        order.bookTitle.toLowerCase().includes(query) ||
+        order.email.toLowerCase().includes(query)
+      );
+      renderTable(filtered);
+    }
+
+    function exportCSV() {
+      const orders = window.allOrders;
+      if (!orders || orders.length === 0) {
+        alert("No data to export.");
+        return;
+      }
+
+      let csv = "Name,Email,Book,Amount,Date\n";
+      orders.forEach(order => {
+        const line = [
+          order.name,
+          order.email,
+          `"${order.bookTitle}"`,
+          `$${(order.amount / 100).toFixed(2)}`,
+          new Date(order.date).toLocaleString()
+        ].join(",");
+        csv += line + "\n";
+      });
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "orders.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
