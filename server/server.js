@@ -118,8 +118,24 @@ app.use(express.static(path.join(__dirname, '../client')));
 // ✅ Stripe Checkout Session Route
 app.post('/create-checkout-session', async (req, res) => {
   console.log('✅ Received POST to /create-checkout-session');
-  console.log('Request Body:', req.body);
+  console.log('📦 Request Body:', req.body);
+
   try {
+    const { bookTitle, amount, quantity } = req.body;
+
+    // ✅ Input validation
+    if (!bookTitle || typeof bookTitle !== 'string') {
+      return res.status(400).json({ error: 'Invalid book title' });
+    }
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+    const qty = parseInt(quantity) || 1;
+
+    console.log(`📚 Book: ${bookTitle}`);
+    console.log(`💲 Amount: ${amount} cents`);
+    console.log(`📦 Quantity: ${qty}`);
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -128,15 +144,15 @@ app.post('/create-checkout-session', async (req, res) => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: req.body.bookTitle,
+              name: bookTitle,
             },
-            unit_amount: req.body.amount, // allows frontend to send 999
+            unit_amount: amount,
           },
-          quantity: 1,
+          quantity: qty,
         },
       ],
       metadata: {
-        bookTitle: req.body.bookTitle, // ✅ passed to Stripe
+        bookTitle: bookTitle,
       },
       success_url: 'https://coolcalmandkarter.netlify.app/success.html',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
@@ -148,6 +164,7 @@ app.post('/create-checkout-session', async (req, res) => {
     res.status(500).json({ error: 'Checkout failed' });
   }
 });
+
 
 // ✅ Send confirmation email
 function sendConfirmationEmail(toEmail, name) {
