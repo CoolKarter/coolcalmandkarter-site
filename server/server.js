@@ -75,8 +75,15 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
   response.status(200).end();
 });
 
-// ✅ Apply body-parsing middleware AFTER webhook
-app.use(express.json());
+// ✅ Apply express.json() to all other routes (skip webhook)
+app.use((req, res, next) => {
+  if (req.originalUrl === '/webhook') {
+    next(); // Skip body parsing for webhook route
+  } else {
+    express.json()(req, res, next);
+  }
+});
+
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ Connect to MongoDB
