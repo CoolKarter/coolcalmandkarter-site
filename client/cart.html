@@ -47,7 +47,6 @@
         "Go To Sleep, Karter!": 999
       };
 
-      // Update price display when book or quantity changes
       const updatePriceDisplay = () => {
         const book = document.getElementById('bookSelect').value;
         const quantity = parseInt(document.getElementById('quantity').value);
@@ -58,12 +57,17 @@
       document.getElementById('bookSelect').addEventListener('change', updatePriceDisplay);
       document.getElementById('quantity').addEventListener('change', updatePriceDisplay);
 
-      updatePriceDisplay(); // initialize
+      updatePriceDisplay(); // initialize on load
 
       document.getElementById('checkout-button').addEventListener('click', () => {
         const selectedBook = document.getElementById('bookSelect').value;
         const quantity = parseInt(document.getElementById('quantity').value);
-        const totalAmount = books[selectedBook] * quantity;
+        const pricePerBook = books[selectedBook];
+        const totalAmount = pricePerBook * quantity;
+
+        console.log("🛒 Selected Book:", selectedBook);
+        console.log("📦 Quantity:", quantity);
+        console.log("💰 Total amount (in cents):", totalAmount);
 
         fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
           method: 'POST',
@@ -74,22 +78,23 @@
           })
         })
         .then(res => {
+          console.log("📡 Raw fetch response:", res);
           if (!res.ok) {
-            throw new Error(`Server responded with status ${res.status}`);
+            throw new Error(`❌ Server responded with status ${res.status}`);
           }
           return res.json();
         })
         .then(data => {
-          console.log("Stripe Session ID:", data.id);
+          console.log("✅ Stripe Session ID:", data.id);
           if (data.id) {
             stripe.redirectToCheckout({ sessionId: data.id });
           } else {
-            alert("Checkout session could not be created.");
+            alert("❌ Checkout session could not be created.");
           }
         })
         .catch(err => {
-          console.error('Stripe Checkout Error:', err);
-          alert("There was an issue starting checkout. Check the console for details.");
+          console.error('🔥 Stripe Checkout Error:', err);
+          alert("❌ There was an issue starting checkout. Check the console for details.");
         });
       });
     </script>
