@@ -109,4 +109,75 @@ app.post('/create-checkout-session', async (req, res) => {
   console.log('Request Body:', req.body);
   try {
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: [']()
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: req.body.bookTitle,
+            },
+            unit_amount: req.body.amount,
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: 'https://coolcalmandkarter.netlify.app/success.html',
+      cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
+    });
+
+    res.json({ id: session.id });
+  } catch (err) {
+    console.error('❌ Stripe error:', err);
+    res.status(500).json({ error: 'Checkout failed' });
+  }
+});
+
+// ✅ Send confirmation email
+function sendConfirmationEmail(toEmail, name) {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USERNAME,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
+
+  const mailOptions = {
+    from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
+    to: toEmail,
+    subject: 'Your Order is Confirmed!',
+    text: `Hi ${name || 'there'},\n\nThanks for your purchase from Cool, Calm & Karter!\nYour order has been successfully placed.\n\nBest,\nThe Team`
+  };
+
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      console.log('❌ Email Error:', error);
+    } else {
+      console.log('✅ Email sent: ' + info.response);
+    }
+  });
+}
+
+// ✅ Optional homepage route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
+});
+
+// ✅ Orders API route
+app.get('/api/orders', async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ date: -1 });
+    res.json(orders);
+  } catch (err) {
+    console.error('❌ Failed to fetch orders:', err);
+    res.status(500).json({ error: 'Failed to retrieve orders' });
+  }
+});
+
+// ✅ Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
