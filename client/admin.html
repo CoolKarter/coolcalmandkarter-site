@@ -73,7 +73,7 @@
     };
 
     function fetchOrders() {
-      fetch('/api/orders')
+      fetch('https://coolcalmandkarter-site.onrender.com/api/orders')
         .then(res => res.json())
         .then(orders => {
           window.allOrders = orders;

@@ -18,7 +18,7 @@
       const stripe = Stripe('pk_test_51ROvD22fCucagZmrMTnwvM7AtzzW4xn7qtfitm7C3knY06r2s8Pz0OrCAx9uFbgj9qQrwaqVtY8inniZLEZzhZJJ00VkVz4fyo');
 
       document.getElementById('checkout-button').addEventListener('click', () => {
-        fetch('/create-checkout-session', {
+        fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
