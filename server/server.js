@@ -130,7 +130,7 @@ app.post('/create-checkout-session', async (req, res) => {
             product_data: {
               name: req.body.bookTitle,
             },
-            unit_amount: req.body.amount,
+            unit_amount: 50, // NOT using req.body.amount
           },
           quantity: 1,
         },
