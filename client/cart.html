@@ -15,7 +15,7 @@
     <button id="checkout-button">Place Order</button>
 
     <script>
-      const stripe = Stripe('pk_test_51ROvD22fCucagZmrMTnwvM7AtzzW4xn7qtfitm7C3knY06r2s8Pz0OrCAx9uFbgj9qQrwaqVtY8inniZLEZzhZJJ00VkVz4fyo');
+      const stripe = Stripe('pk_live_51ROvCtGhPxJaSGWSMQuaM8xMO7qdlR6JjDG6cG3QgYpn4u8wpN9yEANE15wIiUrNYMUml5cFfHfQxxjjx4e619Xs00BmupSz5n');
 
       document.getElementById('checkout-button').addEventListener('click', () => {
         fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
