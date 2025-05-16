@@ -1,6 +1,7 @@
 require('dotenv').config(); // Load environment variables
 
 const express = require('express');
+const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
 const bodyParser = require('body-parser');
@@ -8,6 +9,12 @@ const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
 
 const app = express(); // ✅ Define the app BEFORE using it
+
+app.use(cors({
+  origin: 'https://coolcalmandkarter.netlify.app',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
 
 // ✅ Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
