@@ -4,7 +4,6 @@ const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
-const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
 
@@ -29,28 +28,8 @@ app.use(cors({
   credentials: true,
 }));
 
-// ✅ Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('✅ Connected to MongoDB');
-}).catch(err => {
-  console.error('❌ MongoDB Connection Error:', err);
-});
-
-// ✅ Define Order schema & model
-const orderSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  bookTitle: String,
-  amount: Number,
-  date: { type: Date, default: Date.now }
-});
-const Order = mongoose.model('Order', orderSchema);
-
-// ✅ Stripe webhook — RAW BODY FIRST
-app.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (request, response) => {
+// ✅ Stripe webhook — MUST come BEFORE any body parser
+app.post('/webhook', express.raw({ type: 'application/json' }), async (request, response) => {
   console.log("🔔 Incoming webhook request received!");
 
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -99,6 +78,25 @@ app.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (reques
 // ✅ Apply body-parsing middleware AFTER webhook
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ✅ Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('✅ Connected to MongoDB');
+  })
+  .catch(err => {
+    console.error('❌ MongoDB Connection Error:', err);
+  });
+
+// ✅ Define Order schema & model
+const orderSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  bookTitle: String,
+  amount: Number,
+  date: { type: Date, default: Date.now }
+});
+const Order = mongoose.model('Order', orderSchema);
 
 // ✅ Serve static frontend
 app.use(express.static(path.join(__dirname, '../client')));
