@@ -83,7 +83,6 @@ app.use((req, res, next) => {
     express.json()(req, res, next);
   }
 });
-
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ Connect to MongoDB
@@ -104,6 +103,13 @@ const orderSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
+
+// ✅ Add admin password protection to /api/orders
+const basicAuth = require('express-basic-auth');
+app.use('/api/orders', basicAuth({
+  users: { 'admin': process.env.ADMIN_PASSWORD },
+  challenge: true,
+}));
 
 // ✅ Serve static frontend
 app.use(express.static(path.join(__dirname, '../client')));
