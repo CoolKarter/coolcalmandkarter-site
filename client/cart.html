@@ -12,20 +12,24 @@
     }
     label {
       display: inline-block;
-      width: 200px;
-      margin-bottom: 10px;
+      width: 230px;
+      margin-bottom: 8px;
     }
     input[type="number"] {
       width: 60px;
       padding: 5px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .book-row {
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     button {
       padding: 10px 20px;
       font-size: 16px;
+      margin-top: 20px;
+    }
+    #total {
+      font-weight: bold;
       margin-top: 20px;
     }
   </style>
@@ -59,6 +63,8 @@
       <input type="number" id="book5" name="Go To Sleep, Karter!" value="0" min="0" max="99" />
     </div>
 
+    <p id="total">Total: $0.00</p>
+
     <button type="submit">Place Order</button>
   </form>
 
@@ -73,10 +79,28 @@
       "Go To Sleep, Karter!": 50
     };
 
-    document.getElementById('cart-form').addEventListener('submit', async (e) => {
+    const form = document.getElementById('cart-form');
+    const totalDisplay = document.getElementById('total');
+
+    function updateTotal() {
+      const formData = new FormData(form);
+      let total = 0;
+      for (let [title, qty] of formData.entries()) {
+        const quantity = parseInt(qty);
+        if (quantity > 0 && BOOK_PRICES[title]) {
+          total += BOOK_PRICES[title] * quantity;
+        }
+      }
+      totalDisplay.textContent = `Total: $${(total / 100).toFixed(2)}`;
+    }
+
+    form.addEventListener('input', updateTotal);
+    updateTotal(); // initialize
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const formData = new FormData(e.target);
+      const formData = new FormData(form);
       const items = [];
 
       for (let [title, qty] of formData.entries()) {
@@ -99,7 +123,7 @@
         const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items }) // ✅ FIXED: sending items array correctly
+          body: JSON.stringify({ items })
         });
 
         if (!res.ok) {
