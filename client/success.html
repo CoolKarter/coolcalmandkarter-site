@@ -3,69 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Order Success - Cool, Calm & Karter</title>
+  <title>Thank You - Cool, Calm & Karter</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 2rem;
+      background: #f4f4f4;
+      color: #333;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
       max-width: 600px;
       margin: auto;
-      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    .order-summary {
-      margin-top: 2rem;
-      text-align: left;
+    h1 {
+      color: #2a9d8f;
     }
     ul {
-      list-style-type: none;
-      padding: 0;
+      padding-left: 20px;
     }
-    li {
-      margin: 0.5rem 0;
+    .email {
+      margin-top: 1rem;
+      font-style: italic;
+      color: #555;
     }
   </style>
 </head>
 <body>
-  <h1>🎉 Thank You for Your Order!</h1>
-  <p id="confirmation-message">Loading your order details...</p>
-
-  <div class="order-summary" id="order-summary" style="display:none;">
-    <h2>Order Summary</h2>
-    <ul id="items-list"></ul>
-    <p><strong>Confirmation sent to:</strong> <span id="email"></span></p>
+  <div class="container">
+    <h1>🎉 Thank You For Your Purchase!</h1>
+    <p>Here’s a summary of your order:</p>
+    <ul id="itemList"></ul>
+    <p class="email" id="emailDisplay"></p>
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session_id');
+    async function loadSessionDetails() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
 
-    if (!sessionId) {
-      document.getElementById('confirmation-message').innerText = "Invalid session.";
-    } else {
-      fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (!data.items || !data.customerEmail) {
-            throw new Error("Missing data from server.");
-          }
+      if (!sessionId) {
+        document.getElementById('itemList').innerHTML = '<li>Missing session ID.</li>';
+        return;
+      }
 
-          document.getElementById('confirmation-message').style.display = 'none';
-          document.getElementById('order-summary').style.display = 'block';
+      try {
+        const res = await fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`);
+        const data = await res.json();
 
-          const itemsList = document.getElementById('items-list');
-          data.items.forEach(item => {
-            const li = document.createElement('li');
-            li.textContent = `${item.name} x${item.quantity}`;
-            itemsList.appendChild(li);
-          });
+        const itemList = document.getElementById('itemList');
+        itemList.innerHTML = '';
 
-          document.getElementById('email').innerText = data.customerEmail;
-        })
-        .catch(err => {
-          console.error(err);
-          document.getElementById('confirmation-message').innerText = "There was an issue loading your order.";
+        data.items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.name} × ${item.quantity}`;
+          itemList.appendChild(li);
         });
+
+        document.getElementById('emailDisplay').textContent = `A confirmation was sent to: ${data.customerEmail}`;
+      } catch (err) {
+        console.error('❌ Error loading session:', err);
+        document.getElementById('itemList').innerHTML = '<li>Unable to load order details.</li>';
+      }
     }
+
+    loadSessionDetails();
   </script>
 </body>
 </html>
