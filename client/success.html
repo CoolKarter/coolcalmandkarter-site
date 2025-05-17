@@ -1,56 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Thank You | Cool, Calm & Karter</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 2rem;
-      }
-      .card {
-        background: #f2f2f2;
-        padding: 2rem;
-        border-radius: 10px;
-        display: inline-block;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h1>🎉 Thank You for Your Order!</h1>
-      <p id="details">Loading your order...</p>
-    </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Confirmation - Cool, Calm & Karter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2rem;
+      background-color: #f0f8ff;
+    }
+    .confirmation {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      display: inline-block;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    p {
+      font-size: 1.1rem;
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="confirmation">
+    <h1>🎉 Thank You for Your Order!</h1>
+    <p id="book"></p>
+    <p id="quantity"></p>
+    <p id="email"></p>
+    <p>Your books will be on their way soon. 📚</p>
+  </div>
 
-    <script>
-      const params = new URLSearchParams(window.location.search);
-      const sessionId = params.get('session_id');
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
 
-      if (!sessionId) {
-        document.getElementById('details').textContent = "Missing session ID.";
-      } else {
-        fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`)
-          .then(res => {
-            if (!res.ok) throw new Error("Failed to fetch session.");
-            return res.json();
-          })
-          .then(data => {
-            const { bookTitle, quantity, customerEmail } = data;
-            document.getElementById('details').innerHTML = `
-              <p><strong>Book:</strong> ${bookTitle}</p>
-              <p><strong>Quantity:</strong> ${quantity}</p>
-              <p><strong>Email:</strong> ${customerEmail}</p>
-              <p>Your confirmation email is on the way.</p>
-            `;
-          })
-          .catch(err => {
-            console.error(err);
-            document.getElementById('details').textContent = "There was a problem loading your order details.";
-          });
-      }
-    </script>
-  </body>
+    if (!sessionId) {
+      document.querySelector('.confirmation').innerHTML = "<h1>Error</h1><p>Missing session ID.</p>";
+    } else {
+      fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`)
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to fetch session data");
+          return res.json();
+        })
+        .then(data => {
+          document.getElementById('book').textContent = `📖 Book: ${data.bookTitle}`;
+          document.getElementById('quantity').textContent = `🧾 Quantity: ${data.quantity}`;
+          document.getElementById('email').textContent = `📬 Confirmation sent to: ${data.customerEmail}`;
+        })
+        .catch(err => {
+          console.error(err);
+          document.querySelector('.confirmation').innerHTML = "<h1>Error</h1><p>Could not retrieve order details.</p>";
+        });
+    }
+  </script>
+</body>
 </html>
