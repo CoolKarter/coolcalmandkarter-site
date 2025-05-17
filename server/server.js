@@ -29,7 +29,6 @@ app.use(cors({
   credentials: true,
 }));
 
-
 // ✅ Stripe webhook — MUST come BEFORE any body parser
 app.post('/webhook', express.raw({ type: 'application/json' }), async (request, response) => {
   console.log("🔔 Incoming webhook request received!");
@@ -53,14 +52,15 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
     const customerEmail = session.customer_details?.email || 'no-email';
     const customerName = session.customer_details?.name || 'Customer';
     const amount = session.amount_total || 0;
-    const bookTitle = session.metadata?.bookTitle || 'Unknown Book'; // ✅ dynamic title
+    const bookTitle = session.metadata?.bookTitle || 'Unknown Book';
+    const quantity = session.metadata?.quantity || '1';
 
     console.log(`✅ Saving order for ${customerName} (${customerEmail})`);
 
     const newOrder = new Order({
       name: customerName,
       email: customerEmail,
-      bookTitle: bookTitle,
+      bookTitle: `${bookTitle} x${quantity}`,
       amount: amount
     });
 
@@ -71,7 +71,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
       console.error('❌ Error saving order:', err);
     }
 
-    sendConfirmationEmail(customerEmail, customerName);
+    sendConfirmationEmail(customerEmail, customerName, bookTitle, quantity);
   }
 
   response.status(200).end();
@@ -124,7 +124,6 @@ app.post('/create-checkout-session', async (req, res) => {
   try {
     const { bookTitle, amount, quantity } = req.body;
 
-    // ✅ Input validation
     if (!bookTitle || typeof bookTitle !== 'string') {
       return res.status(400).json({ error: 'Invalid book title' });
     }
@@ -157,7 +156,7 @@ app.post('/create-checkout-session', async (req, res) => {
       ],
       metadata: {
         bookTitle: bookTitle,
-        quantity: qty.toString() // ✅ Add quantity to metadata for success.html
+        quantity: qty.toString()
       },
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
@@ -170,9 +169,8 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-
 // ✅ Send confirmation email
-function sendConfirmationEmail(toEmail, name) {
+function sendConfirmationEmail(toEmail, name, bookTitle, quantity) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -185,7 +183,7 @@ function sendConfirmationEmail(toEmail, name) {
     from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
     to: toEmail,
     subject: 'Your Order is Confirmed!',
-    text: `Hi ${name || 'there'},\n\nThanks for your purchase from Cool, Calm & Karter!\nYour order has been successfully placed.\n\nBest,\nThe Team`
+    text: `Hi ${name || 'there'},\n\nThanks for your purchase from Cool, Calm & Karter!\n\nOrder Summary:\n- ${bookTitle} x${quantity}\n\nYour order has been successfully placed.\n\nBest,\nThe Team`
   };
 
   transporter.sendMail(mailOptions, function(error, info){
@@ -231,11 +229,6 @@ app.get('/api/orders/export', async (req, res) => {
   }
 });
 
-// ✅ Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
 // ✅ GET session details by ID (for success.html)
 app.get('/api/session/:id', async (req, res) => {
   try {
@@ -250,4 +243,10 @@ app.get('/api/session/:id', async (req, res) => {
     console.error('❌ Failed to fetch session:', err);
     res.status(500).json({ error: 'Could not retrieve session' });
   }
+});
+
+// ✅ Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });

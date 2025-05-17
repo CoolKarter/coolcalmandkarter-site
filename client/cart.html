@@ -31,20 +31,20 @@
       <option value="5">5</option>
     </select>
 
-    <p id="priceDisplay"><strong>Price: $9.99</strong></p>
+    <p id="priceDisplay"><strong>Price: $0.50</strong></p>
 
     <button id="checkout-button">Place Order</button>
 
     <script>
       const stripe = Stripe('pk_live_51ROvCtGhPxJaSGWSMQuaM8xMO7qdlR6JjDG6cG3QgYpn4u8wpN9yEANE15wIiUrNYMUml5cFfHfQxxjjx4e619Xs00BmupSz5n');
 
-      // Book price map (all $9.99 = 999 cents)
+      // Book price map (temporarily 50 cents for testing)
       const books = {
-        "Florida, Beach & Baby": 999,
-        "Black, Beautiful & Baby": 999,
-        "Adventure, Fun & Baby": 999,
-        "Black, Puerto Rican & Baby": 999,
-        "Go To Sleep, Karter!": 999
+        "Florida, Beach & Baby": 50,
+        "Black, Beautiful & Baby": 50,
+        "Adventure, Fun & Baby": 50,
+        "Black, Puerto Rican & Baby": 50,
+        "Go To Sleep, Karter!": 50
       };
 
       const updatePriceDisplay = () => {
@@ -74,7 +74,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             bookTitle: selectedBook,
-            amount: totalAmount
+            amount: totalAmount,
+            quantity: quantity // ✅ Send quantity to backend
           })
         })
         .then(res => {
