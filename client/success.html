@@ -2,68 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Thank You - Cool, Calm & Karter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Success - Cool, Calm & Karter</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #f9f9f9;
-    }
-    h1 {
-      color: #2c3e50;
-    }
-    .summary {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      max-width: 500px;
+      padding: 2rem;
+      max-width: 600px;
       margin: auto;
+      text-align: center;
+    }
+    .order-summary {
+      margin-top: 2rem;
+      text-align: left;
     }
     ul {
-      padding-left: 20px;
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      margin: 0.5rem 0;
     }
   </style>
 </head>
 <body>
-  <div class="summary">
-    <h1>Thank You for Your Purchase!</h1>
-    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-    <p><strong>Order Summary:</strong></p>
-    <ul id="itemList"></ul>
+  <h1>🎉 Thank You for Your Order!</h1>
+  <p id="confirmation-message">Loading your order details...</p>
+
+  <div class="order-summary" id="order-summary" style="display:none;">
+    <h2>Order Summary</h2>
+    <ul id="items-list"></ul>
+    <p><strong>Confirmation sent to:</strong> <span id="email"></span></p>
   </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session_id');
 
-    if (sessionId) {
+    if (!sessionId) {
+      document.getElementById('confirmation-message').innerText = "Invalid session.";
+    } else {
       fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`)
         .then(res => res.json())
         .then(data => {
-          document.getElementById('email').textContent = data.customerEmail || 'Not found';
-
-          try {
-            const items = JSON.parse(data.items);
-            const list = document.getElementById('itemList');
-            list.innerHTML = '';
-
-            items.forEach(item => {
-              const li = document.createElement('li');
-              li.textContent = `${item.bookTitle} x${item.quantity}`;
-              list.appendChild(li);
-            });
-          } catch (e) {
-            document.getElementById('itemList').innerHTML = '<li>Could not display order items.</li>';
+          if (!data.items || !data.customerEmail) {
+            throw new Error("Missing data from server.");
           }
+
+          document.getElementById('confirmation-message').style.display = 'none';
+          document.getElementById('order-summary').style.display = 'block';
+
+          const itemsList = document.getElementById('items-list');
+          data.items.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = `${item.name} x${item.quantity}`;
+            itemsList.appendChild(li);
+          });
+
+          document.getElementById('email').innerText = data.customerEmail;
         })
         .catch(err => {
-          console.error('Failed to load order summary:', err);
-          document.getElementById('itemList').innerHTML = '<li>Error loading order details.</li>';
+          console.error(err);
+          document.getElementById('confirmation-message').innerText = "There was an issue loading your order.";
         });
-    } else {
-      document.getElementById('itemList').innerHTML = '<li>Session ID not found.</li>';
     }
   </script>
 </body>
