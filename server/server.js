@@ -136,7 +136,7 @@ app.post('/create-checkout-session', async (req, res) => {
     }
 
     console.log(`📚 Book: ${bookTitle}`);
-    console.log(`💲 Amount: ${amount} cents`);
+    console.log(`💲 Unit Price: ${amount} cents`);
     console.log(`📦 Quantity: ${qty}`);
 
     const session = await stripe.checkout.sessions.create({
@@ -149,7 +149,7 @@ app.post('/create-checkout-session', async (req, res) => {
             product_data: {
               name: bookTitle,
             },
-            unit_amount: amount,
+            unit_amount: amount, // ✅ Send unit price only (frontend now fixed)
           },
           quantity: qty,
         },

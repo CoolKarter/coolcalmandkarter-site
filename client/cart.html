@@ -63,19 +63,18 @@
         const selectedBook = document.getElementById('bookSelect').value;
         const quantity = parseInt(document.getElementById('quantity').value);
         const pricePerBook = books[selectedBook];
-        const totalAmount = pricePerBook * quantity;
 
         console.log("🛒 Selected Book:", selectedBook);
         console.log("📦 Quantity:", quantity);
-        console.log("💰 Total amount (in cents):", totalAmount);
+        console.log("💰 Price per book (in cents):", pricePerBook);
 
         fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             bookTitle: selectedBook,
-            amount: totalAmount,
-            quantity: quantity // ✅ Send quantity to backend
+            amount: pricePerBook, // ✅ send unit price only
+            quantity: quantity     // ✅ let backend/Stripe multiply
           })
         })
         .then(res => {
