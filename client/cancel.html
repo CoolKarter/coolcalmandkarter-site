@@ -1,12 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Order Canceled</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Canceled - Cool, Calm & Karter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 2rem;
+      color: #333;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .logo {
+      width: 100px;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      color: #f46045; /* Coral Red */
+    }
+    p {
+      margin-top: 1rem;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 10px 20px;
+      background-color: #195569; /* Navy Blue */
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .back-btn:hover {
+      background-color: #133f50;
+    }
+  </style>
 </head>
 <body>
-  <h1>Order Canceled</h1>
-  <p>Your order was canceled. If this was a mistake, please try again.</p>
-  <a href="cart.html">Return to Cart</a>
+  <div class="container">
+    <img src="images/coolcalm-logo.png" alt="Cool, Calm & Karter Logo" class="logo" />
+    <h1>Order Canceled</h1>
+    <p>No worries! Your order was not completed.</p>
+    <p>You can always head back to the shop and pick up where you left off.</p>
+    <a href="shop.html" class="back-btn">← Return to Shop</a>
+  </div>
 </body>
 </html>

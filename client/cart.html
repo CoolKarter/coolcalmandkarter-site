@@ -8,28 +8,37 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: auto;
       padding: 20px;
     }
-    label {
-      display: inline-block;
-      width: 230px;
-      margin-bottom: 8px;
+    h1 {
+      text-align: center;
     }
-    input[type="number"] {
-      width: 60px;
-      padding: 5px;
-      margin-bottom: 8px;
+    .book {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
     }
-    .book-row {
-      margin-bottom: 10px;
+    .subtotal {
+      margin-top: 5px;
+      color: #555;
+    }
+    .total {
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 20px;
+      text-align: right;
     }
     button {
-      padding: 10px 20px;
+      display: block;
+      width: 100%;
+      padding: 12px;
       font-size: 16px;
-      margin-top: 20px;
-    }
-    #total {
-      font-weight: bold;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      cursor: pointer;
       margin-top: 20px;
     }
   </style>
@@ -37,85 +46,129 @@
 <body>
   <h1>Your Cart</h1>
 
-  <form id="cart-form">
-    <div class="book-row">
-      <label for="book1">Florida, Beach & Baby ($0.50):</label>
-      <input type="number" id="book1" name="Florida, Beach & Baby" value="0" min="0" max="99" />
+  <form id="cartForm">
+    <div class="book">
+      <label>
+        <strong>Florida, Beach & Baby - $9.99</strong><br />
+        Quantity:
+        <input type="number" name="Florida, Beach & Baby" min="0"/>
+      </label>
+      <p class="subtotal" id="subtotal-Florida, Beach & Baby">$0.00</p>
     </div>
 
-    <div class="book-row">
-      <label for="book2">Black, Beautiful & Baby ($0.50):</label>
-      <input type="number" id="book2" name="Black, Beautiful & Baby" value="0" min="0" max="99" />
+    <div class="book">
+      <label>
+        <strong>Black, Beautiful & Baby - $9.99</strong><br />
+        Quantity:
+        <input type="number" name="Black, Beautiful & Baby" min="0"/>
+      </label>
+      <p class="subtotal" id="subtotal-Black, Beautiful & Baby">$0.00</p>
     </div>
 
-    <div class="book-row">
-      <label for="book3">Adventure, Fun & Baby ($0.50):</label>
-      <input type="number" id="book3" name="Adventure, Fun & Baby" value="0" min="0" max="99" />
+    <div class="book">
+      <label>
+        <strong>Adventure, Fun & Baby - $9.99</strong><br />
+        Quantity:
+        <input type="number" name="Adventure, Fun & Baby" min="0"/>
+      </label>
+      <p class="subtotal" id="subtotal-Adventure, Fun & Baby">$0.00</p>
     </div>
 
-    <div class="book-row">
-      <label for="book4">Black, Puerto Rican & Baby ($0.50):</label>
-      <input type="number" id="book4" name="Black, Puerto Rican & Baby" value="0" min="0" max="99" />
+    <div class="book">
+      <label>
+        <strong>Black, Puerto Rican & Baby - $9.99</strong><br />
+        Quantity:
+        <input type="number" name="Black, Puerto Rican & Baby" min="0"/>
+      </label>
+      <p class="subtotal" id="subtotal-Black, Puerto Rican & Baby">$0.00</p>
     </div>
 
-    <div class="book-row">
-      <label for="book5">Go To Sleep, Karter! ($0.50):</label>
-      <input type="number" id="book5" name="Go To Sleep, Karter!" value="0" min="0" max="99" />
+    <div class="book">
+      <label>
+        <strong>Go To Sleep, Karter! - $9.99</strong><br />
+        Quantity:
+        <input type="number" name="Go To Sleep, Karter!" min="0"/>
+      </label>
+      <p class="subtotal" id="subtotal-Go To Sleep, Karter!">$0.00</p>
     </div>
 
-    <p id="total">Total: $0.00</p>
-
+    <p class="total">Total: $<span id="totalAmount">0.00</span></p>
     <button type="submit">Place Order</button>
   </form>
 
   <script>
-    const stripe = Stripe('pk_live_51ROvCtGhPxJaSGWSMQuaM8xMO7qdlR6JjDG6cG3QgYpn4u8wpN9yEANE15wIiUrNYMUml5cFfHfQxxjjx4e619Xs00BmupSz5n');
+    const stripe = Stripe('pk_test_51ROvCtGhPxJaSGWSdoXey3SVYX0FJxWshxyTiy34PfRUREOxLPcG7bLCKdslJS6ZmLTF5LMpDW9PEPd8fEnzKxK700WnUeFtr6');
 
-    const BOOK_PRICES = {
-      "Florida, Beach & Baby": 50,
-      "Black, Beautiful & Baby": 50,
-      "Adventure, Fun & Baby": 50,
-      "Black, Puerto Rican & Baby": 50,
-      "Go To Sleep, Karter!": 50
+    const prices = {
+      "Florida, Beach & Baby": 1,
+      "Black, Beautiful & Baby": 1,
+      "Adventure, Fun & Baby": 1,
+      "Black, Puerto Rican & Baby": 1,
+      "Go To Sleep, Karter!": 1
     };
 
-    const form = document.getElementById('cart-form');
-    const totalDisplay = document.getElementById('total');
+    const form = document.getElementById('cartForm');
+    const totalDisplay = document.getElementById('totalAmount');
 
-    function updateTotal() {
-      const formData = new FormData(form);
-      let total = 0;
-      for (let [title, qty] of formData.entries()) {
-        const quantity = parseInt(qty);
-        if (quantity > 0 && BOOK_PRICES[title]) {
-          total += BOOK_PRICES[title] * quantity;
+    function loadCart() {
+      const saved = localStorage.getItem('cart');
+      if (saved) {
+        const cart = JSON.parse(saved);
+        for (const book in cart) {
+          const input = form.elements[book];
+          if (input) input.value = cart[book];
         }
       }
-      totalDisplay.textContent = `Total: $${(total / 100).toFixed(2)}`;
     }
 
-    form.addEventListener('input', updateTotal);
-    updateTotal(); // initialize
+    function saveCart() {
+      const cart = {};
+      for (const book in prices) {
+        cart[book] = parseInt(form.elements[book].value) || 0;
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
+
+    function updateTotal() {
+      let total = 0;
+      for (const book in prices) {
+        const qty = parseInt(form.elements[book].value) || 0;
+        const subtotal = (prices[book] * qty) / 100;
+        const subtotalElement = document.getElementById(`subtotal-${book}`);
+        if (subtotalElement) {
+          subtotalElement.textContent = `Subtotal: $${subtotal.toFixed(2)}`;
+        }
+        total += prices[book] * qty;
+      }
+      totalDisplay.textContent = (total / 100).toFixed(2);
+    }
+
+    loadCart();
+    updateTotal();
+
+    form.addEventListener('input', () => {
+      saveCart();
+      updateTotal();
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const formData = new FormData(form);
       const items = [];
 
-      for (let [title, qty] of formData.entries()) {
-        const quantity = parseInt(qty);
-        if (quantity > 0 && BOOK_PRICES[title]) {
+      for (const book in prices) {
+        const qty = parseInt(form.elements[book].value);
+        if (qty && qty > 0) {
           items.push({
-            name: title,
-            unit_amount: BOOK_PRICES[title],
-            quantity
+            name: book,
+            quantity: qty,
+            unit_amount: prices[book]
           });
         }
       }
 
       if (items.length === 0) {
-        alert("Please select at least one book.");
+        alert('Please select at least one book.');
         return;
       }
 
@@ -132,11 +185,9 @@
         }
 
         const data = await res.json();
-        if (data.id) {
-          stripe.redirectToCheckout({ sessionId: data.id });
-        } else {
-          alert("❌ Checkout session could not be created.");
-        }
+        localStorage.removeItem('cart');
+        stripe.redirectToCheckout({ sessionId: data.id });
+
       } catch (err) {
         console.error('🔥 Stripe Checkout Error:', err);
         alert("❌ There was an issue starting checkout. Check the console for details.");

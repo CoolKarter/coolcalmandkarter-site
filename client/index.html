@@ -4,32 +4,74 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cool, Calm & Karter</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    main {
+      padding: 3rem 2rem;
+      max-width: 800px;
+      margin: auto;
+      text-align: center;
+    }
+    h1 {
+      color: #195569;
+      font-size: 2rem;
+    }
+    p {
+      margin: 1.5rem 0;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    .cta-buttons {
+      margin-top: 2rem;
+    }
+    .cta-buttons a {
+      display: inline-block;
+      margin: 0.5rem;
+      padding: 12px 24px;
+      background-color: #f46045;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .cta-buttons a:hover {
+      background-color: #d94c36;
+    }
+  </style>
 </head>
 <body>
-
-  <header>
-    <img src="assets/logo.png" alt="Cool, Calm & Karter Logo" />
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="shop.html">Shop</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-    </nav>
-  </header>
+  <!-- ✅ NAVBAR Placeholder -->
+  <div id="navbar"></div>
 
   <main>
-    <h1>Books That Feel Like Home.</h1>
-    <a href="shop.html" class="cta-button">Shop Now</a>
-
-    <section class="featured-books">
-      <!-- We’ll add your 5 books here later -->
-    </section>
+    <h1>Welcome to Our World of Diverse Children's Books!</h1>
+    <p>
+      At <strong>Cool, Calm & Karter</strong>, we create beautifully illustrated, diverse stories that reflect the real world and celebrate all types of families. Whether it's beach adventures, bedtime battles, or cultural pride — each book is crafted to bring joy and connection to your child's bookshelf.
+    </p>
+    <div class="cta-buttons">
+      <a href="shop.html">🛍️ Shop Books</a>
+      <a href="about.html">📖 About the Author</a>
+    </div>
   </main>
 
-  <footer>
-    <p>&copy; 2025 Cool, Calm & Karter</p>
-  </footer>
+  <!-- ✅ FOOTER Placeholder -->
+  <div id="footer"></div>
 
+  <!-- ✅ Load navbar and footer -->
+  <script>
+    async function loadComponent(id, file) {
+      const res = await fetch(file);
+      const html = await res.text();
+      document.getElementById(id).innerHTML = html;
+    }
+
+    loadComponent("navbar", "components/navbar.html");
+    loadComponent("footer", "components/footer.html");
+  </script>
 </body>
 </html>

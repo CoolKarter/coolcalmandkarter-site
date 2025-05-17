@@ -71,6 +71,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
     }
 
     sendConfirmationEmail(customerEmail, customerName, bookTitleSummary);
+    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id);
   }
 
   response.status(200).end();
@@ -178,6 +179,41 @@ function sendConfirmationEmail(toEmail, name, summary) {
       console.log('❌ Email Error:', error);
     } else {
       console.log('✅ Email sent: ' + info.response);
+    }
+  });
+}
+
+// ✅ Send admin notification email
+function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USERNAME,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
+
+  const mailOptions = {
+    from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
+    to: process.env.ADMIN_EMAIL,
+    subject: '🛒 New Order Placed',
+    text: `
+A new order has been placed.
+
+Customer Email: ${customerEmail}
+
+Books:
+${bookSummary}
+
+Stripe Session ID: ${sessionId}
+    `.trim()
+  };
+
+  transporter.sendMail(mailOptions, (err, info) => {
+    if (err) {
+      console.error('❌ Admin Email Error:', err);
+    } else {
+      console.log('✅ Admin email sent:', info.response);
     }
   });
 }

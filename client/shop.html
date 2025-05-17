@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shop - Cool, Calm & Karter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #195569;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    .book {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .book img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+    .book-title {
+      font-weight: bold;
+      margin: 0.5rem 0;
+    }
+    .price {
+      color: #195569;
+      font-weight: bold;
+    }
+    .qty {
+      margin: 0.5rem 0;
+    }
+    .add-btn {
+      background-color: #f46045;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .add-btn:hover {
+      background-color: #d44d3a;
+    }
+    .view-cart {
+      display: block;
+      text-align: center;
+      margin-top: 2rem;
+      font-weight: bold;
+      text-decoration: none;
+      color: #195569;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📚 Shop Books</h1>
+
+    <div class="grid">
+      <div class="book">
+        <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby" />
+        <p class="book-title">Florida, Beach & Baby</p>
+        <p class="price">$9.99</p>
+        <input class="qty" type="number" min="0" value="0" data-title="Florida, Beach & Baby" />
+        <button class="add-btn">Add to Cart</button>
+      </div>
+
+      <div class="book">
+        <img src="images/Beautiful, Black & Baby Cover.png" alt="Black, Beautiful & Baby" />
+        <p class="book-title">Black, Beautiful & Baby</p>
+        <p class="price">$9.99</p>
+        <input class="qty" type="number" min="0" value="0" data-title="Black, Beautiful & Baby" />
+        <button class="add-btn">Add to Cart</button>
+      </div>
+
+      <div class="book">
+        <img src="images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby" />
+        <p class="book-title">Adventure, Fun & Baby</p>
+        <p class="price">$9.99</p>
+        <input class="qty" type="number" min="0" value="0" data-title="Adventure, Fun & Baby" />
+        <button class="add-btn">Add to Cart</button>
+      </div>
+
+      <div class="book">
+        <img src="images/Black PuertoRican & Baby COVER.png" alt="Black, Puerto Rican & Baby" />
+        <p class="book-title">Black, Puerto Rican & Baby</p>
+        <p class="price">$9.99</p>
+        <input class="qty" type="number" min="0" value="0" data-title="Black, Puerto Rican & Baby" />
+        <button class="add-btn">Add to Cart</button>
+      </div>
+
+      <div class="book">
+        <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!" />
+        <p class="book-title">Go To Sleep, Karter!</p>
+        <p class="price">$9.99</p>
+        <input class="qty" type="number" min="0" value="0" data-title="Go To Sleep, Karter!" />
+        <button class="add-btn">Add to Cart</button>
+      </div>
+    </div>
+
+    <a class="view-cart" href="cart.html">🛒 View Cart</a>
+  </div>
+
+  <script>
+    const buttons = document.querySelectorAll('.add-btn');
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const bookCard = btn.closest('.book');
+        const input = bookCard.querySelector('input');
+        const quantity = parseInt(input.value);
+        const title = input.getAttribute('data-title');
+
+        if (!quantity || quantity <= 0) {
+          alert('Please select a quantity greater than 0.');
+          return;
+        }
+
+        // Load current cart or initialize
+        let cart = JSON.parse(localStorage.getItem('cart')) || {};
+
+        // Update or add to cart
+        cart[title] = (cart[title] || 0) + quantity;
+
+        // Save cart
+        localStorage.setItem('cart', JSON.stringify(cart));
+
+        // Reset input and show feedback
+        input.value = 0;
+        alert(`${quantity} × "${title}" added to your cart.`);
+      });
+    });
+  </script>
+</body>
+</html>

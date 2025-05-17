@@ -18,26 +18,44 @@
       max-width: 600px;
       margin: auto;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .logo {
+      width: 100px;
+      margin-bottom: 1rem;
     }
     h1 {
-      color: #2a9d8f;
+      color: #195569; /* Navy Blue */
     }
     ul {
       padding-left: 20px;
+      text-align: left;
     }
     .email {
       margin-top: 1rem;
       font-style: italic;
       color: #555;
     }
+    .button {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 10px 20px;
+      background-color: #f46045; /* Coral Red */
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <img src="images/coolcalm-logo.png" alt="Cool, Calm & Karter Logo" class="logo" />
     <h1>🎉 Thank You For Your Purchase!</h1>
     <p>Here’s a summary of your order:</p>
     <ul id="itemList"></ul>
     <p class="email" id="emailDisplay"></p>
+    <a href="/shop.html" class="button">← Browse More Books</a>
   </div>
 
   <script>
