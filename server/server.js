@@ -97,7 +97,7 @@ const Order = mongoose.model('Order', orderSchema);
 // ✅ Admin auth
 const basicAuth = require('express-basic-auth');
 app.use('/api/orders', basicAuth({
-  users: { 'admin': 'test123' },
+ users: { 'admin': process.env.ADMIN_PASSWORD },
   challenge: true,
 }));
 
