@@ -131,7 +131,10 @@ app.post('/create-checkout-session', async (req, res) => {
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
-    const qty = parseInt(quantity) || 1;
+    const qty = parseInt(quantity);
+    if (!qty || qty <= 0) {
+      return res.status(400).json({ error: 'Invalid quantity' });
+    }
 
     console.log(`📚 Book: ${bookTitle}`);
     console.log(`💲 Amount: ${amount} cents`);
@@ -154,8 +157,9 @@ app.post('/create-checkout-session', async (req, res) => {
       ],
       metadata: {
         bookTitle: bookTitle,
+        quantity: qty.toString() // ✅ Add quantity to metadata for success.html
       },
-      success_url: 'https://coolcalmandkarter.netlify.app/success.html',
+      success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
     });
 
