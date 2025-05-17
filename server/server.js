@@ -1,4 +1,4 @@
-require('dotenv').config(); // Load environment variables
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
@@ -6,11 +6,10 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
 const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
-const { Parser } = require('json2csv'); // ✅ CSV export support
+const { Parser } = require('json2csv');
 
-const app = express(); // ✅ Define the app BEFORE using it
+const app = express();
 
-// ✅ Corrected CORS configuration
 const allowedOrigins = [
   'http://127.0.0.1:5500',
   'http://localhost:3000',
@@ -31,8 +30,6 @@ app.use(cors({
 
 // ✅ Stripe webhook — MUST come BEFORE any body parser
 app.post('/webhook', express.raw({ type: 'application/json' }), async (request, response) => {
-  console.log("🔔 Incoming webhook request received!");
-
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const sig = request.headers['stripe-signature'];
 
@@ -44,59 +41,50 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
     return response.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log('✅ Webhook received:', event.type);
-
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
     const customerEmail = session.customer_details?.email || 'no-email';
     const customerName = session.customer_details?.name || 'Customer';
     const amount = session.amount_total || 0;
-    const bookTitle = session.metadata?.bookTitle || 'Unknown Book';
-    const quantity = session.metadata?.quantity || '1';
+    const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
 
-    console.log(`✅ Saving order for ${customerName} (${customerEmail})`);
+    const bookTitleSummary = items.map(i => `${i.name} x${i.quantity}`).join(', ');
 
     const newOrder = new Order({
       name: customerName,
       email: customerEmail,
-      bookTitle: `${bookTitle} x${quantity}`,
+      bookTitle: bookTitleSummary,
       amount: amount
     });
 
     try {
       await newOrder.save();
-      console.log('✅ Order saved to database');
+      console.log('✅ Order saved');
     } catch (err) {
-      console.error('❌ Error saving order:', err);
+      console.error('❌ Save error:', err);
     }
 
-    sendConfirmationEmail(customerEmail, customerName, bookTitle, quantity);
+    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary);
   }
 
   response.status(200).end();
 });
 
-// ✅ Apply express.json() to all other routes (skip webhook)
+// ✅ Use express.json after webhook
 app.use((req, res, next) => {
   if (req.originalUrl === '/webhook') {
-    next(); // Skip body parsing for webhook route
+    next();
   } else {
     express.json()(req, res, next);
   }
 });
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-  })
-  .catch(err => {
-    console.error('❌ MongoDB Connection Error:', err);
-  });
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB error:', err));
 
-// ✅ Define Order schema & model
 const orderSchema = new mongoose.Schema({
   name: String,
   email: String,
@@ -106,60 +94,46 @@ const orderSchema = new mongoose.Schema({
 });
 const Order = mongoose.model('Order', orderSchema);
 
-// ✅ Add admin password protection to /api/orders
+// ✅ Admin auth
 const basicAuth = require('express-basic-auth');
 app.use('/api/orders', basicAuth({
   users: { 'admin': process.env.ADMIN_PASSWORD },
   challenge: true,
 }));
 
-// ✅ Serve static frontend
 app.use(express.static(path.join(__dirname, '../client')));
 
-// ✅ Stripe Checkout Session Route
+// ✅ Stripe Checkout Route — MULTI-ITEM version
 app.post('/create-checkout-session', async (req, res) => {
-  console.log('✅ Received POST to /create-checkout-session');
-  console.log('📦 Request Body:', req.body);
+  console.log('✅ Creating checkout session with body:', req.body);
+
+  const items = req.body.items;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Invalid items array' });
+  }
+
+  const line_items = items.map(item => ({
+    price_data: {
+      currency: 'usd',
+      product_data: {
+        name: item.name,
+      },
+      unit_amount: item.unit_amount,
+    },
+    quantity: item.quantity
+  }));
 
   try {
-    const { bookTitle, amount, quantity } = req.body;
-
-    if (!bookTitle || typeof bookTitle !== 'string') {
-      return res.status(400).json({ error: 'Invalid book title' });
-    }
-    if (!amount || typeof amount !== 'number' || amount <= 0) {
-      return res.status(400).json({ error: 'Invalid amount' });
-    }
-    const qty = parseInt(quantity);
-    if (!qty || qty <= 0) {
-      return res.status(400).json({ error: 'Invalid quantity' });
-    }
-
-    console.log(`📚 Book: ${bookTitle}`);
-    console.log(`💲 Unit Price: ${amount} cents`);
-    console.log(`📦 Quantity: ${qty}`);
-
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: bookTitle,
-            },
-            unit_amount: amount,
-          },
-          quantity: qty,
-        },
-      ],
+      line_items,
       metadata: {
-        bookTitle: bookTitle,
-        quantity: qty.toString()
+        items: JSON.stringify(items)
       },
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
+      cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html'
     });
 
     res.json({ id: session.id });
@@ -169,8 +143,8 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// ✅ Send confirmation email
-function sendConfirmationEmail(toEmail, name, bookTitle, quantity) {
+// ✅ Confirmation Email
+function sendConfirmationEmail(toEmail, name, summary) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -183,53 +157,42 @@ function sendConfirmationEmail(toEmail, name, bookTitle, quantity) {
     from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
     to: toEmail,
     subject: 'Your Order is Confirmed!',
-    text: `Hi ${name || 'there'},\n\nThanks for your purchase from Cool, Calm & Karter!\n\nOrder Summary:\n- ${bookTitle} x${quantity}\n\nYour order has been successfully placed.\n\nBest,\nThe Team`
+    text: `Hi ${name || 'there'},\n\nThanks for your purchase from Cool, Calm & Karter!\n\nOrder Summary:\n${summary}\n\nYour order has been successfully placed.\n\nBest,\nThe Team`
   };
 
-  transporter.sendMail(mailOptions, function(error, info){
+  transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.log('❌ Email Error:', error);
+      console.log('❌ Email error:', error);
     } else {
-      console.log('✅ Email sent: ' + info.response);
+      console.log('✅ Email sent:', info.response);
     }
   });
 }
 
-// ✅ Optional homepage route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
-});
-
-// ✅ Orders API route
+// ✅ Order Viewer
 app.get('/api/orders', async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
     res.json(orders);
   } catch (err) {
-    console.error('❌ Failed to fetch orders:', err);
-    res.status(500).json({ error: 'Failed to retrieve orders' });
+    res.status(500).json({ error: 'Failed to fetch orders' });
   }
 });
 
-// ✅ Export Orders as CSV route
 app.get('/api/orders/export', async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
-
     const fields = ['name', 'email', 'bookTitle', 'amount', 'date'];
     const parser = new Parser({ fields });
     const csv = parser.parse(orders);
-
     res.header('Content-Type', 'text/csv');
     res.attachment('orders.csv');
-    return res.send(csv);
+    res.send(csv);
   } catch (err) {
-    console.error('❌ Failed to export orders:', err);
-    res.status(500).json({ error: 'Could not export orders' });
+    res.status(500).json({ error: 'Export failed' });
   }
 });
 
-// ✅ GET session details by ID (for success.html)
 app.get('/api/session/:id', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(req.params.id, {
@@ -242,17 +205,17 @@ app.get('/api/session/:id', async (req, res) => {
     })) || [];
 
     res.json({
-      customerEmail: session.customer_details?.email || 'No email found',
+      customerEmail: session.customer_details?.email || 'No email',
       items
     });
   } catch (err) {
-    console.error('❌ Failed to fetch session:', err);
-    res.status(500).json({ error: 'Could not retrieve session' });
+    res.status(500).json({ error: 'Could not fetch session' });
   }
 });
 
-// ✅ Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
