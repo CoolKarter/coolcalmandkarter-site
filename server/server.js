@@ -19,7 +19,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || origin === null) {
       callback(null, true);
     } else {
       console.log(`❌ Blocked CORS request from: ${origin}`);
@@ -28,6 +28,7 @@ app.use(cors({
   },
   credentials: true,
 }));
+
 
 // ✅ Stripe webhook — MUST come BEFORE any body parser
 app.post('/webhook', express.raw({ type: 'application/json' }), async (request, response) => {
