@@ -6,11 +6,10 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
 const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
-const { Parser } = require('json2csv'); // ✅ CSV export support
+const { Parser } = require('json2csv');
 
-const app = express(); // ✅ Define the app BEFORE using it
+const app = express();
 
-// ✅ Corrected CORS configuration
 const allowedOrigins = [
   'http://127.0.0.1:5500',
   'http://localhost:3000',
@@ -29,7 +28,6 @@ app.use(cors({
   credentials: true,
 }));
 
-// ✅ Stripe webhook — MUST come BEFORE any body parser
 app.post('/webhook', express.raw({ type: 'application/json' }), async (request, response) => {
   console.log("🔔 Incoming webhook request received!");
 
@@ -52,15 +50,21 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
     const customerEmail = session.customer_details?.email || 'no-email';
     const customerName = session.customer_details?.name || 'Customer';
     const amount = session.amount_total || 0;
-    const bookTitle = session.metadata?.bookTitle || 'Unknown Book';
-    const quantity = session.metadata?.quantity || '1';
+    const rawItems = session.metadata?.items || '{}';
 
-    console.log(`✅ Saving order for ${customerName} (${customerEmail})`);
+    let parsedItems = [];
+    try {
+      parsedItems = JSON.parse(rawItems);
+    } catch (e) {
+      console.error('❌ Failed to parse metadata.items:', e);
+    }
+
+    const orderSummary = parsedItems.map(i => `${i.title} x${i.quantity}`).join(', ');
 
     const newOrder = new Order({
       name: customerName,
       email: customerEmail,
-      bookTitle: `${bookTitle} x${quantity}`,
+      bookTitle: orderSummary,
       amount: amount
     });
 
@@ -71,23 +75,21 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
       console.error('❌ Error saving order:', err);
     }
 
-    sendConfirmationEmail(customerEmail, customerName, bookTitle, quantity);
+    sendConfirmationEmail(customerEmail, customerName, orderSummary);
   }
 
   response.status(200).end();
 });
 
-// ✅ Apply express.json() to all other routes (skip webhook)
 app.use((req, res, next) => {
   if (req.originalUrl === '/webhook') {
-    next(); // Skip body parsing for webhook route
+    next();
   } else {
     express.json()(req, res, next);
   }
 });
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
@@ -96,7 +98,6 @@ mongoose.connect(process.env.MONGO_URI)
     console.error('❌ MongoDB Connection Error:', err);
   });
 
-// ✅ Define Order schema & model
 const orderSchema = new mongoose.Schema({
   name: String,
   email: String,
@@ -106,57 +107,50 @@ const orderSchema = new mongoose.Schema({
 });
 const Order = mongoose.model('Order', orderSchema);
 
-// ✅ Add admin password protection to /api/orders
 const basicAuth = require('express-basic-auth');
 app.use('/api/orders', basicAuth({
   users: { 'admin': process.env.ADMIN_PASSWORD },
   challenge: true,
 }));
 
-// ✅ Serve static frontend
 app.use(express.static(path.join(__dirname, '../client')));
 
-// ✅ Stripe Checkout Session Route
 app.post('/create-checkout-session', async (req, res) => {
   console.log('✅ Received POST to /create-checkout-session');
   console.log('📦 Request Body:', req.body);
 
   try {
-    const { bookTitle, amount, quantity } = req.body;
+    const { items } = req.body;
 
-    if (!bookTitle || typeof bookTitle !== 'string') {
-      return res.status(400).json({ error: 'Invalid book title' });
-    }
-    if (!amount || typeof amount !== 'number' || amount <= 0) {
-      return res.status(400).json({ error: 'Invalid amount' });
-    }
-    const qty = parseInt(quantity);
-    if (!qty || qty <= 0) {
-      return res.status(400).json({ error: 'Invalid quantity' });
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Invalid items array' });
     }
 
-    console.log(`📚 Book: ${bookTitle}`);
-    console.log(`💲 Unit Price: ${amount} cents`);
-    console.log(`📦 Quantity: ${qty}`);
+    const lineItems = items.map(book => {
+      if (!book.title || typeof book.title !== 'string') {
+        throw new Error('Invalid book title');
+      }
+      const quantity = parseInt(book.quantity);
+      const unitAmount = parseInt(book.amount);
+      if (!quantity || quantity <= 0 || !unitAmount || unitAmount <= 0) {
+        throw new Error('Invalid quantity or amount');
+      }
+      return {
+        price_data: {
+          currency: 'usd',
+          product_data: { name: book.title },
+          unit_amount: unitAmount
+        },
+        quantity: quantity
+      };
+    });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: bookTitle,
-            },
-            unit_amount: amount, // ✅ Send unit price only (frontend now fixed)
-          },
-          quantity: qty,
-        },
-      ],
+      line_items: lineItems,
       metadata: {
-        bookTitle: bookTitle,
-        quantity: qty.toString()
+        items: JSON.stringify(items)
       },
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
@@ -169,8 +163,7 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// ✅ Send confirmation email
-function sendConfirmationEmail(toEmail, name, bookTitle, quantity) {
+function sendConfirmationEmail(toEmail, name, orderSummary) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -183,7 +176,7 @@ function sendConfirmationEmail(toEmail, name, bookTitle, quantity) {
     from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
     to: toEmail,
     subject: 'Your Order is Confirmed!',
-    text: `Hi ${name || 'there'},\n\nThanks for your purchase from Cool, Calm & Karter!\n\nOrder Summary:\n- ${bookTitle} x${quantity}\n\nYour order has been successfully placed.\n\nBest,\nThe Team`
+    text: `Hi ${name || 'there'},\n\nThanks for your purchase from Cool, Calm & Karter!\n\nOrder Summary:\n${orderSummary}\n\nYour order has been successfully placed.\n\nBest,\nThe Team`
   };
 
   transporter.sendMail(mailOptions, function(error, info){
@@ -195,12 +188,10 @@ function sendConfirmationEmail(toEmail, name, bookTitle, quantity) {
   });
 }
 
-// ✅ Optional homepage route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
-// ✅ Orders API route
 app.get('/api/orders', async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
@@ -211,7 +202,6 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// ✅ Export Orders as CSV route
 app.get('/api/orders/export', async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
@@ -229,14 +219,19 @@ app.get('/api/orders/export', async (req, res) => {
   }
 });
 
-// ✅ GET session details by ID (for success.html)
 app.get('/api/session/:id', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(req.params.id);
 
+    let orderSummary = 'Unknown';
+    try {
+      const items = JSON.parse(session.metadata?.items || '[]');
+      orderSummary = items.map(i => `${i.title} x${i.quantity}`).join(', ');
+    } catch {}
+
     res.json({
-      bookTitle: session.metadata?.bookTitle || 'Unknown Book',
-      quantity: session.metadata?.quantity || '1',
+      bookTitle: orderSummary,
+      quantity: '—',
       customerEmail: session.customer_details?.email || 'No email found'
     });
   } catch (err) {
@@ -245,7 +240,6 @@ app.get('/api/session/:id', async (req, res) => {
   }
 });
 
-// ✅ Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);

@@ -10,35 +10,17 @@
   <body>
     <h1>Your Cart</h1>
 
-    <!-- Book selector -->
-    <label for="bookSelect"><strong>Select Book:</strong></label>
-    <select id="bookSelect">
-      <option value="Florida, Beach & Baby">Florida, Beach & Baby</option>
-      <option value="Black, Beautiful & Baby">Black, Beautiful & Baby</option>
-      <option value="Adventure, Fun & Baby">Adventure, Fun & Baby</option>
-      <option value="Black, Puerto Rican & Baby">Black, Puerto Rican & Baby</option>
-      <option value="Go To Sleep, Karter!">Go To Sleep, Karter!</option>
-    </select>
+    <!-- Book List -->
+    <div id="bookList"></div>
 
-    <!-- Quantity selector -->
-    <br /><br />
-    <label for="quantity"><strong>Quantity:</strong></label>
-    <select id="quantity">
-      <option value="1" selected>1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-    </select>
-
-    <p id="priceDisplay"><strong>Price: $0.50</strong></p>
+    <p id="priceDisplay"><strong>Total: $0.00</strong></p>
 
     <button id="checkout-button">Place Order</button>
 
     <script>
       const stripe = Stripe('pk_live_51ROvCtGhPxJaSGWSMQuaM8xMO7qdlR6JjDG6cG3QgYpn4u8wpN9yEANE15wIiUrNYMUml5cFfHfQxxjjx4e619Xs00BmupSz5n');
 
-      // Book price map (temporarily 50 cents for testing)
+      // Book price map
       const books = {
         "Florida, Beach & Baby": 50,
         "Black, Beautiful & Baby": 50,
@@ -47,50 +29,70 @@
         "Go To Sleep, Karter!": 50
       };
 
-      const updatePriceDisplay = () => {
-        const book = document.getElementById('bookSelect').value;
-        const quantity = parseInt(document.getElementById('quantity').value);
-        const total = (books[book] * quantity) / 100;
-        document.getElementById('priceDisplay').innerHTML = `<strong>Total: $${total.toFixed(2)}</strong>`;
-      };
+      const bookListDiv = document.getElementById('bookList');
 
-      document.getElementById('bookSelect').addEventListener('change', updatePriceDisplay);
-      document.getElementById('quantity').addEventListener('change', updatePriceDisplay);
+      // Dynamically create checkboxes and quantity selectors
+      Object.entries(books).forEach(([title, price]) => {
+        const container = document.createElement('div');
+        container.innerHTML = `
+          <label>
+            <input type="checkbox" class="book-checkbox" value="${title}" />
+            ${title} - $${(price / 100).toFixed(2)}
+          </label>
+          <select class="quantity-select" data-title="${title}" disabled>
+            ${Array.from({ length: 20 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('')}
+          </select>
+          <br /><br />
+        `;
+        bookListDiv.appendChild(container);
+      });
 
-      updatePriceDisplay(); // initialize on load
+      // Enable quantity when book is checked
+      document.querySelectorAll('.book-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const select = document.querySelector(`.quantity-select[data-title="${checkbox.value}"]`);
+          select.disabled = !checkbox.checked;
+          updatePriceDisplay();
+        });
+      });
+
+      // Update total when quantities change
+      document.querySelectorAll('.quantity-select').forEach(select => {
+        select.addEventListener('change', updatePriceDisplay);
+      });
+
+      function updatePriceDisplay() {
+        let total = 0;
+        document.querySelectorAll('.book-checkbox:checked').forEach(checkbox => {
+          const qty = parseInt(document.querySelector(`.quantity-select[data-title="${checkbox.value}"]`).value);
+          total += books[checkbox.value] * qty;
+        });
+        document.getElementById('priceDisplay').innerHTML = `<strong>Total: $${(total / 100).toFixed(2)}</strong>`;
+      }
 
       document.getElementById('checkout-button').addEventListener('click', () => {
-        const selectedBook = document.getElementById('bookSelect').value;
-        const quantity = parseInt(document.getElementById('quantity').value);
-        const pricePerBook = books[selectedBook];
+        const selectedItems = [];
+        document.querySelectorAll('.book-checkbox:checked').forEach(checkbox => {
+          const qty = parseInt(document.querySelector(`.quantity-select[data-title="${checkbox.value}"]`).value);
+          selectedItems.push({ bookTitle: checkbox.value, quantity: qty });
+        });
 
-        console.log("🛒 Selected Book:", selectedBook);
-        console.log("📦 Quantity:", quantity);
-        console.log("💰 Price per book (in cents):", pricePerBook);
+        if (selectedItems.length === 0) {
+          return alert("Please select at least one book.");
+        }
 
         fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            bookTitle: selectedBook,
-            amount: pricePerBook, // ✅ send unit price only
-            quantity: quantity     // ✅ let backend/Stripe multiply
-          })
+          body: JSON.stringify({ items: selectedItems })
         })
         .then(res => {
-          console.log("📡 Raw fetch response:", res);
-          if (!res.ok) {
-            throw new Error(`❌ Server responded with status ${res.status}`);
-          }
+          if (!res.ok) throw new Error(`❌ Server responded with status ${res.status}`);
           return res.json();
         })
         .then(data => {
-          console.log("✅ Stripe Session ID:", data.id);
-          if (data.id) {
-            stripe.redirectToCheckout({ sessionId: data.id });
-          } else {
-            alert("❌ Checkout session could not be created.");
-          }
+          if (data.id) stripe.redirectToCheckout({ sessionId: data.id });
+          else alert("❌ Checkout session could not be created.");
         })
         .catch(err => {
           console.error('🔥 Stripe Checkout Error:', err);
