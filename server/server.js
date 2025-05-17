@@ -10,26 +10,7 @@ const { Parser } = require('json2csv');
 
 const app = express();
 
-// ✅ CORS configuration
-const allowedOrigins = [
-  'http://127.0.0.1:5500',
-  'http://localhost:3000',
-  'https://coolcalmandkarter.netlify.app',
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin) || origin === null) {
-      callback(null, true);
-    } else {
-      console.log(`❌ Blocked CORS request from: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-}));
-
-// ✅ Webhook must be first and use express.raw
+// ✅ STRIPE WEBHOOK — MUST BE FIRST BEFORE ANY MIDDLEWARE
 app.post('/webhook', express.raw({ type: 'application/json' }), async (request, response) => {
   console.log("🔔 Incoming webhook request received!");
 
@@ -80,7 +61,23 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
   response.status(200).end();
 });
 
-// ✅ Only apply body parsers AFTER webhook route
+// ✅ MIDDLEWARE (apply AFTER webhook to avoid breaking signature)
+app.use(cors({
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://127.0.0.1:5500',
+      'http://localhost:3000',
+      'https://coolcalmandkarter.netlify.app',
+    ];
+    if (!origin || allowedOrigins.includes(origin) || origin === null) {
+      callback(null, true);
+    } else {
+      console.log(`❌ Blocked CORS request from: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -89,7 +86,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// ✅ Order Schema
+// ✅ Define schema
 const orderSchema = new mongoose.Schema({
   name: String,
   email: String,
@@ -99,17 +96,17 @@ const orderSchema = new mongoose.Schema({
 });
 const Order = mongoose.model('Order', orderSchema);
 
-// ✅ Protect /api/orders with basic auth
+// ✅ Protect /api/orders
 const basicAuth = require('express-basic-auth');
 app.use('/api/orders', basicAuth({
   users: { 'admin': process.env.ADMIN_PASSWORD },
   challenge: true,
 }));
 
-// ✅ Serve static frontend
+// ✅ Static frontend
 app.use(express.static(path.join(__dirname, '../client')));
 
-// ✅ Create checkout session
+// ✅ Checkout session route
 app.post('/create-checkout-session', async (req, res) => {
   console.log('✅ Received POST to /create-checkout-session');
   console.log('📦 Request Body:', req.body);
@@ -213,7 +210,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
-// ✅ Orders API route
+// ✅ Orders API
 app.get('/api/orders', async (req, res) => {
   try {
     const { email, bookTitle } = req.query;
@@ -229,7 +226,7 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// ✅ Export orders as CSV
+// ✅ Export CSV
 app.get('/api/orders/export', async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
