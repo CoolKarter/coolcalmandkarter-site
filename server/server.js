@@ -236,3 +236,18 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
+// ✅ GET session details by ID (for success.html)
+app.get('/api/session/:id', async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.retrieve(req.params.id);
+
+    res.json({
+      bookTitle: session.metadata?.bookTitle || 'Unknown Book',
+      quantity: session.metadata?.quantity || '1',
+      customerEmail: session.customer_details?.email || 'No email found'
+    });
+  } catch (err) {
+    console.error('❌ Failed to fetch session:', err);
+    res.status(500).json({ error: 'Could not retrieve session' });
+  }
+});
