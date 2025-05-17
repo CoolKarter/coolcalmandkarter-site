@@ -46,33 +46,37 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
 
   console.log('✅ Webhook received:', event.type);
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
+ if (event.type === 'checkout.session.completed') {
+  const session = event.data.object;
 
-    const customerEmail = session.customer_details?.email || 'no-email';
-    const customerName = session.customer_details?.name || 'Customer';
-    const amount = session.amount_total || 0;
-    const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
+  const customerEmail = session.customer_details?.email || 'no-email';
+  const customerName = session.customer_details?.name || 'Customer';
+  const amount = session.amount_total || 0;
+  const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
 
-    const bookTitleSummary = items.map(i => `${i.name} x${i.quantity}`).join(', ');
+  const bookTitleSummary = items.map(i => `${i.name} x${i.quantity}`).join(', ');
 
-    const newOrder = new Order({
-      name: customerName,
-      email: customerEmail,
-      bookTitle: bookTitleSummary,
-      amount: amount
-    });
+  const newOrder = new Order({
+    name: customerName,
+    email: customerEmail,
+    bookTitle: bookTitleSummary,
+    amount: amount
+  });
 
-    try {
-      await newOrder.save();
-      console.log('✅ Order saved to database');
-    } catch (err) {
-      console.error('❌ Error saving order:', err);
-    }
-
-    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary);
-    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id);
+  try {
+    await newOrder.save();
+    console.log('✅ Order saved to database');
+  } catch (err) {
+    console.error('❌ Error saving order:', err);
   }
+
+  // ✅ These MUST be here:
+  console.log('📧 Sending customer confirmation email...');
+  sendConfirmationEmail(customerEmail, customerName, bookTitleSummary);
+
+  console.log('📧 Sending admin notification email...');
+  sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id);
+}
 
   response.status(200).end();
 });
