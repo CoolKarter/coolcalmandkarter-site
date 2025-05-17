@@ -5,32 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cart - Cool, Calm & Karter</title>
   <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    label {
+      display: inline-block;
+      width: 200px;
+      margin-bottom: 10px;
+    }
+    input[type="number"] {
+      width: 60px;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    .book-row {
+      margin-bottom: 8px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
   <h1>Your Cart</h1>
 
   <form id="cart-form">
-    <div><label><strong>Florida, Beach & Baby:</strong></label>
-      <input type="number" name="Florida, Beach & Baby" value="0" min="0" max="99" />
+    <div class="book-row">
+      <label for="book1">Florida, Beach & Baby ($0.50):</label>
+      <input type="number" id="book1" name="Florida, Beach & Baby" value="0" min="0" max="99" />
     </div>
 
-    <div><label><strong>Black, Beautiful & Baby:</strong></label>
-      <input type="number" name="Black, Beautiful & Baby" value="0" min="0" max="99" />
+    <div class="book-row">
+      <label for="book2">Black, Beautiful & Baby ($0.50):</label>
+      <input type="number" id="book2" name="Black, Beautiful & Baby" value="0" min="0" max="99" />
     </div>
 
-    <div><label><strong>Adventure, Fun & Baby:</strong></label>
-      <input type="number" name="Adventure, Fun & Baby" value="0" min="0" max="99" />
+    <div class="book-row">
+      <label for="book3">Adventure, Fun & Baby ($0.50):</label>
+      <input type="number" id="book3" name="Adventure, Fun & Baby" value="0" min="0" max="99" />
     </div>
 
-    <div><label><strong>Black, Puerto Rican & Baby:</strong></label>
-      <input type="number" name="Black, Puerto Rican & Baby" value="0" min="0" max="99" />
+    <div class="book-row">
+      <label for="book4">Black, Puerto Rican & Baby ($0.50):</label>
+      <input type="number" id="book4" name="Black, Puerto Rican & Baby" value="0" min="0" max="99" />
     </div>
 
-    <div><label><strong>Go To Sleep, Karter!:</strong></label>
-      <input type="number" name="Go To Sleep, Karter!" value="0" min="0" max="99" />
+    <div class="book-row">
+      <label for="book5">Go To Sleep, Karter! ($0.50):</label>
+      <input type="number" id="book5" name="Go To Sleep, Karter!" value="0" min="0" max="99" />
     </div>
 
-    <br />
     <button type="submit">Place Order</button>
   </form>
 
@@ -71,7 +99,7 @@
         const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items }) // ✅ Key fix: sending an array named "items"
+          body: JSON.stringify({ items }) // ✅ FIXED: sending items array correctly
         });
 
         if (!res.ok) {
