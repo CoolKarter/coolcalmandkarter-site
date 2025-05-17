@@ -6,11 +6,11 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
 const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
-const { Parser } = require('json2csv'); // ✅ CSV export support
+const { Parser } = require('json2csv');
 
-const app = express(); // ✅ Define the app BEFORE using it
+const app = express();
 
-// ✅ Corrected CORS configuration
+// ✅ CORS configuration
 const allowedOrigins = [
   'http://127.0.0.1:5500',
   'http://localhost:3000',
@@ -29,7 +29,7 @@ app.use(cors({
   credentials: true,
 }));
 
-// ✅ Stripe webhook — MUST come BEFORE any body parser
+// ✅ Webhook must be first and use express.raw
 app.post('/webhook', express.raw({ type: 'application/json' }), async (request, response) => {
   console.log("🔔 Incoming webhook request received!");
 
@@ -46,61 +46,50 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (request, 
 
   console.log('✅ Webhook received:', event.type);
 
- if (event.type === 'checkout.session.completed') {
-  const session = event.data.object;
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
 
-  const customerEmail = session.customer_details?.email || 'no-email';
-  const customerName = session.customer_details?.name || 'Customer';
-  const amount = session.amount_total || 0;
-  const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
+    const customerEmail = session.customer_details?.email || 'no-email';
+    const customerName = session.customer_details?.name || 'Customer';
+    const amount = session.amount_total || 0;
+    const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
 
-  const bookTitleSummary = items.map(i => `${i.name} x${i.quantity}`).join(', ');
+    const bookTitleSummary = items.map(i => `${i.name} x${i.quantity}`).join(', ');
 
-  const newOrder = new Order({
-    name: customerName,
-    email: customerEmail,
-    bookTitle: bookTitleSummary,
-    amount: amount
-  });
+    const newOrder = new Order({
+      name: customerName,
+      email: customerEmail,
+      bookTitle: bookTitleSummary,
+      amount: amount
+    });
 
-  try {
-    await newOrder.save();
-    console.log('✅ Order saved to database');
-  } catch (err) {
-    console.error('❌ Error saving order:', err);
+    try {
+      await newOrder.save();
+      console.log('✅ Order saved to database');
+    } catch (err) {
+      console.error('❌ Error saving order:', err);
+    }
+
+    console.log('📧 Sending customer confirmation email...');
+    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary);
+
+    console.log('📧 Sending admin notification email...');
+    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id);
   }
-
-  // ✅ These MUST be here:
-  console.log('📧 Sending customer confirmation email...');
-  sendConfirmationEmail(customerEmail, customerName, bookTitleSummary);
-
-  console.log('📧 Sending admin notification email...');
-  sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id);
-}
 
   response.status(200).end();
 });
 
-// ✅ Apply express.json() to all other routes (skip webhook)
-app.use((req, res, next) => {
-  if (req.originalUrl === '/webhook') {
-    next();
-  } else {
-    express.json()(req, res, next);
-  }
-});
+// ✅ Only apply body parsers AFTER webhook route
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-  })
-  .catch(err => {
-    console.error('❌ MongoDB Connection Error:', err);
-  });
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// ✅ Define Order schema & model
+// ✅ Order Schema
 const orderSchema = new mongoose.Schema({
   name: String,
   email: String,
@@ -110,7 +99,7 @@ const orderSchema = new mongoose.Schema({
 });
 const Order = mongoose.model('Order', orderSchema);
 
-// ✅ Add admin password protection to /api/orders
+// ✅ Protect /api/orders with basic auth
 const basicAuth = require('express-basic-auth');
 app.use('/api/orders', basicAuth({
   users: { 'admin': process.env.ADMIN_PASSWORD },
@@ -120,14 +109,13 @@ app.use('/api/orders', basicAuth({
 // ✅ Serve static frontend
 app.use(express.static(path.join(__dirname, '../client')));
 
-// ✅ Stripe Checkout Session Route (multi-item)
+// ✅ Create checkout session
 app.post('/create-checkout-session', async (req, res) => {
   console.log('✅ Received POST to /create-checkout-session');
   console.log('📦 Request Body:', req.body);
 
   try {
     const items = req.body.items;
-
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Invalid items array' });
     }
@@ -135,9 +123,7 @@ app.post('/create-checkout-session', async (req, res) => {
     const line_items = items.map(item => ({
       price_data: {
         currency: 'usd',
-        product_data: {
-          name: item.name,
-        },
+        product_data: { name: item.name },
         unit_amount: item.unit_amount,
       },
       quantity: item.quantity
@@ -161,7 +147,7 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// ✅ Send confirmation email
+// ✅ Customer confirmation email
 function sendConfirmationEmail(toEmail, name, summary) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -178,16 +164,16 @@ function sendConfirmationEmail(toEmail, name, summary) {
     text: `Hi ${name || 'there'},\n\nThanks for your purchase from Cool, Calm & Karter!\n\nOrder Summary:\n${summary}\n\nYour order has been successfully placed.\n\nBest,\nThe Team`
   };
 
-  transporter.sendMail(mailOptions, function(error, info) {
+  transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.log('❌ Email Error:', error);
     } else {
-      console.log('✅ Email sent: ' + info.response);
+      console.log('✅ Email sent:', info.response);
     }
   });
 }
 
-// ✅ Send admin notification email
+// ✅ Admin notification email
 function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -222,12 +208,12 @@ Stripe Session ID: ${sessionId}
   });
 }
 
-// ✅ Optional homepage route
+// ✅ Homepage route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
-// ✅ Orders API route with optional filtering by book title or email
+// ✅ Orders API route
 app.get('/api/orders', async (req, res) => {
   try {
     const { email, bookTitle } = req.query;
@@ -243,11 +229,10 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// ✅ Export Orders as CSV route
+// ✅ Export orders as CSV
 app.get('/api/orders/export', async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
-
     const fields = ['name', 'email', 'bookTitle', 'amount', 'date'];
     const parser = new Parser({ fields });
     const csv = parser.parse(orders);
@@ -261,7 +246,7 @@ app.get('/api/orders/export', async (req, res) => {
   }
 });
 
-// ✅ GET session details by ID (for success.html)
+// ✅ Success page session lookup
 app.get('/api/session/:id', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(req.params.id, {
@@ -283,7 +268,7 @@ app.get('/api/session/:id', async (req, res) => {
   }
 });
 
-// ✅ Start server
+// ✅ Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
