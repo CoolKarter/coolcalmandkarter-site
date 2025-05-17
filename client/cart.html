@@ -10,28 +10,23 @@
   <h1>Your Cart</h1>
 
   <form id="cart-form">
-    <div>
-      <label><strong>Florida, Beach & Baby:</strong></label>
+    <div><label><strong>Florida, Beach & Baby:</strong></label>
       <input type="number" name="Florida, Beach & Baby" value="0" min="0" max="99" />
     </div>
 
-    <div>
-      <label><strong>Black, Beautiful & Baby:</strong></label>
+    <div><label><strong>Black, Beautiful & Baby:</strong></label>
       <input type="number" name="Black, Beautiful & Baby" value="0" min="0" max="99" />
     </div>
 
-    <div>
-      <label><strong>Adventure, Fun & Baby:</strong></label>
+    <div><label><strong>Adventure, Fun & Baby:</strong></label>
       <input type="number" name="Adventure, Fun & Baby" value="0" min="0" max="99" />
     </div>
 
-    <div>
-      <label><strong>Black, Puerto Rican & Baby:</strong></label>
+    <div><label><strong>Black, Puerto Rican & Baby:</strong></label>
       <input type="number" name="Black, Puerto Rican & Baby" value="0" min="0" max="99" />
     </div>
 
-    <div>
-      <label><strong>Go To Sleep, Karter!:</strong></label>
+    <div><label><strong>Go To Sleep, Karter!:</strong></label>
       <input type="number" name="Go To Sleep, Karter!" value="0" min="0" max="99" />
     </div>
 
@@ -56,13 +51,13 @@
       const formData = new FormData(e.target);
       const items = [];
 
-      for (let [name, qty] of formData.entries()) {
+      for (let [title, qty] of formData.entries()) {
         const quantity = parseInt(qty);
-        if (quantity > 0 && BOOK_PRICES[name]) {
+        if (quantity > 0 && BOOK_PRICES[title]) {
           items.push({
-            name: name,
-            unit_amount: BOOK_PRICES[name],
-            quantity: quantity
+            name: title,
+            unit_amount: BOOK_PRICES[title],
+            quantity
           });
         }
       }
@@ -76,11 +71,12 @@
         const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items })
+          body: JSON.stringify({ items }) // ✅ Key fix: sending an array named "items"
         });
 
         if (!res.ok) {
-          throw new Error(`❌ Server responded with status ${res.status}`);
+          const err = await res.json();
+          throw new Error(`❌ Server responded with status ${res.status}: ${err.error}`);
         }
 
         const data = await res.json();
