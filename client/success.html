@@ -1,79 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Favicon -->
-<link rel="icon" type="image/x-icon" href="images/favicon.ico" />
-
-<!-- SEO Metadata -->
-<meta name="description" content="Cool, Calm & Karter creates beautifully diverse children’s books filled with culture, joy, and love." />
-<meta name="keywords" content="children's books, diverse books, kids books, baby books, bedtime stories" />
-<meta name="author" content="Cool, Calm & Karter" />
-
-<!-- Open Graph for Social Sharing -->
-<meta property="og:title" content="Cool, Calm & Karter | Books That Feel Like Home" />
-<meta property="og:description" content="Explore beautifully illustrated, inclusive stories your child will love." />
-<meta property="og:image" content="https://coolcalmandkarter.netlify.app/images/coolcalm-logo.png" />
-<meta property="og:url" content="https://coolcalmandkarter.netlify.app" />
-<meta name="twitter:card" content="summary_large_image" />
-
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Thank You - Cool, Calm & Karter</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background: #f4f4f4;
-      color: #333;
-    }
-    .container {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      font-family: 'Baloo 2', cursive;
+      background-color: #efe1c6;
+      margin: 0;
+      padding: 0;
+      color: #195569;
       text-align: center;
     }
+    header {
+      padding: 2rem 1rem 0;
+    }
     .logo {
-      width: 100px;
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+    }
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    .cart-icon::before {
+      content: "\1F6D2";
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: #f46045;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 700px;
+      margin: 2rem auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .checkmark {
+      font-size: 64px;
+      color: #4CAF50;
       margin-bottom: 1rem;
     }
     h1 {
-      color: #195569; /* Navy Blue */
+      font-size: 2rem;
+      color: #f46045;
+      margin-bottom: 1rem;
     }
     ul {
-      padding-left: 20px;
-      text-align: left;
+      list-style: none;
+      padding: 0;
+      margin-bottom: 1rem;
+    }
+    ul li {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
     }
     .email {
-      margin-top: 1rem;
+      font-size: 1rem;
+      color: #195569;
       font-style: italic;
-      color: #555;
+      margin-bottom: 1.5rem;
     }
     .button {
       display: inline-block;
-      margin-top: 1.5rem;
-      padding: 10px 20px;
-      background-color: #f46045; /* Coral Red */
+      background-color: #f46045;
       color: white;
       text-decoration: none;
-      border-radius: 5px;
       font-weight: bold;
+      padding: 0.75rem 2rem;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    .button:hover {
+      background-color: #d94c36;
     }
   </style>
 </head>
 <body>
+  <header>
+    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
+  </header>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav>
+
   <div class="container">
-    <img src="images/coolcalm-logo.png" alt="Cool, Calm & Karter Logo" class="logo" />
-    <h1>🎉 Thank You For Your Purchase!</h1>
+    <div class="checkmark">✔</div>
+    <h1>Thank you, your order has been placed!</h1>
     <p>Here’s a summary of your order:</p>
     <ul id="itemList"></ul>
-    <p class="email" id="emailDisplay"></p>
-    <a href="/shop.html" class="button">← Browse More Books</a>
+    <p class="email" id="emailDisplay">A confirmation email has been sent to you.</p>
+    <a href="shop.html" class="button">← Browse More Books</a>
   </div>
 
   <script>
+    // Clear cart and update badge
+    localStorage.removeItem('cart');
+    document.getElementById('cartCount').textContent = '0';
+
+    // Load order from session
     async function loadSessionDetails() {
       const params = new URLSearchParams(window.location.search);
       const sessionId = params.get('session_id');

@@ -1,146 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Favicon -->
-<link rel="icon" type="image/x-icon" href="images/favicon.ico" />
-
-<!-- SEO Metadata -->
-<meta name="description" content="Cool, Calm & Karter creates beautifully diverse children’s books filled with culture, joy, and love." />
-<meta name="keywords" content="children's books, diverse books, kids books, baby books, bedtime stories" />
-<meta name="author" content="Cool, Calm & Karter" />
-
-<!-- Open Graph for Social Sharing -->
-<meta property="og:title" content="Cool, Calm & Karter | Books That Feel Like Home" />
-<meta property="og:description" content="Explore beautifully illustrated, inclusive stories your child will love." />
-<meta property="og:image" content="https://coolcalmandkarter.netlify.app/images/coolcalm-logo.png" />
-<meta property="og:url" content="https://coolcalmandkarter.netlify.app" />
-<meta name="twitter:card" content="summary_large_image" />
-
-
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shop - Cool, Calm & Karter</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      font-family: 'Baloo 2', cursive;
+      background-color: #efe1c6;
       margin: 0;
-      padding: 2rem;
-      color: #333;
+      padding: 0;
+      color: #195569;
+      text-align: center;
     }
-    .container {
-      max-width: 900px;
-      margin: auto;
+    header {
+      padding: 2rem 1rem 0rem;
+    }
+    .logo {
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    .cart-icon::before {
+      content: "🛒";
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: #f46045;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
     }
     h1 {
-      text-align: center;
-      color: #195569;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 1rem;
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 2rem;
-      margin-top: 2rem;
     }
     .book {
       background: white;
       border-radius: 8px;
       padding: 1rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .book img {
+    .book a img {
       width: 100%;
       height: 250px;
-      object-fit: cover;
+      object-fit: contain;
       border-radius: 6px;
       margin-bottom: 1rem;
     }
     .book-title {
       font-weight: bold;
+      font-size: 1.1rem;
       margin: 0.5rem 0;
     }
     .price {
       color: #195569;
       font-weight: bold;
+      margin-bottom: 0.75rem;
     }
     .qty {
-      margin: 0.5rem 0;
+      width: 60px;
+      margin-bottom: 0.75rem;
     }
-    .add-btn {
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .add-btn,
+    .view-btn {
       background-color: #f46045;
       color: white;
-      padding: 8px 12px;
+      padding: 10px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
-    }
-    .add-btn:hover {
-      background-color: #d44d3a;
-    }
-    .view-cart {
-      display: block;
-      text-align: center;
-      margin-top: 2rem;
-      font-weight: bold;
       text-decoration: none;
-      color: #195569;
+      display: inline-block;
+    }
+    .add-btn:hover,
+    .view-btn:hover {
+      background-color: #d94c36;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📚 Shop Books</h1>
+  <header>
+    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
+  </header>
 
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About the Author</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav>
+
+  <div class="container">
+    <h1>Shop All Books</h1>
     <div class="grid">
       <div class="book">
-        <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby" />
+        <a href="product-pages/florida-beach-and-baby.html">
+          <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby">
+        </a>
         <p class="book-title">Florida, Beach & Baby</p>
         <p class="price">$9.99</p>
         <input class="qty" type="number" min="0" value="0" data-title="Florida, Beach & Baby" />
-        <button class="add-btn">Add to Cart</button>
+        <div class="btn-group">
+          <button class="add-btn">Add to Cart</button>
+          <a class="view-btn" href="product-pages/florida-beach-and-baby.html">View Details</a>
+        </div>
       </div>
 
       <div class="book">
-        <img src="images/Beautiful, Black & Baby Cover.png" alt="Black, Beautiful & Baby" />
+        <a href="product-pages/black-beautiful-and-baby.html">
+          <img src="images/Beautiful, Black & Baby Cover.png" alt="Black, Beautiful & Baby">
+        </a>
         <p class="book-title">Black, Beautiful & Baby</p>
         <p class="price">$9.99</p>
         <input class="qty" type="number" min="0" value="0" data-title="Black, Beautiful & Baby" />
-        <button class="add-btn">Add to Cart</button>
+        <div class="btn-group">
+          <button class="add-btn">Add to Cart</button>
+          <a class="view-btn" href="product-pages/black-beautiful-and-baby.html">View Details</a>
+        </div>
       </div>
 
       <div class="book">
-        <img src="images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby" />
+        <a href="product-pages/adventure-fun-and-baby.html">
+          <img src="images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby">
+        </a>
         <p class="book-title">Adventure, Fun & Baby</p>
         <p class="price">$9.99</p>
         <input class="qty" type="number" min="0" value="0" data-title="Adventure, Fun & Baby" />
-        <button class="add-btn">Add to Cart</button>
+        <div class="btn-group">
+          <button class="add-btn">Add to Cart</button>
+          <a class="view-btn" href="product-pages/adventure-fun-and-baby.html">View Details</a>
+        </div>
       </div>
 
       <div class="book">
-        <img src="images/Black PuertoRican & Baby COVER.png" alt="Black, Puerto Rican & Baby" />
+        <a href="product-pages/black-puerto-rican-and-baby.html">
+          <img src="images/Black PuertoRican & Baby COVER.png" alt="Black, Puerto Rican & Baby">
+        </a>
         <p class="book-title">Black, Puerto Rican & Baby</p>
         <p class="price">$9.99</p>
         <input class="qty" type="number" min="0" value="0" data-title="Black, Puerto Rican & Baby" />
-        <button class="add-btn">Add to Cart</button>
+        <div class="btn-group">
+          <button class="add-btn">Add to Cart</button>
+          <a class="view-btn" href="product-pages/black-puerto-rican-and-baby.html">View Details</a>
+        </div>
       </div>
 
       <div class="book">
-        <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!" />
+        <a href="product-pages/go-to-sleep-karter.html">
+          <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!">
+        </a>
         <p class="book-title">Go To Sleep, Karter!</p>
         <p class="price">$9.99</p>
         <input class="qty" type="number" min="0" value="0" data-title="Go To Sleep, Karter!" />
-        <button class="add-btn">Add to Cart</button>
+        <div class="btn-group">
+          <button class="add-btn">Add to Cart</button>
+          <a class="view-btn" href="product-pages/go-to-sleep-karter.html">View Details</a>
+        </div>
       </div>
     </div>
-
-    <a class="view-cart" href="cart.html">🛒 View Cart</a>
   </div>
 
   <script>
     const buttons = document.querySelectorAll('.add-btn');
-
     buttons.forEach((btn) => {
       btn.addEventListener('click', () => {
         const bookCard = btn.closest('.book');
@@ -153,20 +225,27 @@
           return;
         }
 
-        // Load current cart or initialize
         let cart = JSON.parse(localStorage.getItem('cart')) || {};
-
-        // Update or add to cart
         cart[title] = (cart[title] || 0) + quantity;
-
-        // Save cart
         localStorage.setItem('cart', JSON.stringify(cart));
 
-        // Reset input and show feedback
         input.value = 0;
         alert(`${quantity} × "${title}" added to your cart.`);
+
+        let count = 0;
+        for (const key in cart) {
+          count += cart[key];
+        }
+        document.getElementById('cartCount').textContent = count;
       });
     });
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || {};
+    let count = 0;
+    for (const key in cart) {
+      count += cart[key];
+    }
+    document.getElementById('cartCount').textContent = count;
   </script>
 </body>
 </html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Florida, Beach & Baby - Cool, Calm & Karter</title>
+  <link rel="icon" href="../images/favicon.ico" type="image/x-icon" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #efe1c6;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .book-detail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      background-color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+    }
+    .book-cover {
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #195569;
+    }
+    .details {
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      color: #555;
+    }
+    p.description {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    .price {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin: 1rem 0;
+    }
+    .buttons {
+      display: flex;
+      gap: 1rem;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 1rem;
+      background-color: #f46045;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #d94c36;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="book-detail">
+      <img src="../images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby Cover" class="book-cover" />
+      <h1>Florida, Beach & Baby</h1>
+      <div class="details">Published: March 5, 2024 · ★★★★★ 5.0 Rating</div>
+      <p class="description">
+        "Florida, Beach & Baby" is a sunny, joyful story that captures the magic of a day at the beach. Perfect for toddlers and young readers, this beautifully illustrated book follows Baby’s beachside adventures through sandcastles, seashells, waves, and wonder. It's a celebration of nature, fun, and family bonding in a coastal paradise.
+      </p>
+      <div class="price">$9.99</div>
+      <div class="buttons">
+        <button onclick="addToCart('Florida, Beach & Baby', 999)">Add to Cart</button>
+        <button onclick="buyNow('Florida, Beach & Baby', 999)">Buy Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function addToCart(bookTitle, price) {
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      cart[bookTitle] = (cart[bookTitle] || 0) + 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      alert(`Added "${bookTitle}" to cart.`);
+    }
+
+    function buyNow(bookTitle, price) {
+      const cart = {};
+      cart[bookTitle] = 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.location.href = '../cart.html';
+    }
+  </script>
+</body>
+</html>

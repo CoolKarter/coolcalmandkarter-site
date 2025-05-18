@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact - Cool, Calm & Karter</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
+  <style>
+    body {
+      font-family: 'Baloo 2', cursive;
+      background-color: #efe1c6;
+      margin: 0;
+      padding: 0;
+      color: #195569;
+      text-align: center;
+    }
+    header {
+      padding: 2rem 1rem 0;
+    }
+    .logo {
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    .cart-icon::before {
+      content: "\1F6D2";
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: #f46045;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 2rem;
+      color: #f46045;
+      margin-bottom: 1.5rem;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    label {
+      font-size: 1.1rem;
+      text-align: left;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    button {
+      background-color: #f46045;
+      color: white;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background-color: #d94c36;
+    }
+    .confirmation {
+      margin-top: 1rem;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
+  </header>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav>
+
+  <div class="container">
+    <h1>Contact</h1>
+    <form id="contactForm">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required />
+
+      <label for="reason">Reason for Contact</label>
+      <select id="reason" name="reason">
+        <option value="general">General Inquiry</option>
+        <option value="feedback">Feedback or Review</option>
+        <option value="collab">Collaboration or Partnership</option>
+        <option value="bulk">Bulk Order / Retail</option>
+        <option value="support">Support or Issue</option>
+      </select>
+
+      <label for="subject">Subject</label>
+      <input type="text" id="subject" name="subject" required />
+
+      <label for="message">Message</label>
+      <textarea id="message" name="message" required></textarea>
+
+      <button type="submit" id="submitButton">Send</button>
+      <div class="confirmation" id="confirmationMessage" style="display: none;">Thank you! Your message has been sent.</div>
+    </form>
+  </div>
+
+  <script>
+    const cart = JSON.parse(localStorage.getItem('cart')) || {};
+    let count = 0;
+    for (const item in cart) {
+      count += cart[item];
+    }
+    document.getElementById('cartCount').textContent = count;
+
+    const form = document.getElementById('contactForm');
+    const button = document.getElementById('submitButton');
+    const confirmation = document.getElementById('confirmationMessage');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      button.disabled = true;
+      button.textContent = 'Sending...';
+
+      const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        reason: document.getElementById('reason').value,
+        subject: document.getElementById('subject').value,
+        message: document.getElementById('message').value,
+      };
+
+      try {
+        await fetch('https://coolcalmandkarter-site.onrender.com/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+
+        confirmation.style.display = 'block';
+        form.reset();
+
+        setTimeout(() => {
+          confirmation.style.display = 'none';
+        }, 5000);
+
+      } catch (error) {
+        alert('There was an error sending your message. Please try again later.');
+      }
+
+      button.disabled = false;
+      button.textContent = 'Send';
+    });
+  </script>
+</body>
+</html>

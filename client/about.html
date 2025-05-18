@@ -1,92 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Favicon -->
-<link rel="icon" type="image/x-icon" href="images/favicon.ico" />
-
-<!-- SEO Metadata -->
-<meta name="description" content="Cool, Calm & Karter creates beautifully diverse children’s books filled with culture, joy, and love." />
-<meta name="keywords" content="children's books, diverse books, kids books, baby books, bedtime stories" />
-<meta name="author" content="Cool, Calm & Karter" />
-
-<!-- Open Graph for Social Sharing -->
-<meta property="og:title" content="Cool, Calm & Karter | Books That Feel Like Home" />
-<meta property="og:description" content="Explore beautifully illustrated, inclusive stories your child will love." />
-<meta property="og:image" content="https://coolcalmandkarter.netlify.app/images/coolcalm-logo.png" />
-<meta property="og:url" content="https://coolcalmandkarter.netlify.app" />
-<meta name="twitter:card" content="summary_large_image" />
-
-
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About the Author - Cool, Calm & Karter</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
   <style>
     body {
+      font-family: 'Baloo 2', cursive;
+      background-color: #efe1c6;
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
+      padding: 0;
+      color: #195569;
+      text-align: center;
     }
     header {
-      background-color: #195569;
-      padding: 1.5rem 2rem;
-      text-align: center;
+      padding: 2rem 1rem 0rem;
     }
     .logo {
-      max-width: 120px;
-      margin-bottom: 1rem;
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
     }
-    .brand-name {
-      font-size: 1.8rem;
-      color: white;
-      margin: 0;
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+      position: relative;
     }
-    main {
-      padding: 3rem 2rem;
-      max-width: 800px;
-      margin: auto;
-      text-align: center;
-    }
-    h1 {
+    nav a {
       color: #195569;
-      font-size: 2rem;
-      margin-bottom: 1.5rem;
+      text-decoration: none;
     }
-    .bio-placeholder {
-      border: 2px dashed #ccc;
-      padding: 2rem;
-      font-style: italic;
-      color: #666;
-      background-color: #fff;
-      border-radius: 10px;
+    nav a:hover {
+      text-decoration: underline;
     }
-    .back-btn {
+    .cart-icon {
+      position: relative;
       display: inline-block;
-      margin-top: 2rem;
-      padding: 10px 20px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    .cart-icon::before {
+      content: "\1F6D2";
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
       background-color: #f46045;
       color: white;
-      text-decoration: none;
-      border-radius: 6px;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
       font-weight: bold;
     }
-    .back-btn:hover {
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      text-align: left;
+    }
+    .browse-button {
+      margin-top: 2rem;
+      background-color: #f46045;
+      color: white;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .browse-button:hover {
       background-color: #d94c36;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="images/coolcalm-logo.png" alt="Cool, Calm & Karter Logo" class="logo" />
-    <h1 class="brand-name">Cool, Calm & Karter</h1>
+    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
   </header>
 
-  <main>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About the Author</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav>
+
+  <div class="container">
     <h1>About the Author</h1>
-    <div class="bio-placeholder">
-      <p>This is where your author bio will go. You can write about your journey, your inspiration for writing children’s books, and your passion for diversity and storytelling.</p>
-    </div>
-    <a href="index.html" class="back-btn">← Back to Home</a>
-  </main>
+    <p><strong>Meet Ki-Jana Thomas &mdash; Father, Author, and the Heart Behind the "And Baby" Series</strong></p>
+    <p>Ki-Jana Thomas discovered his passion for writing children&rsquo;s books after the birth of his son, Karter. Becoming a father opened his eyes to the magic of everyday moments &mdash; the laughter, the challenges, the milestones &mdash; and inspired him to capture those memories through storytelling. That&rsquo;s how the &ldquo;And Baby&rdquo; series was born.</p>
+    <p>Through books like <em>Black, Beautiful &amp; Baby</em> and <em>Black, Puerto Rican &amp; Baby</em>, Ki-Jana creates heartwarming stories that celebrate identity, culture, and confidence. His mission is to fill the shelves with stories that reflect the beauty of every child &mdash; especially those who have been underrepresented for too long.</p>
+    <p>But these books aren&rsquo;t just for families of color &mdash; they&rsquo;re for everyone. Ki-Jana believes that through stories, we can all learn to love ourselves and better understand each other. His writing is a bridge &mdash; teaching children to embrace who they are while inspiring families to celebrate the uniqueness in others.</p>
+    <p>Whether it's a bedtime laugh in <em>Go To Sleep, Karter</em> or a lesson in self-love and joy, every Cool, Calm &amp; Karter book is crafted with care, connection, and a big dose of heart.</p>
+    <p>And the impact doesn&rsquo;t stop on the page. For every book sold, we donate a copy to a child in foster care, a child in need, or an underserved community &mdash; because we believe every child deserves to feel seen, celebrated, and loved.</p>
+    <p><strong>Thank you for supporting Ki-Jana and the team at Cool, Calm &amp; Karter. With your help, we&rsquo;re building a brighter, more inclusive future &mdash; one book at a time.</strong></p>
+    <a href="shop.html" class="browse-button">Browse Books</a>
+  </div>
+
+  <script>
+    const cart = JSON.parse(localStorage.getItem('cart')) || {};
+    let count = 0;
+    for (const item in cart) {
+      count += cart[item];
+    }
+    document.getElementById('cartCount').textContent = count;
+  </script>
 </body>
 </html>

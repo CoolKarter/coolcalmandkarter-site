@@ -3,174 +3,316 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cart - Cool, Calm & Karter</title>
+  <title>Your Cart - Cool, Calm & Karter</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap">
   <script src="https://js.stripe.com/v3/"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: auto;
-      padding: 20px;
+      font-family: 'Nunito', sans-serif;
+      background-color: #efe1c6;
+      margin: 0;
+      padding: 0;
+      color: #002d3d;
     }
+
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+    }
+
+    header img {
+      max-width: 400px;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      font-weight: bold;
+      position: relative;
+    }
+
+    nav a {
+      color: #002d3d;
+      text-decoration: none;
+      font-size: 1.1rem;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .cart-icon::before {
+      content: "🛒";
+      font-size: 24px;
+    }
+
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: #f46045;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
     h1 {
       text-align: center;
+      font-size: 2rem;
+      margin-bottom: 1rem;
     }
-    .book {
-      margin-bottom: 15px;
-      padding: 10px;
-      border-bottom: 1px solid #ccc;
+
+    .cart-container {
+      max-width: 900px;
+      margin: auto;
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    .subtotal {
-      margin-top: 5px;
-      color: #555;
-    }
-    .total {
-      font-weight: bold;
-      font-size: 18px;
-      margin-top: 20px;
-      text-align: right;
-    }
-    button {
-      display: block;
+
+    table {
       width: 100%;
-      padding: 12px;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #fff6e9;
+      color: #002d3d;
+    }
+
+    td img {
+      width: 50px;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quantity-controls button {
+      padding: 4px 10px;
       font-size: 16px;
-      background-color: #0077cc;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #fefefe;
+      cursor: pointer;
+    }
+
+    .remove-btn {
+      background-color: #d94c36;
       color: white;
       border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
       cursor: pointer;
-      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+
+    .total {
+      text-align: right;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    form {
+      margin-top: 2rem;
+    }
+
+    input[type="text"], input[type="email"] {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    .checkout-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    button[type="submit"] {
+      background-color: #f46045;
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      display: block;
+      margin: 1rem auto 0;
+      font-weight: bold;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #d94c36;
+    }
+
+    .empty-cart {
+      text-align: center;
+      font-size: 1.2rem;
+      margin-top: 2rem;
     }
   </style>
 </head>
 <body>
-  <h1>Your Cart</h1>
+  <header>
+    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" />
+  </header>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav>
 
-  <form id="cartForm">
-    <div class="book">
-      <label>
-        <strong>Florida, Beach & Baby - $9.99</strong><br />
-        Quantity:
-        <input type="number" name="Florida, Beach & Baby" min="0"/>
-      </label>
-      <p class="subtotal" id="subtotal-Florida, Beach & Baby">$0.00</p>
-    </div>
-
-    <div class="book">
-      <label>
-        <strong>Black, Beautiful & Baby - $9.99</strong><br />
-        Quantity:
-        <input type="number" name="Black, Beautiful & Baby" min="0"/>
-      </label>
-      <p class="subtotal" id="subtotal-Black, Beautiful & Baby">$0.00</p>
-    </div>
-
-    <div class="book">
-      <label>
-        <strong>Adventure, Fun & Baby - $9.99</strong><br />
-        Quantity:
-        <input type="number" name="Adventure, Fun & Baby" min="0"/>
-      </label>
-      <p class="subtotal" id="subtotal-Adventure, Fun & Baby">$0.00</p>
-    </div>
-
-    <div class="book">
-      <label>
-        <strong>Black, Puerto Rican & Baby - $9.99</strong><br />
-        Quantity:
-        <input type="number" name="Black, Puerto Rican & Baby" min="0"/>
-      </label>
-      <p class="subtotal" id="subtotal-Black, Puerto Rican & Baby">$0.00</p>
-    </div>
-
-    <div class="book">
-      <label>
-        <strong>Go To Sleep, Karter! - $9.99</strong><br />
-        Quantity:
-        <input type="number" name="Go To Sleep, Karter!" min="0"/>
-      </label>
-      <p class="subtotal" id="subtotal-Go To Sleep, Karter!">$0.00</p>
-    </div>
-
+  <div class="cart-container">
+    <h1>Your Cart</h1>
+    <table id="cartTable">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="cartItems"></tbody>
+    </table>
     <p class="total">Total: $<span id="totalAmount">0.00</span></p>
-    <button type="submit">Place Order</button>
-  </form>
+
+    <form id="checkoutForm">
+      <h2 class="checkout-title">Checkout</h2>
+      <input type="text" placeholder="Full name" required />
+      <input type="email" placeholder="Email address" required />
+      <input type="text" placeholder="Shipping address" required />
+      <button type="submit">Place Order</button>
+    </form>
+    <p class="empty-cart" id="emptyCart" style="display: none;">Your cart is empty.</p>
+  </div>
 
   <script>
     const stripe = Stripe('pk_test_51ROvCtGhPxJaSGWSdoXey3SVYX0FJxWshxyTiy34PfRUREOxLPcG7bLCKdslJS6ZmLTF5LMpDW9PEPd8fEnzKxK700WnUeFtr6');
-
+    let cart = JSON.parse(localStorage.getItem('cart')) || {};
     const prices = {
-      "Florida, Beach & Baby": 1,
-      "Black, Beautiful & Baby": 1,
-      "Adventure, Fun & Baby": 1,
-      "Black, Puerto Rican & Baby": 1,
-      "Go To Sleep, Karter!": 1
+      "Florida, Beach & Baby": 100,
+      "Black, Beautiful & Baby": 100,
+      "Adventure, Fun & Baby": 100,
+      "Black, Puerto Rican & Baby": 100,
+      "Go To Sleep, Karter!": 100
     };
 
-    const form = document.getElementById('cartForm');
-    const totalDisplay = document.getElementById('totalAmount');
+    const images = {
+      "Florida, Beach & Baby": "images/Florida Beach And Baby COVER.png",
+      "Black, Beautiful & Baby": "images/Beautiful, Black & Baby Cover.png",
+      "Adventure, Fun & Baby": "images/Adventure Fun & Baby Cover.png",
+      "Black, Puerto Rican & Baby": "images/Black PuertoRican & Baby COVER.png",
+      "Go To Sleep, Karter!": "images/Go To Sleep,Karter Cover.png"
+    };
 
-    function loadCart() {
-      const saved = localStorage.getItem('cart');
-      if (saved) {
-        const cart = JSON.parse(saved);
-        for (const book in cart) {
-          const input = form.elements[book];
-          if (input) input.value = cart[book];
+    const cartItems = document.getElementById('cartItems');
+    const totalDisplay = document.getElementById('totalAmount');
+    const emptyMsg = document.getElementById('emptyCart');
+    const form = document.getElementById('checkoutForm');
+    const cartCount = document.getElementById('cartCount');
+
+    function updateCartDisplay() {
+      cartItems.innerHTML = '';
+      let total = 0;
+      let count = 0;
+      let hasItems = false;
+
+      for (const book in cart) {
+        const quantity = cart[book];
+        if (quantity > 0) {
+          hasItems = true;
+          const price = prices[book];
+          total += price * quantity;
+          count += quantity;
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><img src="${images[book]}" alt="${book}" /> ${book}</td>
+            <td>$${(price / 100).toFixed(2)}</td>
+            <td>
+              <div class="quantity-controls">
+                <button onclick="updateQuantity('${book}', -1)">-</button>
+                ${quantity}
+                <button onclick="updateQuantity('${book}', 1)">+</button>
+              </div>
+            </td>
+            <td><button class="remove-btn" onclick="removeItem('${book}')">Remove</button></td>
+          `;
+          cartItems.appendChild(row);
         }
       }
-    }
 
-    function saveCart() {
-      const cart = {};
-      for (const book in prices) {
-        cart[book] = parseInt(form.elements[book].value) || 0;
+      totalDisplay.textContent = (total / 100).toFixed(2);
+      cartCount.textContent = count;
+
+      if (!hasItems) {
+        document.querySelector('table').style.display = 'none';
+        document.querySelector('.total').style.display = 'none';
+        form.style.display = 'none';
+        emptyMsg.style.display = 'block';
+      } else {
+        document.querySelector('table').style.display = '';
+        document.querySelector('.total').style.display = '';
+        form.style.display = '';
+        emptyMsg.style.display = 'none';
       }
+
       localStorage.setItem('cart', JSON.stringify(cart));
     }
 
-    function updateTotal() {
-      let total = 0;
-      for (const book in prices) {
-        const qty = parseInt(form.elements[book].value) || 0;
-        const subtotal = (prices[book] * qty) / 100;
-        const subtotalElement = document.getElementById(`subtotal-${book}`);
-        if (subtotalElement) {
-          subtotalElement.textContent = `Subtotal: $${subtotal.toFixed(2)}`;
-        }
-        total += prices[book] * qty;
+    function updateQuantity(book, change) {
+      if (cart[book] !== undefined) {
+        cart[book] += change;
+        if (cart[book] <= 0) delete cart[book];
+        updateCartDisplay();
       }
-      totalDisplay.textContent = (total / 100).toFixed(2);
     }
 
-    loadCart();
-    updateTotal();
-
-    form.addEventListener('input', () => {
-      saveCart();
-      updateTotal();
-    });
+    function removeItem(book) {
+      delete cart[book];
+      updateCartDisplay();
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      const items = [];
-
-      for (const book in prices) {
-        const qty = parseInt(form.elements[book].value);
-        if (qty && qty > 0) {
-          items.push({
-            name: book,
-            quantity: qty,
-            unit_amount: prices[book]
-          });
-        }
-      }
-
-      if (items.length === 0) {
-        alert('Please select at least one book.');
-        return;
-      }
+      const items = Object.keys(cart).map(book => ({
+        name: book,
+        quantity: cart[book],
+        unit_amount: prices[book]
+      }));
 
       try {
         const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
@@ -179,20 +321,17 @@
           body: JSON.stringify({ items })
         });
 
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(`❌ Server responded with status ${res.status}: ${err.error}`);
-        }
-
+        if (!res.ok) throw new Error('Failed to create session');
         const data = await res.json();
         localStorage.removeItem('cart');
         stripe.redirectToCheckout({ sessionId: data.id });
-
       } catch (err) {
-        console.error('🔥 Stripe Checkout Error:', err);
-        alert("❌ There was an issue starting checkout. Check the console for details.");
+        alert('❌ There was a problem starting checkout.');
+        console.error(err);
       }
     });
+
+    updateCartDisplay();
   </script>
 </body>
 </html>
