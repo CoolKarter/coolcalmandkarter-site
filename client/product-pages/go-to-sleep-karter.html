@@ -5,31 +5,74 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Go To Sleep, Karter! - Cool, Calm & Karter</title>
   <link rel="icon" href="../images/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Baloo 2', cursive;
       margin: 0;
       background-color: #efe1c6;
       color: #333;
+      text-align: center;
+    }
+    header {
+      padding: 2rem 1rem 0;
+    }
+    .logo {
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+    }
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    .cart-icon::before {
+      content: "\1F6D2";
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: #f46045;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
     }
     .container {
       max-width: 900px;
       margin: auto;
       padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
     }
     .book-detail {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
       background-color: white;
       padding: 2rem;
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       max-width: 600px;
+      margin: auto;
     }
     .book-cover {
       width: 100%;
@@ -58,6 +101,7 @@
     }
     .buttons {
       display: flex;
+      justify-content: center;
       gap: 1rem;
     }
     button {
@@ -72,16 +116,47 @@
     button:hover {
       background-color: #d94c36;
     }
+    footer {
+      background-color: #195569;
+      color: white;
+      padding: 2rem;
+      font-size: 0.9rem;
+      font-family: 'Nunito', sans-serif;
+      margin-top: 3rem;
+    }
+    footer .footer-links {
+      margin-bottom: 1rem;
+    }
+    footer a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
+  <header>
+    <img src="../images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
+  </header>
+
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../shop.html">Shop</a>
+    <a href="../about.html">About</a>
+    <a href="../contact.html">Contact</a>
+    <a href="../cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav>
+
   <div class="container">
     <div class="book-detail">
-      <img src="../images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter! Cover" class="book-cover" />
+      <img src="../images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!" class="book-cover" />
       <h1>Go To Sleep, Karter!</h1>
-      <div class="details">Published: April 14, 2024 · ★★★★★ 5.0 Rating</div>
+      <div class="details">Published: May 18, 2024 · ★★★★★ 5.0 Rating</div>
       <p class="description">
-        "Go To Sleep, Karter!" is a hilarious and relatable bedtime story every parent and toddler will love. Join baby Karter and his exhausted parents as they try everything to get him to sleep. With rhythm, rhymes, and the cutest nighttime chaos, this book will bring giggles and comfort before bed.
+        "Go To Sleep, Karter!" is a funny and relatable bedtime story for both children and parents. Through playful rhyme and hilarious nighttime chaos, this book captures the nightly battle every family faces — convincing baby Karter it's time for bed. Perfect for laughs, bonding, and bedtime routines.
       </p>
       <div class="price">$9.99</div>
       <div class="buttons">
@@ -91,12 +166,24 @@
     </div>
   </div>
 
+  <footer>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="../shop.html">Shop</a>
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+    <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
+  </footer>
+
   <script>
     function addToCart(bookTitle, price) {
       const cart = JSON.parse(localStorage.getItem('cart') || '{}');
       cart[bookTitle] = (cart[bookTitle] || 0) + 1;
       localStorage.setItem('cart', JSON.stringify(cart));
-      alert(`Added \"${bookTitle}\" to cart.`);
+      alert(`Added "${bookTitle}" to cart.`);
+      updateCartCount();
     }
 
     function buyNow(bookTitle, price) {
@@ -105,6 +192,17 @@
       localStorage.setItem('cart', JSON.stringify(cart));
       window.location.href = '../cart.html';
     }
+
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      let count = 0;
+      for (const book in cart) {
+        count += cart[book];
+      }
+      document.getElementById('cartCount').textContent = count;
+    }
+
+    updateCartCount();
   </script>
 </body>
 </html>
