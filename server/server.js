@@ -11,7 +11,7 @@ const { Parser } = require('json2csv');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ Define Mongo Schema
+// ✅ Define Mongo Schemas
 const orderSchema = new mongoose.Schema({
   name: String,
   email: String,
@@ -20,6 +20,12 @@ const orderSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
+
+const newsletterSchema = new mongoose.Schema({
+  email: { type: String, required: true },
+  date: { type: Date, default: Date.now }
+});
+const NewsletterEmail = mongoose.model('NewsletterEmail', newsletterSchema);
 
 // ✅ Stripe webhook handler — in isolated sub-app
 const webhookApp = express();
@@ -107,6 +113,10 @@ app.use('/api/orders', basicAuth({
   users: { 'admin': process.env.ADMIN_PASSWORD },
   challenge: true,
 }));
+app.use('/api/newsletter/emails', basicAuth({
+  users: { 'admin': process.env.ADMIN_PASSWORD },
+  challenge: true,
+}));
 
 // ✅ Serve frontend
 app.use(express.static(path.join(__dirname, '../client')));
@@ -141,6 +151,63 @@ app.post('/create-checkout-session', async (req, res) => {
   } catch (err) {
     console.error('❌ Stripe error:', err);
     res.status(500).json({ error: 'Checkout failed' });
+  }
+});
+
+// ✅ Newsletter signup route
+app.post('/api/newsletter', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Invalid email address' });
+  }
+
+  try {
+    const newSignup = new NewsletterEmail({ email });
+    await newSignup.save();
+    res.status(200).json({ message: 'Email saved successfully!' });
+  } catch (err) {
+    console.error('❌ Failed to save newsletter email:', err);
+    res.status(500).json({ error: 'Could not save email' });
+  }
+});
+
+// ✅ Fetch all newsletter signups (for admin dashboard)
+app.get('/api/newsletter', async (req, res) => {
+  try {
+    const emails = await NewsletterEmail.find().sort({ date: -1 });
+    res.json(emails); // Will return [] if no results, which is valid JSON
+  } catch (err) {
+    console.error('❌ Failed to fetch newsletter emails:', err);
+    res.status(500).json({ error: 'Could not fetch newsletter emails' });
+  }
+});
+
+// ✅ View newsletter emails
+app.get('/api/newsletter/emails', async (req, res) => {
+  try {
+    const emails = await NewsletterEmail.find().sort({ date: -1 });
+    res.json(emails);
+  } catch (err) {
+    console.error('❌ Failed to fetch newsletter emails:', err);
+    res.status(500).json({ error: 'Failed to retrieve newsletter emails' });
+  }
+});
+
+// ✅ Export newsletter emails as CSV
+app.get('/api/newsletter/export', async (req, res) => {
+  try {
+    const emails = await NewsletterEmail.find().sort({ date: -1 });
+    const fields = ['email', 'date'];
+    const parser = new Parser({ fields });
+    const csv = parser.parse(emails);
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment('newsletter_emails.csv');
+    res.send(csv);
+  } catch (err) {
+    console.error('❌ Failed to export newsletter emails:', err);
+    res.status(500).json({ error: 'Could not export newsletter emails' });
   }
 });
 
@@ -184,16 +251,7 @@ function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
     from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
     to: process.env.ADMIN_EMAIL,
     subject: '🛒 New Order Placed',
-    text: `
-A new order has been placed.
-
-Customer Email: ${customerEmail}
-
-Books:
-${bookSummary}
-
-Stripe Session ID: ${sessionId}
-    `.trim()
+    text: `\nA new order has been placed.\n\nCustomer Email: ${customerEmail}\n\nBooks:\n${bookSummary}\n\nStripe Session ID: ${sessionId}`.trim()
   };
 
   transporter.sendMail(mailOptions, (err, info) => {

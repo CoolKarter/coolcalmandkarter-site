@@ -2,15 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Orders Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 2rem;
+      background: #f9f9f9;
     }
     h1 {
       margin-bottom: 1rem;
+    }
+    .section {
+      margin-bottom: 3rem;
     }
     .search-bar {
       margin-bottom: 1rem;
@@ -34,47 +38,61 @@
   </style>
 </head>
 <body>
-  <h1>Admin Orders Dashboard</h1>
+  <h1>Admin Dashboard</h1>
 
-  <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search by email or book title..." size="40" />
-    <button onclick="fetchOrders()">Search</button>
-    <button onclick="exportCSV()">Export CSV</button>
+  <div class="section">
+    <h2>Orders</h2>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search by email or book title..." size="40" />
+      <button onclick="fetchOrders()">Search</button>
+      <button onclick="exportCSV()">Export Orders</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Book Title</th>
+          <th>Amount</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTableBody"></tbody>
+    </table>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Book Title</th>
-        <th>Amount</th>
-        <th>Date</th>
-      </tr>
-    </thead>
-    <tbody id="ordersTableBody"></tbody>
-  </table>
+  <div class="section">
+    <h2>Newsletter Signups</h2>
+    <button onclick="fetchNewsletter()">Refresh</button>
+    <button onclick="exportNewsletter()">Export Emails</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="newsletterTableBody"></tbody>
+    </table>
+  </div>
 
   <script>
+    const credentials = localStorage.getItem('adminAuth');
+
     function fetchOrders() {
       const search = document.getElementById('searchInput').value.trim();
       let query = '';
 
-      if (search.includes('@')) {
-        query = `?email=${encodeURIComponent(search)}`;
-      } else if (search) {
-        query = `?bookTitle=${encodeURIComponent(search)}`;
-      }
+      if (search.includes('@')) query = `?email=${encodeURIComponent(search)}`;
+      else if (search) query = `?bookTitle=${encodeURIComponent(search)}`;
 
       fetch(`https://coolcalmandkarter-site.onrender.com/api/orders${query}`, {
         headers: {
-          'Authorization': 'Basic ' + btoa('admin:' + prompt("Enter admin password:", ""))
+          'Authorization': `Basic ${credentials}`
         }
       })
-        .then(res => {
-          if (!res.ok) throw new Error('Unauthorized or failed to fetch orders');
-          return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
           const tbody = document.getElementById('ordersTableBody');
           tbody.innerHTML = '';
@@ -91,7 +109,7 @@
           });
         })
         .catch(err => {
-          alert('Unable to fetch orders');
+          alert('Unable to fetch orders.');
           console.error(err);
         });
     }
@@ -100,30 +118,20 @@
       const search = document.getElementById('searchInput').value.trim();
       let query = '';
 
-      if (search.includes('@')) {
-        query = `?email=${encodeURIComponent(search)}`;
-      } else if (search) {
-        query = `?bookTitle=${encodeURIComponent(search)}`;
-      }
-
-      const password = prompt("Enter admin password to export CSV:", "");
-      if (!password) return;
+      if (search.includes('@')) query = `?email=${encodeURIComponent(search)}`;
+      else if (search) query = `?bookTitle=${encodeURIComponent(search)}`;
 
       const link = document.createElement('a');
       link.href = `https://coolcalmandkarter-site.onrender.com/api/orders/export${query}`;
-      link.setAttribute('download', 'orders.csv');
       link.setAttribute('target', '_blank');
       link.setAttribute('rel', 'noopener noreferrer');
 
       fetch(link.href, {
         headers: {
-          'Authorization': 'Basic ' + btoa('admin:' + password)
+          'Authorization': `Basic ${credentials}`
         }
       })
-      .then(res => {
-        if (!res.ok) throw new Error('Unauthorized');
-        return res.blob();
-      })
+      .then(res => res.blob())
       .then(blob => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -134,13 +142,61 @@
         a.remove();
       })
       .catch(err => {
-        alert('Failed to export CSV');
+        alert('Failed to export orders');
         console.error(err);
       });
     }
 
-    // Auto-fetch on page load
+    function fetchNewsletter() {
+      fetch(`https://coolcalmandkarter-site.onrender.com/api/newsletter`, {
+        headers: {
+          'Authorization': `Basic ${credentials}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('newsletterTableBody');
+          tbody.innerHTML = '';
+          data.forEach(entry => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${entry.email}</td>
+              <td>${new Date(entry.date).toLocaleString()}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        })
+        .catch(err => {
+          alert('Unable to fetch newsletter emails.');
+          console.error(err);
+        });
+    }
+
+    function exportNewsletter() {
+      fetch(`https://coolcalmandkarter-site.onrender.com/api/newsletter/export`, {
+        headers: {
+          'Authorization': `Basic ${credentials}`
+        }
+      })
+      .then(res => res.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'newsletter.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      })
+      .catch(err => {
+        alert('Failed to export newsletter');
+        console.error(err);
+      });
+    }
+
+    // Auto-load data
     fetchOrders();
+    fetchNewsletter();
   </script>
 </body>
 </html>

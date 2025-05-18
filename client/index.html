@@ -1,77 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+
+  <!-- SEO Metadata -->
+  <meta name="description" content="Cool, Calm & Karter creates beautifully diverse children’s books filled with culture, joy, and love." />
+  <meta name="keywords" content="children's books, diverse books, kids books, baby books, bedtime stories" />
+  <meta name="author" content="Cool, Calm & Karter" />
+
+  <!-- Open Graph for Social Sharing -->
+  <meta property="og:title" content="Cool, Calm & Karter | Books That Feel Like Home" />
+  <meta property="og:description" content="Explore beautifully illustrated, inclusive stories your child will love." />
+  <meta property="og:image" content="https://coolcalmandkarter.netlify.app/images/coolcalm-logo.png" />
+  <meta property="og:url" content="https://coolcalmandkarter.netlify.app" />
+  <meta name="twitter:card" content="summary_large_image" />
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cool, Calm & Karter</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
-    }
-    main {
-      padding: 3rem 2rem;
-      max-width: 800px;
-      margin: auto;
+      font-family: 'Baloo 2', cursive;
+      background-color: #efe1c6;
+      color: #195569;
       text-align: center;
     }
-    h1 {
-      color: #195569;
-      font-size: 2rem;
+    header {
+      padding: 2rem 1rem 0rem;
     }
-    p {
-      margin: 1.5rem 0;
-      font-size: 1.1rem;
-      line-height: 1.6;
+    .logo {
+      width: 100%;
+      max-width: 700px;
+      display: block;
+      margin: 0 auto 1.25rem;
     }
-    .cta-buttons {
-      margin-top: 2rem;
+    .tagline {
+      margin: 0.5rem auto 1.5rem;
+      font-size: 1.25rem;
+      font-weight: bold;
+      max-width: 500px;
+      font-family: 'Nunito', sans-serif;
     }
-    .cta-buttons a {
-      display: inline-block;
-      margin: 0.5rem;
-      padding: 12px 24px;
+    .shop-button {
       background-color: #f46045;
       color: white;
-      text-decoration: none;
-      border-radius: 6px;
+      padding: 0.75rem 2.2rem;
+      font-size: 1rem;
       font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 0 auto 2rem;
     }
-    .cta-buttons a:hover {
-      background-color: #d94c36;
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      font-family: 'Nunito', sans-serif;
+    }
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .section-title {
+      margin-top: 2rem;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+    .books {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin: 2rem auto;
+      max-width: 90%;
+    }
+    .books img {
+      width: 110px;
+      height: auto;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+    .view-all-button {
+      background-color: #195569;
+      color: white;
+      padding: 0.6rem 1.6rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      cursor: pointer;
+    }
+    .divider {
+      width: 60px;
+      height: 4px;
+      background-color: #f46045;
+      margin: 2rem auto;
+      border-radius: 2px;
+    }
+    .newsletter {
+      background-color: #ffffff;
+      padding: 2rem;
+      max-width: 500px;
+      margin: 2rem auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+    .newsletter h3 {
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+    .newsletter input[type="email"] {
+      padding: 0.5rem;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .newsletter button {
+      background-color: #f46045;
+      color: white;
+      padding: 0.5rem 1.2rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    footer {
+      background-color: #195569;
+      color: white;
+      padding: 2rem;
+      font-size: 0.9rem;
+      font-family: 'Nunito', sans-serif;
+    }
+    footer .footer-links {
+      margin-bottom: 1rem;
+    }
+    footer a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <!-- ✅ NAVBAR Placeholder -->
-  <div id="navbar"></div>
+  <header>
+    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
+    <p class="tagline">Books That Feel Like Home.</p>
+    <button class="shop-button" onclick="window.location.href='shop.html'">Shop Now</button>
+  </header>
 
-  <main>
-    <h1>Welcome to Our World of Diverse Children's Books!</h1>
-    <p>
-      At <strong>Cool, Calm & Karter</strong>, we create beautifully illustrated, diverse stories that reflect the real world and celebrate all types of families. Whether it's beach adventures, bedtime battles, or cultural pride — each book is crafted to bring joy and connection to your child's bookshelf.
-    </p>
-    <div class="cta-buttons">
-      <a href="shop.html">🛍️ Shop Books</a>
-      <a href="about.html">📖 About the Author</a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About the Author</a>
+    <a href="#">Contact</a>
+  </nav>
+
+  <div class="divider"></div>
+
+  <section>
+    <h2 class="section-title">Featured Books</h2>
+    <div class="books">
+      <img src="images/Florida Beach And Baby COVER.png" alt="Florida Beach And Baby" />
+      <img src="images/Black PuertoRican & Baby COVER.png" alt="Black Puerto Rican & Baby" />
+      <img src="images/Beautiful, Black & Baby Cover.png" alt="Beautiful, Black & Baby" />
+      <img src="images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby" />
+      <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter" />
     </div>
-  </main>
+    <button class="view-all-button" onclick="window.location.href='shop.html'">View All</button>
+  </section>
 
-  <!-- ✅ FOOTER Placeholder -->
-  <div id="footer"></div>
+  <div class="divider"></div>
 
-  <!-- ✅ Load navbar and footer -->
-  <script>
-    async function loadComponent(id, file) {
-      const res = await fetch(file);
-      const html = await res.text();
-      document.getElementById(id).innerHTML = html;
-    }
+  <section class="newsletter">
+    <h3>Stay in the Loop!</h3>
+    <p>Sign up to hear about new books and special offers.</p>
+    <form>
+      <input type="email" placeholder="Your email address" required />
+      <br />
+      <button type="submit">Subscribe</button>
+    </form>
+  </section>
 
-    loadComponent("navbar", "components/navbar.html");
-    loadComponent("footer", "components/footer.html");
-  </script>
+  <footer>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="#">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+    <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
+  </footer>
 </body>
 </html>

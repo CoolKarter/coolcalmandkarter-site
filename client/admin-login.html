@@ -89,10 +89,8 @@
 
           if (!res.ok) throw new Error("Login failed");
 
-          const orders = await res.json();
           localStorage.setItem("adminAuth", credentials);
-          localStorage.setItem("adminOrders", JSON.stringify(orders));
-          window.location.href = "dashboard.html";
+          window.location.href = "admin-dashboard.html";
         } catch (err) {
           document.getElementById("error").innerText = "Invalid login credentials.";
         }
