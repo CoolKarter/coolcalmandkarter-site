@@ -155,6 +155,12 @@
       border-radius: 6px;
       cursor: pointer;
     }
+    .thank-you-message {
+      margin-top: 1rem;
+      color: green;
+      font-weight: bold;
+      display: none;
+    }
     footer {
       background-color: #195569;
       color: white;
@@ -243,10 +249,11 @@
   <section class="newsletter">
     <h3>Stay in the Loop!</h3>
     <p>Sign up to hear about new books and special offers.</p>
-    <form>
+    <form onsubmit="event.preventDefault(); document.querySelector('.thank-you-message').style.display = 'block'; this.reset();">
       <input type="email" placeholder="Your email address" required />
       <br />
       <button type="submit">Subscribe</button>
+      <p class="thank-you-message">🎉 Thank you for signing up! You’re officially part of the family.</p>
     </form>
   </section>
 
