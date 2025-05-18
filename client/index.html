@@ -173,6 +173,27 @@
     footer a:hover {
       text-decoration: underline;
     }
+    .featured-book {
+      text-align: left;
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 200px;
+    }
+    .featured-book img {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+    .featured-book h4 {
+      margin: 0.2rem 0;
+      font-size: 1rem;
+    }
+    .featured-book p {
+      font-size: 0.9rem;
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -198,13 +219,23 @@
   <section>
     <h2 class="section-title">Featured Books</h2>
     <div class="books">
-      <img src="images/Florida Beach And Baby COVER.png" alt="Florida Beach And Baby" />
-      <img src="images/Black PuertoRican & Baby COVER.png" alt="Black Puerto Rican & Baby" />
-      <img src="images/Beautiful, Black & Baby Cover.png" alt="Beautiful, Black & Baby" />
-      <img src="images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby" />
-      <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter" />
+      <div class="featured-book">
+        <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby">
+        <h4>Florida, Beach & Baby</h4>
+        <p>A sunny adventure filled with waves, seashells, and joy.</p>
+      </div>
+      <div class="featured-book">
+        <img src="images/Beautiful, Black & Baby Cover.png" alt="Black, Beautiful & Baby">
+        <h4>Black, Beautiful & Baby</h4>
+        <p>Uplifting rhymes that celebrate Black joy and identity.</p>
+      </div>
+      <div class="featured-book">
+        <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!">
+        <h4>Go To Sleep, Karter!</h4>
+        <p>A hilarious bedtime struggle every parent can relate to.</p>
+      </div>
     </div>
-    <button class="view-all-button" onclick="window.location.href='shop.html'">View All</button>
+    <button class="view-all-button" onclick="window.location.href='shop.html'">View All Books</button>
   </section>
 
   <div class="divider"></div>
