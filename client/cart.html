@@ -1,4 +1,3 @@
-<!-- ✅ REPLACE YOUR ENTIRE EXISTING FILE WITH THIS -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -354,35 +353,49 @@
     }
 
     form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      loadingIndicator.style.display = 'block';
-      placeOrderBtn.disabled = true;
+  e.preventDefault();
+  loadingIndicator.style.display = 'block';
+  placeOrderBtn.disabled = true;
 
-      const email = document.getElementById('customerEmail').value;
-      const items = Object.keys(cart).map(book => ({
-        price: priceIds[book],
-        quantity: cart[book]
-      }));
+  const email = document.getElementById('customerEmail').value;
+  const items = [];
 
-      try {
-        const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items, customerEmail: email })
-        });
+  for (const book in cart) {
+    const priceId = priceIds[book];
+    const quantity = cart[book];
+    if (priceId && quantity > 0) {
+      items.push({ price: priceId, quantity });
+    } else {
+      console.warn(`Missing or invalid price ID for book: ${book}`);
+    }
+  }
 
-        if (!res.ok) throw new Error('Failed to create session');
+  if (items.length === 0) {
+    loadingIndicator.style.display = 'none';
+    placeOrderBtn.disabled = false;
+    alert('There was a problem processing your cart. Please try again.');
+    return;
+  }
 
-        const data = await res.json();
-        localStorage.removeItem('cart');
-        await stripe.redirectToCheckout({ sessionId: data.id });
-      } catch (err) {
-        loadingIndicator.style.display = 'none';
-        placeOrderBtn.disabled = false;
-        console.error('Checkout Error:', err);
-        alert('There was a problem starting checkout. Please try again.');
-      }
+  try {
+    const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, customerEmail: email })
     });
+
+    if (!res.ok) throw new Error('Failed to create session');
+
+    const data = await res.json();
+    localStorage.removeItem('cart');
+    await stripe.redirectToCheckout({ sessionId: data.id });
+  } catch (err) {
+    loadingIndicator.style.display = 'none';
+    placeOrderBtn.disabled = false;
+    console.error('Checkout Error:', err);
+    alert('There was a problem starting checkout. Please try again.');
+  }
+});
 
     updateCartDisplay();
   </script>
