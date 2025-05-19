@@ -212,7 +212,7 @@
     <form id="checkoutForm">
       <h2 class="checkout-title">Checkout</h2>
       <input type="text" placeholder="Full name" required />
-      <input type="email" placeholder="Email address" required />
+      <input type="email" id="customerEmail" placeholder="Email address" required />
       <input type="text" placeholder="Shipping address" required />
       <button type="submit">Place Order</button>
     </form>
@@ -308,6 +308,7 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const email = document.getElementById('customerEmail').value;
       const items = Object.keys(cart).map(book => ({
         name: book,
         quantity: cart[book],
@@ -318,7 +319,7 @@
         const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items })
+          body: JSON.stringify({ items, customerEmail: email })
         });
 
         if (!res.ok) throw new Error('Failed to create session');

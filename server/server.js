@@ -125,6 +125,7 @@ app.use(express.static(path.join(__dirname, '../client')));
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const items = req.body.items;
+    const customerEmail = req.body.customerEmail;
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Invalid items array' });
     }
@@ -143,6 +144,7 @@ app.post('/create-checkout-session', async (req, res) => {
       mode: 'payment',
       line_items,
       metadata: { items: JSON.stringify(items) },
+      customer_email: customerEmail,
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html'
     });
@@ -172,11 +174,11 @@ app.post('/api/newsletter', async (req, res) => {
   }
 });
 
-// ✅ Fetch all newsletter signups (for admin dashboard)
+// ✅ Fetch newsletter emails
 app.get('/api/newsletter', async (req, res) => {
   try {
     const emails = await NewsletterEmail.find().sort({ date: -1 });
-    res.json(emails); // Will return [] if no results, which is valid JSON
+    res.json(emails);
   } catch (err) {
     console.error('❌ Failed to fetch newsletter emails:', err);
     res.status(500).json({ error: 'Could not fetch newsletter emails' });
@@ -225,7 +227,19 @@ function sendConfirmationEmail(toEmail, name, summary) {
     from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
     to: toEmail,
     subject: 'Your Order is Confirmed!',
-    text: `Hi ${name || 'there'},\n\nThanks for your purchase from Cool, Calm & Karter!\n\nOrder Summary:\n${summary}\n\nYour order has been successfully placed.\n\nBest,\nThe Team`
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; color: #333;">
+        <div style="text-align: center; padding: 20px;">
+          <img src="https://coolcalmandkarter.netlify.app/images/coolcalm-logo%20TRANSPARENT.png" alt="Cool, Calm & Karter" style="max-width: 200px;" />
+          <h2 style="color: #f46045;">Thank You for Your Order!</h2>
+        </div>
+        <p>Hi ${name || 'there'},</p>
+        <p>Thanks for your purchase from <strong>Cool, Calm & Karter</strong>!</p>
+        <p><strong>Order Summary:</strong><br>${summary}</p>
+        <p>Your order has been successfully placed. You’ll receive another email when your books ship!</p>
+        <p style="margin-top: 2rem;">With love,<br/>The Cool, Calm & Karter Team</p>
+      </div>
+    `
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
@@ -236,6 +250,7 @@ function sendConfirmationEmail(toEmail, name, summary) {
     }
   });
 }
+
 
 // ✅ Admin notification
 function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
@@ -263,7 +278,7 @@ function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
   });
 }
 
-// ✅ API routes
+// ✅ Orders API
 app.get('/api/orders', async (req, res) => {
   try {
     const { email, bookTitle } = req.query;
@@ -279,6 +294,7 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+// ✅ Export orders
 app.get('/api/orders/export', async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
