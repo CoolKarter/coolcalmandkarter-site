@@ -133,7 +133,7 @@ app.post('/create-checkout-session', async (req, res) => {
       return res.status(400).json({ error: 'Invalid items array' });
     }
 
-    // ✅ NEW: Use price IDs instead of manual price/metadata
+    // ✅ Use prebuilt price IDs (no unit_amount, no product_data)
     const line_items = items.map(item => ({
       price: item.price,
       quantity: item.quantity
@@ -152,13 +152,7 @@ app.post('/create-checkout-session', async (req, res) => {
     });
 
     res.json({ id: session.id });
-  } catch (err) {
-    console.error('❌ Stripe error:', err);
-    res.status(500).json({ error: 'Checkout failed' });
-  }
-});
 
-    res.json({ id: session.id });
   } catch (err) {
     console.error('❌ Stripe error:', err);
     res.status(500).json({ error: 'Checkout failed' });
