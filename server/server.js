@@ -153,7 +153,7 @@ app.post('/create-checkout-session', async (req, res) => {
       customer_email: customerEmail,
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
-      expires_at: Math.floor(Date.now() / 1000) + 15 * 60,
+      expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
       automatic_tax: { enabled: true }
     });
 
