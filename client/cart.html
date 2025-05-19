@@ -227,12 +227,13 @@
   <script>
     const stripe = Stripe('pk_test_51ROvCtGhPxJaSGWSdoXey3SVYX0FJxWshxyTiy34PfRUREOxLPcG7bLCKdslJS6ZmLTF5LMpDW9PEPd8fEnzKxK700WnUeFtr6');
     let cart = JSON.parse(localStorage.getItem('cart')) || {};
+
     const prices = {
-      "Florida, Beach & Baby": 100,
-      "Black, Beautiful & Baby": 100,
-      "Adventure, Fun & Baby": 100,
-      "Black, Puerto Rican & Baby": 100,
-      "Go To Sleep, Karter!": 100
+      "Florida, Beach & Baby": 1299,
+      "Black, Beautiful & Baby": 1299,
+      "Adventure, Fun & Baby": 1299,
+      "Black, Puerto Rican & Baby": 1299,
+      "Go To Sleep, Karter!": 1299
     };
 
     const images = {
@@ -316,8 +317,8 @@
       const email = document.getElementById('customerEmail').value;
       const items = Object.keys(cart).map(book => ({
         name: book,
-        quantity: cart[book],
-        unit_amount: prices[book]
+        unit_amount: prices[book],
+        quantity: cart[book]
       }));
 
       try {
@@ -332,8 +333,7 @@
         localStorage.removeItem('cart');
         stripe.redirectToCheckout({ sessionId: data.id });
       } catch (err) {
-        alert('❌ There was a problem starting checkout.');
-        console.error(err);
+        console.error('Checkout Error:', err);
       }
     });
 
