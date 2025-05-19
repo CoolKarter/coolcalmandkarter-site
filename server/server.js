@@ -133,15 +133,9 @@ app.post('/create-checkout-session', async (req, res) => {
       return res.status(400).json({ error: 'Invalid items array' });
     }
 
+    // ✅ NEW: Use price IDs instead of manual price/metadata
     const line_items = items.map(item => ({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: item.name,
-          tax_code: 'txcd_99999999',
-        },
-        unit_amount: item.unit_amount,
-      },
+      price: item.price,
       quantity: item.quantity
     }));
 
@@ -156,6 +150,13 @@ app.post('/create-checkout-session', async (req, res) => {
       expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
       automatic_tax: { enabled: true }
     });
+
+    res.json({ id: session.id });
+  } catch (err) {
+    console.error('❌ Stripe error:', err);
+    res.status(500).json({ error: 'Checkout failed' });
+  }
+});
 
     res.json({ id: session.id });
   } catch (err) {
