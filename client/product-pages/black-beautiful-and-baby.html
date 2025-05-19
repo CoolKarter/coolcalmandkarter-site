@@ -135,6 +135,26 @@
     footer a:hover {
       text-decoration: underline;
     }
+
+    /* ✅ Toast styling */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #f46045;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+    #toast.show {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -166,6 +186,8 @@
     </div>
   </div>
 
+  <div id="toast"></div> <!-- ✅ Toast container -->
+
   <footer>
     <div class="footer-links">
       <a href="../index.html">Home</a>
@@ -178,11 +200,20 @@
   </footer>
 
   <script>
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
     function addToCart(bookTitle, price) {
       const cart = JSON.parse(localStorage.getItem('cart') || '{}');
       cart[bookTitle] = (cart[bookTitle] || 0) + 1;
       localStorage.setItem('cart', JSON.stringify(cart));
-      alert(`Added "${bookTitle}" to cart.`);
+      showToast(`Added "${bookTitle}" to cart.`);
       updateCartCount();
     }
 
