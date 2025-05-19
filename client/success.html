@@ -89,11 +89,11 @@
       font-size: 1.1rem;
       margin-bottom: 0.5rem;
     }
-    .email {
+    .email, .summary-info {
       font-size: 1rem;
       color: #195569;
       font-style: italic;
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.75rem;
     }
     .button {
       display: inline-block;
@@ -128,51 +128,63 @@
     <h1>Thank you, your order has been placed!</h1>
     <p>Here’s a summary of your order:</p>
     <ul id="itemList"></ul>
-    <p class="email" id="emailDisplay">A confirmation email has been sent to you.</p>
+    <p class="summary-info" id="nameDisplay"></p>
+    <p class="summary-info" id="emailDisplay"></p>
+    <p class="summary-info" id="addressDisplay"></p>
+    <p class="summary-info" id="amountDisplay"></p>
+    <p class="summary-info" id="sessionDisplay"></p>
     <a href="shop.html" class="button">← Browse More Books</a>
   </div>
 
   <script>
-  // Clear cart and badge
-  localStorage.removeItem('cart');
-  document.getElementById('cartCount').textContent = '0';
+    localStorage.removeItem('cart');
+    document.getElementById('cartCount').textContent = '0';
 
-  async function loadSessionDetails() {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session_id');
+    async function loadSessionDetails() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
 
-    const itemList = document.getElementById('itemList');
-    const emailDisplay = document.getElementById('emailDisplay');
+      const itemList = document.getElementById('itemList');
+      const nameDisplay = document.getElementById('nameDisplay');
+      const emailDisplay = document.getElementById('emailDisplay');
+      const addressDisplay = document.getElementById('addressDisplay');
+      const amountDisplay = document.getElementById('amountDisplay');
+      const sessionDisplay = document.getElementById('sessionDisplay');
 
-    if (!sessionId) {
-      itemList.innerHTML = '<li>We couldn’t find your order. Please check your email for confirmation or contact us.</li>';
-      emailDisplay.textContent = '';
-      return;
+      if (!sessionId) {
+        itemList.innerHTML = '<li>We couldn’t find your order. Please check your email for confirmation or contact us.</li>';
+        emailDisplay.textContent = '';
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`);
+        if (!res.ok) throw new Error('Session expired or invalid');
+        const data = await res.json();
+
+        itemList.innerHTML = '';
+        data.items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.name} × ${item.quantity}`;
+          itemList.appendChild(li);
+        });
+
+        nameDisplay.textContent = `Name: ${data.name || 'N/A'}`;
+        emailDisplay.textContent = `Email: ${data.customerEmail || 'N/A'}`;
+        amountDisplay.textContent = `Total Paid: $${(data.amount / 100).toFixed(2)}`;
+        sessionDisplay.textContent = `Session ID: ${sessionId}`;
+
+        const addr = data.address || {};
+        const fullAddress = `${addr.street || ''} ${addr.apartment || ''}, ${addr.city || ''}, ${addr.state || ''} ${addr.zip || ''}, ${addr.country || ''}`;
+        addressDisplay.textContent = `Shipping Address: ${fullAddress.trim()}`;
+      } catch (err) {
+        console.error('❌ Error loading session:', err);
+        itemList.innerHTML = '<li>We couldn’t load your order details. Please check your email for confirmation.</li>';
+        emailDisplay.textContent = '';
+      }
     }
 
-    try {
-      const res = await fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`);
-      if (!res.ok) throw new Error('Session expired or invalid');
-
-      const data = await res.json();
-
-      itemList.innerHTML = '';
-      data.items.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = `${item.name} × ${item.quantity}`;
-        itemList.appendChild(li);
-      });
-
-      emailDisplay.textContent = `A confirmation was sent to: ${data.customerEmail}`;
-    } catch (err) {
-      console.error('❌ Error loading session:', err);
-      itemList.innerHTML = '<li>We couldn’t load your order details. Please check your email for confirmation.</li>';
-      emailDisplay.textContent = '';
-    }
-  }
-
-  loadSessionDetails();
-</script>
-
+    loadSessionDetails();
+  </script>
 </body>
 </html>

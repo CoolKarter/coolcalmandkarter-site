@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shop - Cool, Calm & Karter</title>
-  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+  <title>Adventure, Fun & Baby - Cool, Calm & Karter</title>
+  <link rel="icon" href="../images/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
   <style>
     body {
       font-family: 'Baloo 2', cursive;
-      background-color: #efe1c6;
       margin: 0;
-      padding: 0;
-      color: #195569;
+      background-color: #efe1c6;
+      color: #333;
       text-align: center;
     }
     header {
-      padding: 2rem 1rem 0rem;
+      padding: 2rem 1rem 0;
     }
     .logo {
       max-width: 450px;
@@ -32,7 +31,6 @@
       font-size: 1.2rem;
       font-family: 'Nunito', sans-serif;
       margin-bottom: 2rem;
-      position: relative;
     }
     nav a {
       color: #195569;
@@ -49,7 +47,7 @@
       cursor: pointer;
     }
     .cart-icon::before {
-      content: "🛒";
+      content: "\1F6D2";
       font-size: 24px;
     }
     .badge {
@@ -63,189 +61,174 @@
       font-size: 12px;
       font-weight: bold;
     }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 2rem;
-    }
     .container {
-      max-width: 1000px;
+      max-width: 900px;
       margin: auto;
-      padding: 1rem;
+      padding: 2rem;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 2rem;
+    .book-detail {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      margin: auto;
     }
-    .book {
-      background: white;
-      border-radius: 8px;
-      padding: 1rem;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .book a img {
+    .book-cover {
       width: 100%;
-      height: 250px;
-      object-fit: contain;
-      border-radius: 6px;
+      max-width: 300px;
       margin-bottom: 1rem;
     }
-    .book-title {
-      font-weight: bold;
-      font-size: 1.1rem;
-      margin: 0.5rem 0;
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #195569;
+    }
+    .details {
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      color: #555;
+    }
+    p.description {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
     }
     .price {
-      color: #195569;
       font-weight: bold;
-      margin-bottom: 0.75rem;
+      font-size: 1.2rem;
+      margin: 1rem 0;
     }
-    .qty {
-      width: 60px;
-      margin-bottom: 0.75rem;
-    }
-    .btn-group {
+    .buttons {
       display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+      justify-content: center;
+      gap: 1rem;
     }
-    .add-btn,
-    .view-btn {
+    button {
+      padding: 12px 20px;
+      font-size: 1rem;
       background-color: #f46045;
       color: white;
-      padding: 10px;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      font-weight: bold;
-      text-decoration: none;
-      display: inline-block;
     }
-    .add-btn:hover,
-    .view-btn:hover {
+    button:hover {
       background-color: #d94c36;
+    }
+    footer {
+      background-color: #195569;
+      color: white;
+      padding: 2rem;
+      font-size: 0.9rem;
+      font-family: 'Nunito', sans-serif;
+      margin-top: 3rem;
+    }
+    footer .footer-links {
+      margin-bottom: 1rem;
+    }
+    footer a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+    /* ✅ Toast Style */
+    #toast {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #195569;
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      font-weight: bold;
+      z-index: 1000;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
+    <img src="../images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
   </header>
 
   <nav>
-    <a href="index.html">Home</a>
-    <a href="shop.html">Shop</a>
-    <a href="about.html">About the Author</a>
-    <a href="contact.html">Contact</a>
-    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+    <a href="../index.html">Home</a>
+    <a href="../shop.html">Shop</a>
+    <a href="../about.html">About</a>
+    <a href="../contact.html">Contact</a>
+    <a href="../cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
   </nav>
 
   <div class="container">
-    <h1>Shop All Books</h1>
-    <div class="grid">
-      <div class="book">
-        <a href="product-pages/florida-beach-and-baby.html">
-          <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby">
-        </a>
-        <p class="book-title">Florida, Beach & Baby</p>
-        <p class="price">$9.99</p>
-        <input class="qty" type="number" min="0" value="0" data-title="Florida, Beach & Baby" />
-        <div class="btn-group">
-          <button class="add-btn">Add to Cart</button>
-          <a class="view-btn" href="product-pages/florida-beach-and-baby.html">View Details</a>
-        </div>
-      </div>
-
-      <div class="book">
-        <a href="product-pages/black-beautiful-and-baby.html">
-          <img src="images/Beautiful, Black & Baby Cover.png" alt="Black, Beautiful & Baby">
-        </a>
-        <p class="book-title">Black, Beautiful & Baby</p>
-        <p class="price">$9.99</p>
-        <input class="qty" type="number" min="0" value="0" data-title="Black, Beautiful & Baby" />
-        <div class="btn-group">
-          <button class="add-btn">Add to Cart</button>
-          <a class="view-btn" href="product-pages/black-beautiful-and-baby.html">View Details</a>
-        </div>
-      </div>
-
-      <div class="book">
-        <a href="product-pages/adventure-fun-and-baby.html">
-          <img src="images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby">
-        </a>
-        <p class="book-title">Adventure, Fun & Baby</p>
-        <p class="price">$9.99</p>
-        <input class="qty" type="number" min="0" value="0" data-title="Adventure, Fun & Baby" />
-        <div class="btn-group">
-          <button class="add-btn">Add to Cart</button>
-          <a class="view-btn" href="product-pages/adventure-fun-and-baby.html">View Details</a>
-        </div>
-      </div>
-
-      <div class="book">
-        <a href="product-pages/black-puerto-rican-and-baby.html">
-          <img src="images/Black PuertoRican & Baby COVER.png" alt="Black, Puerto Rican & Baby">
-        </a>
-        <p class="book-title">Black, Puerto Rican & Baby</p>
-        <p class="price">$9.99</p>
-        <input class="qty" type="number" min="0" value="0" data-title="Black, Puerto Rican & Baby" />
-        <div class="btn-group">
-          <button class="add-btn">Add to Cart</button>
-          <a class="view-btn" href="product-pages/black-puerto-rican-and-baby.html">View Details</a>
-        </div>
-      </div>
-
-      <div class="book">
-        <a href="product-pages/go-to-sleep-karter.html">
-          <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!">
-        </a>
-        <p class="book-title">Go To Sleep, Karter!</p>
-        <p class="price">$9.99</p>
-        <input class="qty" type="number" min="0" value="0" data-title="Go To Sleep, Karter!" />
-        <div class="btn-group">
-          <button class="add-btn">Add to Cart</button>
-          <a class="view-btn" href="product-pages/go-to-sleep-karter.html">View Details</a>
-        </div>
+    <div class="book-detail">
+      <img src="../images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby" class="book-cover" />
+      <h1>Adventure, Fun & Baby</h1>
+      <div class="details">Published: May 10, 2024 · ★★★★★ 5.0 Rating</div>
+      <p class="description">
+        "Adventure, Fun & Baby" is an energetic journey through imagination, play, and discovery. Packed with cheerful rhymes and colorful scenes, it encourages curiosity and celebrates everyday adventure. This uplifting read is perfect for inspiring little explorers.
+      </p>
+      <div class="price">$9.99</div>
+      <div class="buttons">
+        <button onclick="addToCart('Adventure, Fun & Baby', 999)">Add to Cart</button>
+        <button onclick="buyNow('Adventure, Fun & Baby', 999)">Buy Now</button>
       </div>
     </div>
   </div>
 
+  <!-- ✅ Toast Message -->
+  <div id="toast">Book added to cart!</div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="../shop.html">Shop</a>
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+    <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
+  </footer>
+
   <script>
-    const buttons = document.querySelectorAll('.add-btn');
-    buttons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const bookCard = btn.closest('.book');
-        const input = bookCard.querySelector('input');
-        const quantity = parseInt(input.value);
-        const title = input.getAttribute('data-title');
-
-        if (!quantity || quantity <= 0) {
-          alert('Please select a quantity greater than 0.');
-          return;
-        }
-
-        let cart = JSON.parse(localStorage.getItem('cart')) || {};
-        cart[title] = (cart[title] || 0) + quantity;
-        localStorage.setItem('cart', JSON.stringify(cart));
-
-        input.value = 0;
-        alert(`${quantity} × "${title}" added to your cart.`);
-
-        let count = 0;
-        for (const key in cart) {
-          count += cart[key];
-        }
-        document.getElementById('cartCount').textContent = count;
-      });
-    });
-
-    let cart = JSON.parse(localStorage.getItem('cart')) || {};
-    let count = 0;
-    for (const key in cart) {
-      count += cart[key];
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2500);
     }
-    document.getElementById('cartCount').textContent = count;
+
+    function addToCart(bookTitle, price) {
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      cart[bookTitle] = (cart[bookTitle] || 0) + 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartCount();
+      showToast(`✅ "${bookTitle}" added to cart`);
+    }
+
+    function buyNow(bookTitle, price) {
+      const cart = {};
+      cart[bookTitle] = 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.location.href = '../cart.html';
+    }
+
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      let count = 0;
+      for (const book in cart) {
+        count += cart[book];
+      }
+      document.getElementById('cartCount').textContent = count;
+    }
+
+    updateCartCount();
   </script>
 </body>
 </html>

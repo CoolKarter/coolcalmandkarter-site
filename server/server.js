@@ -70,7 +70,7 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     }
 
     console.log('📧 Sending customer confirmation email...');
-    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary);
+    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary, amount, address);
 
     console.log('📧 Sending admin notification email...');
     sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id);
@@ -222,7 +222,7 @@ app.get('/api/newsletter/export', async (req, res) => {
 });
 
 // ✅ Confirmation email
-function sendConfirmationEmail(toEmail, name, summary) {
+function sendConfirmationEmail(toEmail, name, summary, amount, address = {}) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -231,21 +231,42 @@ function sendConfirmationEmail(toEmail, name, summary) {
     }
   });
 
+  const fullAddress = `
+    ${address.street || ''}<br>
+    ${address.apartment ? address.apartment + '<br>' : ''}
+    ${address.city || ''}, ${address.state || ''} ${address.zip || ''}<br>
+    ${address.country || ''}
+  `.trim();
+
   const mailOptions = {
     from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
     to: toEmail,
-    subject: 'Your Order is Confirmed!',
+    subject: '📚 Your Cool, Calm & Karter Order Confirmation',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; color: #333;">
-        <div style="text-align: center; padding: 20px;">
-          <img src="https://coolcalmandkarter.netlify.app/images/coolcalm-logo%20TRANSPARENT.png" alt="Cool, Calm & Karter" style="max-width: 200px;" />
-          <h2 style="color: #f46045;">Thank You for Your Order!</h2>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; color: #333;">
+        <div style="text-align: center;">
+          <img src="https://coolcalmandkarter.netlify.app/images/coolcalm-logo%20TRANSPARENT.png" alt="Cool, Calm & Karter" style="max-width: 180px; margin-bottom: 20px;" />
+          <h2 style="color: #f46045;">Thank You for Your Order, ${name || 'Friend'}!</h2>
         </div>
-        <p>Hi ${name || 'there'},</p>
-        <p>Thanks for your purchase from <strong>Cool, Calm & Karter</strong>!</p>
-        <p><strong>Order Summary:</strong><br>${summary}</p>
-        <p>Your order has been successfully placed. You’ll receive another email when your books ship!</p>
-        <p style="margin-top: 2rem;">With love,<br/>The Cool, Calm & Karter Team</p>
+
+        <p style="font-size: 16px;">We’ve received your order and we’re getting it ready to ship. Here’s what you purchased:</p>
+
+        <div style="background-color: #fefefe; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 20px;">
+          <p style="margin: 0 0 10px;"><strong>Order Summary:</strong></p>
+          <p style="margin: 0 0 10px;">${summary}</p>
+          <p><strong>Total Paid:</strong> $${(amount / 100).toFixed(2)}</p>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <p style="margin: 0 0 10px;"><strong>Shipping Address:</strong></p>
+          <p style="margin: 0; line-height: 1.6;">${fullAddress}</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="https://coolcalmandkarter.netlify.app/shop.html" style="display: inline-block; background-color: #f46045; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Browse More Books</a>
+        </div>
+
+        <p style="margin-top: 40px; font-size: 14px; color: #777;">We’ll notify you when your order ships. Thank you for supporting Cool, Calm & Karter!</p>
       </div>
     `
   };
@@ -333,21 +354,19 @@ app.get('/api/orders/export', async (req, res) => {
 app.get('/api/session/:id', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(req.params.id, {
-      expand: ['line_items']
+      expand: ['customer_details']
     });
-
-    const items = session.line_items?.data.map(item => ({
-      name: item.description,
-      quantity: item.quantity
-    })) || [];
 
     res.json({
-      customerEmail: session.customer_details?.email || 'No email found',
-      items
+      session_id: session.id,
+      customer_name: session.customer_details.name,
+      customer_email: session.customer_details.email,
+      customer_address: session.customer_details.address,
+      amount_total: session.amount_total
     });
   } catch (err) {
-    console.error('❌ Failed to fetch session:', err);
-    res.status(500).json({ error: 'Could not retrieve session' });
+    console.error('Error fetching session:', err.message);
+    res.status(500).json({ error: 'Unable to fetch session details' });
   }
 });
 
