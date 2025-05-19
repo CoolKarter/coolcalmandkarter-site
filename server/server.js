@@ -133,9 +133,8 @@ app.post('/create-checkout-session', async (req, res) => {
       return res.status(400).json({ error: 'Invalid items array' });
     }
 
-    // ✅ Use prebuilt price IDs (no unit_amount, no product_data)
     const line_items = items.map(item => ({
-      price: item.price,
+      price: item.price, // now using prebuilt price ID from frontend
       quantity: item.quantity
     }));
 
@@ -143,7 +142,7 @@ app.post('/create-checkout-session', async (req, res) => {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items,
-      metadata: { items: JSON.stringify(items) },
+      metadata: { items: JSON.stringify(items) }, // stores the price ID and quantity
       customer_email: customerEmail,
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
@@ -152,7 +151,6 @@ app.post('/create-checkout-session', async (req, res) => {
     });
 
     res.json({ id: session.id });
-
   } catch (err) {
     console.error('❌ Stripe error:', err);
     res.status(500).json({ error: 'Checkout failed' });
