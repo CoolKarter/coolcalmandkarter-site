@@ -113,7 +113,8 @@
       display: none;
       position: fixed;
       bottom: 20px;
-      right: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       background-color: #195569;
       color: white;
       padding: 1rem 1.5rem;
@@ -138,7 +139,6 @@
   </nav>
 
   <div class="container">
-    <!-- Book 1 -->
     <div class="book">
       <a href="product-pages/florida-beach-and-baby.html">
         <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby">
@@ -147,11 +147,10 @@
       <div class="price">$12.99</div>
       <div class="book-buttons">
         <button onclick="window.location.href='product-pages/florida-beach-and-baby.html'">View Details</button>
-        <button onclick="addToCart('Florida, Beach & Baby', 1299)">Add to Cart</button>
+        <button onclick="addToCart('Florida, Beach & Baby')">Add to Cart</button>
       </div>
     </div>
 
-    <!-- Book 2 -->
     <div class="book">
       <a href="product-pages/black-beautiful-and-baby.html">
         <img src="images/black-beautiful-baby-cover.png" alt="Black, Beautiful & Baby">
@@ -160,11 +159,10 @@
       <div class="price">$12.99</div>
       <div class="book-buttons">
         <button onclick="window.location.href='product-pages/black-beautiful-and-baby.html'">View Details</button>
-        <button onclick="addToCart('Black, Beautiful & Baby', 1299)">Add to Cart</button>
+        <button onclick="addToCart('Black, Beautiful & Baby')">Add to Cart</button>
       </div>
     </div>
 
-    <!-- Book 3 -->
     <div class="book">
       <a href="product-pages/black-puerto-rican-and-baby.html">
         <img src="images/Black PuertoRican & Baby COVER.png" alt="Black, Puerto Rican & Baby">
@@ -173,11 +171,10 @@
       <div class="price">$12.99</div>
       <div class="book-buttons">
         <button onclick="window.location.href='product-pages/black-puerto-rican-and-baby.html'">View Details</button>
-        <button onclick="addToCart('Black, Puerto Rican & Baby', 1299)">Add to Cart</button>
+        <button onclick="addToCart('Black, Puerto Rican & Baby')">Add to Cart</button>
       </div>
     </div>
 
-    <!-- Book 4 -->
     <div class="book">
       <a href="product-pages/adventure-fun-and-baby.html">
         <img src="images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby">
@@ -186,11 +183,10 @@
       <div class="price">$12.99</div>
       <div class="book-buttons">
         <button onclick="window.location.href='product-pages/adventure-fun-and-baby.html'">View Details</button>
-        <button onclick="addToCart('Adventure, Fun & Baby', 1299)">Add to Cart</button>
+        <button onclick="addToCart('Adventure, Fun & Baby')">Add to Cart</button>
       </div>
     </div>
 
-    <!-- Book 5 -->
     <div class="book">
       <a href="product-pages/go-to-sleep-karter.html">
         <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!">
@@ -199,14 +195,22 @@
       <div class="price">$12.99</div>
       <div class="book-buttons">
         <button onclick="window.location.href='product-pages/go-to-sleep-karter.html'">View Details</button>
-        <button onclick="addToCart('Go To Sleep, Karter!', 1299)">Add to Cart</button>
+        <button onclick="addToCart('Go To Sleep, Karter!')">Add to Cart</button>
       </div>
     </div>
   </div>
 
-  <div id="toast">Book added to cart!</div>
+  <div id="toast"></div>
 
   <script>
+    const prices = {
+      "Florida, Beach & Baby": 1299,
+      "Black, Beautiful & Baby": 1299,
+      "Black, Puerto Rican & Baby": 1299,
+      "Adventure, Fun & Baby": 1299,
+      "Go To Sleep, Karter!": 1299
+    };
+
     function showToast(message) {
       const toast = document.getElementById('toast');
       toast.textContent = message;
@@ -216,24 +220,21 @@
       }, 2500);
     }
 
-    function addToCart(title, price) {
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const existing = cart.find(item => item.title === title);
-
-      if (existing) {
-        existing.quantity += 1;
-      } else {
-        cart.push({ title, price, quantity: 1 });
-      }
-
+    function addToCart(title) {
+      const price = prices[title];
+      const cart = JSON.parse(localStorage.getItem('cart')) || {};
+      cart[title] = (cart[title] || 0) + 1;
       localStorage.setItem('cart', JSON.stringify(cart));
       updateCartCount();
       showToast(`✅ "${title}" added to cart`);
     }
 
     function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const cart = JSON.parse(localStorage.getItem('cart')) || {};
+      let count = 0;
+      for (const book in cart) {
+        count += cart[book];
+      }
       document.getElementById('cartCount').textContent = count;
     }
 
