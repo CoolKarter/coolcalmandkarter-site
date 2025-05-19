@@ -1,73 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Favicon -->
-<link rel="icon" type="image/x-icon" href="images/favicon.ico" />
-
-<!-- SEO Metadata -->
-<meta name="description" content="Cool, Calm & Karter creates beautifully diverse children’s books filled with culture, joy, and love." />
-<meta name="keywords" content="children's books, diverse books, kids books, baby books, bedtime stories" />
-<meta name="author" content="Cool, Calm & Karter" />
-
-<!-- Open Graph for Social Sharing -->
-<meta property="og:title" content="Cool, Calm & Karter | Books That Feel Like Home" />
-<meta property="og:description" content="Explore beautifully illustrated, inclusive stories your child will love." />
-<meta property="og:image" content="https://coolcalmandkarter.netlify.app/images/coolcalm-logo.png" />
-<meta property="og:url" content="https://coolcalmandkarter.netlify.app" />
-<meta name="twitter:card" content="summary_large_image" />
-
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Order Canceled - Cool, Calm & Karter</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
+
+  <!-- SEO Metadata -->
+  <meta name="description" content="Cool, Calm & Karter creates beautifully diverse children’s books filled with culture, joy, and love." />
+  <meta name="keywords" content="children's books, diverse books, kids books, baby books, bedtime stories" />
+  <meta name="author" content="Cool, Calm & Karter" />
+  <meta property="og:title" content="Cool, Calm & Karter | Books That Feel Like Home" />
+  <meta property="og:description" content="Explore beautifully illustrated, inclusive stories your child will love." />
+  <meta property="og:image" content="https://coolcalmandkarter.netlify.app/images/coolcalm-logo.png" />
+  <meta property="og:url" content="https://coolcalmandkarter.netlify.app" />
+  <meta name="twitter:card" content="summary_large_image" />
+
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      padding: 2rem;
-      color: #333;
+      font-family: 'Baloo 2', cursive;
+      background: #efe1c6;
+      padding: 0;
+      margin: 0;
+      color: #195569;
+      text-align: center;
     }
+
+    header {
+      padding: 2rem 1rem 1rem;
+    }
+
+    .logo {
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+    }
+
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .cart-icon::before {
+      content: "🛒";
+      font-size: 24px;
+    }
+
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: #f46045;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
     .container {
       background: white;
       padding: 2rem;
-      border-radius: 8px;
+      border-radius: 12px;
       max-width: 600px;
-      margin: auto;
+      margin: 2rem auto;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: center;
     }
-    .logo {
-      width: 100px;
-      margin-bottom: 1rem;
-    }
+
     h1 {
-      color: #f46045; /* Coral Red */
+      color: #f46045;
+      font-size: 2rem;
     }
+
     p {
+      font-size: 1.1rem;
       margin-top: 1rem;
     }
+
     .back-btn {
       display: inline-block;
       margin-top: 2rem;
       padding: 10px 20px;
-      background-color: #195569; /* Navy Blue */
+      background-color: #195569;
       color: white;
       text-decoration: none;
-      border-radius: 5px;
+      border-radius: 10px;
       font-weight: bold;
+      font-size: 1rem;
     }
+
     .back-btn:hover {
       background-color: #133f50;
     }
   </style>
 </head>
 <body>
+  <header>
+    <img src="images/coolcalm-logo TRANSPARENT.webp" alt="Cool, Calm & Karter Logo" class="logo" />
+  </header>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav>
+
   <div class="container">
-    <img src="images/coolcalm-logo.png" alt="Cool, Calm & Karter Logo" class="logo" />
     <h1>Order Canceled</h1>
     <p>No worries! Your order was not completed.</p>
     <p>You can always head back to the shop and pick up where you left off.</p>
     <a href="shop.html" class="back-btn">← Return to Shop</a>
   </div>
+
+  <script>
+    // Clear cart badge just in case
+    document.getElementById('cartCount').textContent = '0';
+  </script>
 </body>
 </html>

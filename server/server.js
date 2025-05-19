@@ -83,14 +83,15 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
 app.use(webhookApp);
 
 // ✅ Now apply other middleware
+const allowedOrigins = [
+  'http://127.0.0.1:5500',
+  'http://localhost:3000',
+  'https://coolcalmandkarter.netlify.app',
+];
+
 app.use(cors({
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://127.0.0.1:5500',
-      'http://localhost:3000',
-      'https://coolcalmandkarter.netlify.app',
-    ];
-    if (!origin || allowedOrigins.includes(origin) || origin === null) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.log(`❌ Blocked CORS request from: ${origin}`);
@@ -99,6 +100,7 @@ app.use(cors({
   },
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -126,6 +128,7 @@ app.post('/create-checkout-session', async (req, res) => {
   try {
     const items = req.body.items;
     const customerEmail = req.body.customerEmail;
+
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Invalid items array' });
     }
@@ -133,7 +136,10 @@ app.post('/create-checkout-session', async (req, res) => {
     const line_items = items.map(item => ({
       price_data: {
         currency: 'usd',
-        product_data: { name: item.name },
+        product_data: {
+          name: item.name,
+          tax_code: 'txcd_99999999',
+        },
         unit_amount: item.unit_amount,
       },
       quantity: item.quantity
@@ -146,7 +152,9 @@ app.post('/create-checkout-session', async (req, res) => {
       metadata: { items: JSON.stringify(items) },
       customer_email: customerEmail,
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html'
+      cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
+      expires_at: Math.floor(Date.now() / 1000) + 15 * 60,
+      automatic_tax: { enabled: true }
     });
 
     res.json({ id: session.id });
@@ -251,7 +259,6 @@ function sendConfirmationEmail(toEmail, name, summary) {
   });
 }
 
-
 // ✅ Admin notification
 function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
   const transporter = nodemailer.createTransport({
@@ -266,7 +273,18 @@ function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
     from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
     to: process.env.ADMIN_EMAIL,
     subject: '🛒 New Order Placed',
-    text: `\nA new order has been placed.\n\nCustomer Email: ${customerEmail}\n\nBooks:\n${bookSummary}\n\nStripe Session ID: ${sessionId}`.trim()
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; color: #333;">
+        <div style="text-align: center; padding: 20px;">
+          <img src="https://coolcalmandkarter.netlify.app/images/coolcalm-logo%20TRANSPARENT.png" alt="Cool, Calm & Karter" style="max-width: 200px;" />
+          <h2 style="color: #f46045;">New Order Alert</h2>
+        </div>
+        <p><strong>Customer Email:</strong> ${customerEmail}</p>
+        <p><strong>Books Ordered:</strong><br>${bookSummary}</p>
+        <p><strong>Stripe Session ID:</strong> ${sessionId}</p>
+        <p style="margin-top: 2rem;">Log into your dashboard for more details.</p>
+      </div>
+    `
   };
 
   transporter.sendMail(mailOptions, (err, info) => {

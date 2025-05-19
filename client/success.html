@@ -133,41 +133,46 @@
   </div>
 
   <script>
-    // Clear cart and update badge
-    localStorage.removeItem('cart');
-    document.getElementById('cartCount').textContent = '0';
+  // Clear cart and badge
+  localStorage.removeItem('cart');
+  document.getElementById('cartCount').textContent = '0';
 
-    // Load order from session
-    async function loadSessionDetails() {
-      const params = new URLSearchParams(window.location.search);
-      const sessionId = params.get('session_id');
+  async function loadSessionDetails() {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
 
-      if (!sessionId) {
-        document.getElementById('itemList').innerHTML = '<li>Missing session ID.</li>';
-        return;
-      }
+    const itemList = document.getElementById('itemList');
+    const emailDisplay = document.getElementById('emailDisplay');
 
-      try {
-        const res = await fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`);
-        const data = await res.json();
-
-        const itemList = document.getElementById('itemList');
-        itemList.innerHTML = '';
-
-        data.items.forEach(item => {
-          const li = document.createElement('li');
-          li.textContent = `${item.name} × ${item.quantity}`;
-          itemList.appendChild(li);
-        });
-
-        document.getElementById('emailDisplay').textContent = `A confirmation was sent to: ${data.customerEmail}`;
-      } catch (err) {
-        console.error('❌ Error loading session:', err);
-        document.getElementById('itemList').innerHTML = '<li>Unable to load order details.</li>';
-      }
+    if (!sessionId) {
+      itemList.innerHTML = '<li>We couldn’t find your order. Please check your email for confirmation or contact us.</li>';
+      emailDisplay.textContent = '';
+      return;
     }
 
-    loadSessionDetails();
-  </script>
+    try {
+      const res = await fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`);
+      if (!res.ok) throw new Error('Session expired or invalid');
+
+      const data = await res.json();
+
+      itemList.innerHTML = '';
+      data.items.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.name} × ${item.quantity}`;
+        itemList.appendChild(li);
+      });
+
+      emailDisplay.textContent = `A confirmation was sent to: ${data.customerEmail}`;
+    } catch (err) {
+      console.error('❌ Error loading session:', err);
+      itemList.innerHTML = '<li>We couldn’t load your order details. Please check your email for confirmation.</li>';
+      emailDisplay.textContent = '';
+    }
+  }
+
+  loadSessionDetails();
+</script>
+
 </body>
 </html>
