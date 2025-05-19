@@ -4,23 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shop - Cool, Calm & Karter</title>
-  <link rel="icon" href="images/favicon.ico" type="image/x-icon" />
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
   <style>
     body {
       font-family: 'Baloo 2', cursive;
-      margin: 0;
       background-color: #efe1c6;
-      color: #333;
-      text-align: center;
+      margin: 0;
+      padding: 0;
+      color: #195569;
     }
     header {
       padding: 2rem 1rem 0;
+      text-align: center;
     }
     .logo {
       max-width: 450px;
-      display: block;
-      margin: 0 auto 1.25rem;
+      margin-bottom: 1.25rem;
     }
     nav {
       display: flex;
@@ -61,78 +61,72 @@
       font-size: 12px;
       font-weight: bold;
     }
-    .book-list {
+    .books-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 2rem;
       padding: 2rem;
     }
-    .book {
+    .book-card {
       background: #fff;
-      border-radius: 10px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 220px;
       padding: 1rem;
-      max-width: 250px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      text-align: center;
     }
-    .book img {
+    .book-card img {
       width: 100%;
       border-radius: 10px;
       margin-bottom: 1rem;
     }
-    .book-title {
-      font-size: 1.2rem;
+    .book-card h3 {
+      font-size: 1.1rem;
+      margin: 0.5rem 0;
+    }
+    .book-card .price {
       font-weight: bold;
-      color: #195569;
-      margin-bottom: 0.5rem;
+      color: #333;
     }
-    .price {
-      font-size: 1rem;
-      margin-bottom: 1rem;
-    }
-    .buttons {
+    .book-card .buttons {
       display: flex;
-      justify-content: space-between;
-      gap: 10px;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 0.75rem;
     }
-    .buttons a, .buttons button {
-      padding: 0.5rem 1rem;
-      font-size: 0.9rem;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
-      flex: 1;
-    }
-    .buttons a {
-      background-color: #195569;
-      color: white;
-    }
-    .buttons button {
+    .book-card button, .book-card a {
       background-color: #f46045;
       color: white;
       border: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-weight: bold;
+      text-decoration: none;
+      font-size: 0.9rem;
+      cursor: pointer;
     }
-    .buttons button:hover {
+    .book-card button:hover, .book-card a:hover {
       background-color: #d94c36;
     }
-    .alert-box {
+    .alert {
+      display: none;
       position: fixed;
-      bottom: 20px;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background-color: #4caf50;
+      background-color: #4CAF50;
       color: white;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 1rem;
-      display: none;
+      padding: 0.75rem 1.25rem;
+      border-radius: 6px;
+      font-weight: bold;
       z-index: 9999;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
   </style>
 </head>
 <body>
+  <div class="alert" id="cartAlert">✅ Added to cart!</div>
+
   <header>
     <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
   </header>
@@ -145,37 +139,57 @@
     <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
   </nav>
 
-  <div class="book-list">
-    <div class="book">
-      <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby" />
-      <div class="book-title">Florida, Beach & Baby</div>
-      <div class="price">$9.99</div>
+  <section class="books-container">
+    <div class="book-card">
+      <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby">
+      <h3>Florida, Beach & Baby</h3>
+      <p class="price">$9.99</p>
       <div class="buttons">
         <a href="product-pages/florida-beach-and-baby.html">View Details</a>
         <button onclick="addToCart('Florida, Beach & Baby', 999)">Add to Cart</button>
       </div>
     </div>
-    <div class="book">
-      <img src="images/black-beautiful-baby-cover.png" alt="Black, Beautiful & Baby" />
-      <div class="book-title">Black, Beautiful & Baby</div>
-      <div class="price">$9.99</div>
+
+    <div class="book-card">
+      <img src="images/Beautiful, Black & Baby Cover.png" alt="Black, Beautiful & Baby">
+      <h3>Black, Beautiful & Baby</h3>
+      <p class="price">$9.99</p>
       <div class="buttons">
         <a href="product-pages/black-beautiful-and-baby.html">View Details</a>
         <button onclick="addToCart('Black, Beautiful & Baby', 999)">Add to Cart</button>
       </div>
     </div>
-    <div class="book">
-      <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!" />
-      <div class="book-title">Go To Sleep, Karter!</div>
-      <div class="price">$9.99</div>
+
+    <div class="book-card">
+      <img src="images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby">
+      <h3>Adventure, Fun & Baby</h3>
+      <p class="price">$9.99</p>
+      <div class="buttons">
+        <a href="product-pages/adventure-fun-and-baby.html">View Details</a>
+        <button onclick="addToCart('Adventure, Fun & Baby', 999)">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="book-card">
+      <img src="images/Black PuertoRican & Baby COVER.png" alt="Black, Puerto Rican & Baby">
+      <h3>Black, Puerto Rican & Baby</h3>
+      <p class="price">$9.99</p>
+      <div class="buttons">
+        <a href="product-pages/black-puerto-rican-and-baby.html">View Details</a>
+        <button onclick="addToCart('Black, Puerto Rican & Baby', 999)">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="book-card">
+      <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!">
+      <h3>Go To Sleep, Karter!</h3>
+      <p class="price">$9.99</p>
       <div class="buttons">
         <a href="product-pages/go-to-sleep-karter.html">View Details</a>
         <button onclick="addToCart('Go To Sleep, Karter!', 999)">Add to Cart</button>
       </div>
     </div>
-  </div>
-
-  <div class="alert-box" id="alertBox">✅ Added to cart!</div>
+  </section>
 
   <script>
     function addToCart(bookTitle, price) {
@@ -183,7 +197,7 @@
       cart[bookTitle] = (cart[bookTitle] || 0) + 1;
       localStorage.setItem('cart', JSON.stringify(cart));
       updateCartCount();
-      showAlert();
+      showCartAlert();
     }
 
     function updateCartCount() {
@@ -195,8 +209,8 @@
       document.getElementById('cartCount').textContent = count;
     }
 
-    function showAlert() {
-      const alertBox = document.getElementById('alertBox');
+    function showCartAlert() {
+      const alertBox = document.getElementById('cartAlert');
       alertBox.style.display = 'block';
       setTimeout(() => {
         alertBox.style.display = 'none';
