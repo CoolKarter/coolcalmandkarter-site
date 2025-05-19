@@ -207,6 +207,26 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #f46045;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+
+    #toast.show {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -254,6 +274,8 @@
     <p class="empty-cart" id="emptyCart" style="display: none;">Your cart is empty.</p>
   </div>
 
+  <div id="toast"></div>
+
   <script>
     const stripe = Stripe('pk_live_51ROvCtGhPxJaSGWSMQuaM8xMO7qdlR6JjDG6cG3QgYpn4u8wpN9yEANE15wIiUrNYMUml5cFfHfQxxjjx4e619Xs00BmupSz5n');
     let cart = JSON.parse(localStorage.getItem('cart')) || {};
@@ -289,6 +311,15 @@
     const cartCount = document.getElementById('cartCount');
     const loadingIndicator = document.getElementById('loading');
     const placeOrderBtn = document.getElementById('placeOrderBtn');
+    const toast = document.getElementById('toast');
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
 
     function updateCartDisplay() {
       cartItems.innerHTML = '';
@@ -353,49 +384,49 @@
     }
 
     form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  loadingIndicator.style.display = 'block';
-  placeOrderBtn.disabled = true;
+      e.preventDefault();
+      loadingIndicator.style.display = 'block';
+      placeOrderBtn.disabled = true;
 
-  const email = document.getElementById('customerEmail').value;
-  const items = [];
+      const email = document.getElementById('customerEmail').value;
+      const items = [];
 
-  for (const book in cart) {
-    const priceId = priceIds[book];
-    const quantity = cart[book];
-    if (priceId && quantity > 0) {
-      items.push({ price: priceId, quantity });
-    } else {
-      console.warn(`Missing or invalid price ID for book: ${book}`);
-    }
-  }
+      for (const book in cart) {
+        const priceId = priceIds[book];
+        const quantity = cart[book];
+        if (priceId && quantity > 0) {
+          items.push({ price: priceId, quantity });
+        } else {
+          console.warn(`Missing or invalid price ID for book: ${book}`);
+        }
+      }
 
-  if (items.length === 0) {
-    loadingIndicator.style.display = 'none';
-    placeOrderBtn.disabled = false;
-    alert('There was a problem processing your cart. Please try again.');
-    return;
-  }
+      if (items.length === 0) {
+        loadingIndicator.style.display = 'none';
+        placeOrderBtn.disabled = false;
+        showToast('Cart is empty or invalid. Please try again.');
+        return;
+      }
 
-  try {
-    const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items, customerEmail: email })
+      try {
+        const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items, customerEmail: email })
+        });
+
+        if (!res.ok) throw new Error('Failed to create session');
+
+        const data = await res.json();
+        localStorage.removeItem('cart');
+        await stripe.redirectToCheckout({ sessionId: data.id });
+      } catch (err) {
+        loadingIndicator.style.display = 'none';
+        placeOrderBtn.disabled = false;
+        console.error('Checkout Error:', err);
+        showToast('There was a problem starting checkout. Please try again.');
+      }
     });
-
-    if (!res.ok) throw new Error('Failed to create session');
-
-    const data = await res.json();
-    localStorage.removeItem('cart');
-    await stripe.redirectToCheckout({ sessionId: data.id });
-  } catch (err) {
-    loadingIndicator.style.display = 'none';
-    placeOrderBtn.disabled = false;
-    console.error('Checkout Error:', err);
-    alert('There was a problem starting checkout. Please try again.');
-  }
-});
 
     updateCartDisplay();
   </script>
