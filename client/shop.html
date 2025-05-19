@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Adventure, Fun & Baby - Cool, Calm & Karter</title>
-  <link rel="icon" href="../images/favicon.ico" type="image/x-icon" />
+  <title>Shop - Cool, Calm & Karter</title>
+  <link rel="icon" href="images/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
   <style>
     body {
@@ -61,59 +61,52 @@
       font-size: 12px;
       font-weight: bold;
     }
-    .container {
-      max-width: 900px;
+    .shop-container {
+      max-width: 1000px;
       margin: auto;
       padding: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2rem;
     }
-    .book-detail {
+    .book-card {
       background-color: white;
-      padding: 2rem;
+      padding: 1rem;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      max-width: 600px;
-      margin: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 220px;
+      text-align: center;
     }
-    .book-cover {
-      width: 100%;
-      max-width: 300px;
-      margin-bottom: 1rem;
+    .book-card img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-bottom: 0.75rem;
     }
-    h1 {
-      font-size: 2rem;
+    .book-card h3 {
+      font-size: 1.1rem;
+      margin: 0.5rem 0 0.25rem;
+    }
+    .book-card p {
+      font-size: 0.9rem;
+      color: #666;
       margin-bottom: 0.5rem;
-      color: #195569;
-    }
-    .details {
-      margin-bottom: 1rem;
-      font-size: 0.95rem;
-      color: #555;
-    }
-    p.description {
-      font-size: 1rem;
-      line-height: 1.6;
-      margin-bottom: 1rem;
     }
     .price {
       font-weight: bold;
-      font-size: 1.2rem;
-      margin: 1rem 0;
-    }
-    .buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-    button {
-      padding: 12px 20px;
       font-size: 1rem;
+      margin: 0.25rem 0 0.5rem;
+    }
+    .book-card button {
       background-color: #f46045;
       color: white;
       border: none;
+      padding: 8px 16px;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 0.95rem;
     }
-    button:hover {
+    .book-card button:hover {
       background-color: #d94c36;
     }
     footer {
@@ -135,99 +128,93 @@
     footer a:hover {
       text-decoration: underline;
     }
-    /* ✅ Toast Style */
-    #toast {
-      display: none;
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #195569;
-      color: white;
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      font-weight: bold;
-      z-index: 1000;
-    }
   </style>
 </head>
 <body>
   <header>
-    <img src="../images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
+    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
   </header>
 
   <nav>
-    <a href="../index.html">Home</a>
-    <a href="../shop.html">Shop</a>
-    <a href="../about.html">About</a>
-    <a href="../contact.html">Contact</a>
-    <a href="../cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
   </nav>
 
-  <div class="container">
-    <div class="book-detail">
-      <img src="../images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby" class="book-cover" />
-      <h1>Adventure, Fun & Baby</h1>
-      <div class="details">Published: May 10, 2024 · ★★★★★ 5.0 Rating</div>
-      <p class="description">
-        "Adventure, Fun & Baby" is an energetic journey through imagination, play, and discovery. Packed with cheerful rhymes and colorful scenes, it encourages curiosity and celebrates everyday adventure. This uplifting read is perfect for inspiring little explorers.
-      </p>
+  <div class="shop-container">
+    <div class="book-card">
+      <a href="product-pages/florida-beach-and-baby.html">
+        <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby">
+      </a>
+      <h3>Florida, Beach & Baby</h3>
+      <p>A sunny adventure filled with waves, seashells, and joy.</p>
       <div class="price">$9.99</div>
-      <div class="buttons">
-        <button onclick="addToCart('Adventure, Fun & Baby', 999)">Add to Cart</button>
-        <button onclick="buyNow('Adventure, Fun & Baby', 999)">Buy Now</button>
-      </div>
+      <a href="product-pages/florida-beach-and-baby.html"><button>View Details</button></a>
+    </div>
+
+    <div class="book-card">
+      <a href="product-pages/black-beautiful-and-baby.html">
+        <img src="images/black-beautiful-baby-cover.png" alt="Black, Beautiful & Baby">
+      </a>
+      <h3>Black, Beautiful & Baby</h3>
+      <p>Uplifting rhymes that celebrate Black joy and identity.</p>
+      <div class="price">$9.99</div>
+      <a href="product-pages/black-beautiful-and-baby.html"><button>View Details</button></a>
+    </div>
+
+    <div class="book-card">
+      <a href="product-pages/adventure-fun-and-baby.html">
+        <img src="images/Adventure Fun & Baby Cover.png" alt="Adventure, Fun & Baby">
+      </a>
+      <h3>Adventure, Fun & Baby</h3>
+      <p>A cheerful journey through imagination, play, and discovery.</p>
+      <div class="price">$9.99</div>
+      <a href="product-pages/adventure-fun-and-baby.html"><button>View Details</button></a>
+    </div>
+
+    <div class="book-card">
+      <a href="product-pages/black-puerto-rican-and-baby.html">
+        <img src="images/Black PuertoRican & Baby COVER.png" alt="Black, Puerto Rican & Baby">
+      </a>
+      <h3>Black, Puerto Rican & Baby</h3>
+      <p>A celebration of beautiful heritage and family love.</p>
+      <div class="price">$9.99</div>
+      <a href="product-pages/black-puerto-rican-and-baby.html"><button>View Details</button></a>
+    </div>
+
+    <div class="book-card">
+      <a href="product-pages/go-to-sleep-karter.html">
+        <img src="images/Go To Sleep,Karter Cover.png" alt="Go To Sleep, Karter!">
+      </a>
+      <h3>Go To Sleep, Karter!</h3>
+      <p>A hilarious bedtime struggle every parent will relate to.</p>
+      <div class="price">$9.99</div>
+      <a href="product-pages/go-to-sleep-karter.html"><button>View Details</button></a>
     </div>
   </div>
 
-  <!-- ✅ Toast Message -->
-  <div id="toast">Book added to cart!</div>
-
   <footer>
     <div class="footer-links">
-      <a href="../index.html">Home</a>
-      <a href="../shop.html">Shop</a>
-      <a href="../about.html">About</a>
-      <a href="../contact.html">Contact</a>
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
       <a href="#">Privacy Policy</a>
     </div>
     <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
   </footer>
 
   <script>
-    function showToast(message) {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.style.display = 'block';
-      setTimeout(() => {
-        toast.style.display = 'none';
-      }, 2500);
-    }
-
-    function addToCart(bookTitle, price) {
-      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
-      cart[bookTitle] = (cart[bookTitle] || 0) + 1;
-      localStorage.setItem('cart', JSON.stringify(cart));
-      updateCartCount();
-      showToast(`✅ "${bookTitle}" added to cart`);
-    }
-
-    function buyNow(bookTitle, price) {
-      const cart = {};
-      cart[bookTitle] = 1;
-      localStorage.setItem('cart', JSON.stringify(cart));
-      window.location.href = '../cart.html';
-    }
-
     function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      const cart = JSON.parse(localStorage.getItem('cart')) || {};
       let count = 0;
       for (const book in cart) {
         count += cart[book];
       }
       document.getElementById('cartCount').textContent = count;
     }
-
     updateCartCount();
   </script>
 </body>
