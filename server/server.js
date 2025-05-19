@@ -123,6 +123,8 @@ app.use('/api/newsletter/emails', basicAuth({
 // ✅ Serve frontend
 app.use(express.static(path.join(__dirname, '../client')));
 
+
+
 // ✅ Stripe Checkout route
 app.post('/create-checkout-session', async (req, res) => {
   try {
@@ -133,8 +135,11 @@ app.post('/create-checkout-session', async (req, res) => {
       return res.status(400).json({ error: 'Invalid items array' });
     }
 
+    console.log("👉 Received checkout items:", items);
+    console.log("👉 Customer email:", customerEmail);
+
     const line_items = items.map(item => ({
-      price: item.price, // now using prebuilt price ID from frontend
+      price: item.price,
       quantity: item.quantity
     }));
 
@@ -142,7 +147,7 @@ app.post('/create-checkout-session', async (req, res) => {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items,
-      metadata: { items: JSON.stringify(items) }, // stores the price ID and quantity
+      metadata: { items: JSON.stringify(items) },
       customer_email: customerEmail,
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
@@ -151,8 +156,9 @@ app.post('/create-checkout-session', async (req, res) => {
     });
 
     res.json({ id: session.id });
+
   } catch (err) {
-    console.error('❌ Stripe error:', err);
+    console.error('❌ Stripe error in /create-checkout-session:', err.message);
     res.status(500).json({ error: 'Checkout failed' });
   }
 });
