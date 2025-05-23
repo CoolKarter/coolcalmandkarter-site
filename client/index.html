@@ -308,22 +308,42 @@
 
     // Newsletter form handler
     document.getElementById('newsletterForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const email = document.getElementById('newsletterEmail').value;
+  e.preventDefault();
+  const email = document.getElementById('newsletterEmail').value;
+  const thankYou = document.getElementById('thankYouMsg');
 
-      const res = await fetch('/api/newsletter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
+  // Basic email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    thankYou.textContent = "❌ Please enter a valid email address.";
+    thankYou.style.color = "red";
+    thankYou.style.display = "block";
+    return;
+  }
 
-      if (res.ok) {
-        document.getElementById('thankYouMsg').style.display = 'block';
-        this.reset();
-      } else {
-        alert('Oops! Something went wrong. Please try again.');
-      }
+  try {
+    const res = await fetch('/api/newsletter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
     });
+
+    if (res.ok) {
+      thankYou.textContent = "🎉 Thank you for signing up! You’re officially part of the family.";
+      thankYou.style.color = "green";
+    } else {
+      const result = await res.json();
+      thankYou.textContent = `❌ ${result.error || 'Signup failed. Try again.'}`;
+      thankYou.style.color = "red";
+    }
+    thankYou.style.display = "block";
+    this.reset();
+  } catch (err) {
+    thankYou.textContent = "❌ Network error. Please try again.";
+    thankYou.style.color = "red";
+    thankYou.style.display = "block";
+  }
+});
   </script>
 </body>
 </html>

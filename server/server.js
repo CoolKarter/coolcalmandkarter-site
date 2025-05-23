@@ -22,7 +22,8 @@ const orderSchema = new mongoose.Schema({
 const Order = mongoose.model('Order', orderSchema);
 
 const newsletterSchema = new mongoose.Schema({
-  email: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  ip: String,
   date: { type: Date, default: Date.now }
 });
 const NewsletterEmail = mongoose.model('NewsletterEmail', newsletterSchema);
@@ -204,17 +205,21 @@ app.get('/api/newsletter/export', async (req, res) => {
 
 app.post('/api/newsletter', async (req, res) => {
   const { email } = req.body;
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   if (!email || !email.includes('@')) {
     return res.status(400).json({ error: 'Invalid email address' });
   }
 
   try {
-    // Save to DB
-    const newSignup = new NewsletterEmail({ email });
+    const existing = await NewsletterEmail.findOne({ email });
+    if (existing) {
+      return res.status(409).json({ error: 'You’ve already signed up.' });
+    }
+
+    const newSignup = new NewsletterEmail({ email, ip });
     await newSignup.save();
 
-    // Email setup
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -223,27 +228,21 @@ app.post('/api/newsletter', async (req, res) => {
       }
     });
 
-    // Send thank-you email to user
     await transporter.sendMail({
       from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
       to: email,
       subject: "🎉 Thanks for joining Cool, Calm & Karter!",
-      html: `
-        <h2>You're officially part of the family!</h2>
-        <p>Thank you for signing up for our newsletter. You'll get updates on new books, special deals, and more.</p>
-        <p>We’re so happy to have you with us!</p>
-      `
+      html: `<h2>You're officially part of the family!</h2><p>Thanks for signing up for our newsletter.</p>`
     });
 
-    // Send notification to admin
     await transporter.sendMail({
       from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
       to: process.env.ADMIN_EMAIL,
       subject: "📬 New Newsletter Signup",
-      html: `<p>New signup: <strong>${email}</strong></p>`
+      html: `<p>New signup: <strong>${email}</strong><br>IP: ${ip}</p>`
     });
 
-    res.status(200).json({ message: 'Newsletter signup successful!' });
+    res.status(200).json({ message: 'Signup successful!' });
 
   } catch (err) {
     console.error('❌ Newsletter signup error:', err);
