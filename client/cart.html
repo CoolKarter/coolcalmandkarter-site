@@ -29,14 +29,17 @@
       max-width: 400px;
     }
 
-    nav {
+    .navbar-horizontal {
       display: flex;
       justify-content: center;
       align-items: center;
+      flex-direction: row;
+      flex-wrap: wrap;
       gap: 2rem;
-      margin-bottom: 2rem;
       font-weight: bold;
-      position: relative;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
     }
 
     nav a {
@@ -237,7 +240,7 @@
     <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" />
   </header>
 
-  <nav>
+  <nav class="navbar-horizontal">
     <a href="index.html">Home</a>
     <a href="shop.html">Shop</a>
     <a href="about.html">About</a>
@@ -279,24 +282,35 @@
 
   <div id="toast"></div>
 
+  <footer>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="#">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+    <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
+  </footer>
+  
   <script>
     const stripe = Stripe('pk_live_51ROvCtGhPxJaSGWSMQuaM8xMO7qdlR6JjDG6cG3QgYpn4u8wpN9yEANE15wIiUrNYMUml5cFfHfQxxjjx4e619Xs00BmupSz5n');
     let cart = JSON.parse(localStorage.getItem('cart')) || {};
 
     const priceIds = {
-      "Florida, Beach & Baby": "price_1RQaIiGhPxJaSGWSfX9Qzbfy",
-      "Black, Beautiful & Baby": "price_1RQaJTGhPxJaSGWSBGHQha4A",
-      "Black, Puerto Rican & Baby": "price_1RQaL0GhPxJaSGWSHirvHO3t",
-      "Adventure, Fun & Baby": "price_1RQaLcGhPxJaSGWS59GlmpSN",
-      "Go To Sleep, Karter!": "price_1RQaMFGhPxJaSGWSylhbcBc3"
+      "Florida, Beach & Baby": "price_1RRkdUGhPxJaSGWS2iuIJx1J",
+      "Black, Beautiful & Baby": "price_1RRkfTGhPxJaSGWStZuZP6pI",
+      "Black, Puerto Rican & Baby": "price_1RRkfwGhPxJaSGWSMGZyeaDW",
+      "Adventure, Fun & Baby": "price_1RRkgEGhPxJaSGWSZ6Q5rQNn",
+      "Go To Sleep, Karter!": "price_1RRkgaGhPxJaSGWSZAUINxDe"
     };
 
     const prices = {
-      "Florida, Beach & Baby": 1299,
-      "Black, Beautiful & Baby": 1299,
-      "Adventure, Fun & Baby": 1299,
-      "Black, Puerto Rican & Baby": 1299,
-      "Go To Sleep, Karter!": 1299
+      "Florida, Beach & Baby": 999,
+      "Black, Beautiful & Baby": 999,
+      "Adventure, Fun & Baby": 999,
+      "Black, Puerto Rican & Baby": 999,
+      "Go To Sleep, Karter!": 999
     };
 
     const images = {

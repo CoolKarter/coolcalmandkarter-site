@@ -55,16 +55,17 @@
       cursor: pointer;
       margin: 0 auto 2rem;
     }
-    nav {
+    .navbar-horizontal {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 2.5rem;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 2rem;
       font-weight: bold;
       font-size: 1.2rem;
-      padding-bottom: 2rem;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
       font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
     }
     nav a {
       color: #195569;
@@ -203,6 +204,11 @@
       font-size: 0.9rem;
       color: #555;
     }
+    @media screen and (max-width: 600px) {
+  .shop-button {
+    display: none;
+  }
+}
   </style>
 </head>
 <body>
@@ -212,7 +218,7 @@
     <button class="shop-button" onclick="window.location.href='shop.html'">Shop Now</button>
   </header>
 
-  <nav>
+  <nav class="navbar-horizontal">
     <a href="index.html">Home</a>
     <a href="shop.html">Shop</a>
     <a href="about.html">About the Author</a>

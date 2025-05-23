@@ -1,4 +1,4 @@
-/* Base styles (already good) */
+/* Base styles */
 body {
   font-family: 'Nunito', sans-serif;
   background-color: #efe1c6;
@@ -12,34 +12,45 @@ header {
   padding: 2rem 1rem 0;
 }
 
-header img {
+.logo {
+  width: 100%;
   max-width: 300px;
-  width: 90%;
   height: auto;
-  margin-bottom: 1.5rem;
+  display: block;
+  margin: 0 auto 1.5rem;
 }
 
-/* Nav styles shared across all sizes */
+/* Responsive logo size for mobile */
+@media (max-width: 500px) {
+  .logo {
+    max-width: 220px;
+    margin: 0 auto 1rem;
+  }
+}
+
+/* Navigation styles */
 nav {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 1rem;
   font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 1rem;
   margin-bottom: 2rem;
+  padding: 0 1rem;
 }
 
 nav a {
   color: #002d3d;
   text-decoration: none;
+  padding: 0.3rem 0.5rem;
 }
 
 nav a:hover {
   text-decoration: underline;
 }
 
-/* Cart icon fix */
+/* Cart icon styles */
 .cart-icon {
   position: relative;
   display: inline-block;
@@ -65,7 +76,7 @@ nav a:hover {
   font-weight: bold;
 }
 
-/* CTA button */
+/* CTA Button */
 button.shop-now {
   background-color: #f46045;
   color: white;
@@ -81,32 +92,46 @@ button.shop-now:hover {
   background-color: #d94c36;
 }
 
-/* Responsive tweaks */
-@media (max-width: 499px) {
-  nav {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  header img {
-    max-width: 240px;
-  }
+/* Book detail image */
+.book-cover {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin: 0 auto 1rem;
+  display: block;
 }
 
-@media (min-width: 500px) {
-  nav {
-    flex-direction: row;
-  }
-
-  header img {
-    max-width: 300px;
-  }
+/* Book buttons */
+.book-buttons {
+  flex-direction: column;
+  gap: 0.5rem;
 }
-/* Mobile responsiveness for shop.html */
-@media screen and (max-width: 600px) {
+
+.book-buttons button {
+  width: 100%;
+}
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background-color: #195569;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  max-width: 90%;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  display: none;
+  z-index: 1000;
+}
+
+/* Shop grid mobile optimization */
+@media (max-width: 600px) {
   .container {
     padding: 1rem;
-    grid-template-columns: 1fr; /* Stack books vertically */
+    grid-template-columns: 1fr;
   }
 
   .book {
@@ -122,70 +147,28 @@ button.shop-now:hover {
     font-size: 1.1rem;
   }
 
-  .book-buttons {
-    flex-direction: column;
-  }
-
   button {
     width: 100%;
     margin-bottom: 0.5rem;
   }
 
-  #toast {
-    bottom: 10px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    font-size: 0.9rem;
-    padding: 0.75rem 1rem;
+  nav {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .cart-icon {
+    margin-top: 5px;
   }
 }
-/* Global Logo Fix for All Pages */
-.logo {
-  max-width: 80%;
-  height: auto;
-  display: block;
-  margin: 0 auto 1rem;
-}
 
-/* Navbar - Responsive Alignment */
-nav {
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
-  padding: 0 1rem;
-}
+@media (min-width: 601px) {
+  nav {
+    flex-direction: row;
+  }
 
-nav a {
-  font-size: 1rem;
-  padding: 0.3rem 0.5rem;
-}
-
-/* Responsive Fix for Product Detail Page Cover Image */
-.book-cover {
-  width: 100%;
-  max-width: 280px;
-  height: auto;
-  margin: 0 auto 1rem;
-  display: block;
-}
-
-/* Responsive Toast Fix */
-#toast {
-  bottom: 10px;
-  right: 10px;
-  left: auto;
-  transform: none;
-  max-width: 90%;
-  font-size: 0.9rem;
-}
-
-/* Optional: Ensure buttons wrap nicely */
-.book-buttons {
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.book-buttons button {
-  width: 100%;
+  .logo {
+    max-width: 300px;
+  }
 }

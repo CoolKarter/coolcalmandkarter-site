@@ -26,16 +26,17 @@
       display: block;
       margin: 0 auto 1.25rem;
     }
-    nav {
+    .navbar-horizontal {
       display: flex;
       justify-content: center;
       align-items: center;
+      flex-direction: row;
+      flex-wrap: wrap;
       gap: 2rem;
       font-weight: bold;
       font-size: 1.2rem;
       font-family: 'Nunito', sans-serif;
       margin-bottom: 2rem;
-      position: relative;
     }
     nav a {
       color: #195569;
@@ -106,7 +107,7 @@
     <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
   </header>
 
-  <nav>
+  <nav class="navbar-horizontal">
     <a href="index.html">Home</a>
     <a href="shop.html">Shop</a>
     <a href="about.html">About the Author</a>
@@ -126,6 +127,17 @@
     <a href="shop.html" class="browse-button">Browse Books</a>
   </div>
 
+  <footer>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="#">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+    <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
+  </footer>
+  
   <script>
     const cart = JSON.parse(localStorage.getItem('cart')) || {};
     let count = 0;

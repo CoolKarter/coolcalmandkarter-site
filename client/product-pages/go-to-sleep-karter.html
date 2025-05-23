@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Go To Sleep, Karter! - Cool, Calm & Karter</title>
   <link rel="icon" href="../images/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../style.css">
   <style>
     body {
       font-family: 'Baloo 2', cursive;
@@ -25,16 +23,19 @@
       display: block;
       margin: 0 auto 1.25rem;
     }
-    nav {
+    .navbar-horizontal {
       display: flex;
       justify-content: center;
       align-items: center;
+      flex-direction: row;
+      flex-wrap: wrap;
       gap: 2rem;
       font-weight: bold;
       font-size: 1.2rem;
       font-family: 'Nunito', sans-serif;
       margin-bottom: 2rem;
     }
+
     nav a {
       color: #195569;
       text-decoration: none;
@@ -165,8 +166,7 @@
     <img src="../images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo" />
   </header>
 
-  <nav>
-    <a href="../index.html">Home</a>
+  <nav class="navbar-horizontal">    <a href="../index.html">Home</a>
     <a href="../shop.html">Shop</a>
     <a href="../about.html">About</a>
     <a href="../contact.html">Contact</a>
