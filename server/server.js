@@ -163,24 +163,6 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// ✅ Newsletter signup route
-app.post('/api/newsletter', async (req, res) => {
-  const { email } = req.body;
-
-  if (!email || !email.includes('@')) {
-    return res.status(400).json({ error: 'Invalid email address' });
-  }
-
-  try {
-    const newSignup = new NewsletterEmail({ email });
-    await newSignup.save();
-    res.status(200).json({ message: 'Email saved successfully!' });
-  } catch (err) {
-    console.error('❌ Failed to save newsletter email:', err);
-    res.status(500).json({ error: 'Could not save email' });
-  }
-});
-
 // ✅ Fetch newsletter emails
 app.get('/api/newsletter', async (req, res) => {
   try {
@@ -219,6 +201,56 @@ app.get('/api/newsletter/export', async (req, res) => {
     res.status(500).json({ error: 'Could not export newsletter emails' });
   }
 });
+
+app.post('/api/newsletter', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Invalid email address' });
+  }
+
+  try {
+    // Save to DB
+    const newSignup = new NewsletterEmail({ email });
+    await newSignup.save();
+
+    // Email setup
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
+
+    // Send thank-you email to user
+    await transporter.sendMail({
+      from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
+      to: email,
+      subject: "🎉 Thanks for joining Cool, Calm & Karter!",
+      html: `
+        <h2>You're officially part of the family!</h2>
+        <p>Thank you for signing up for our newsletter. You'll get updates on new books, special deals, and more.</p>
+        <p>We’re so happy to have you with us!</p>
+      `
+    });
+
+    // Send notification to admin
+    await transporter.sendMail({
+      from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: "📬 New Newsletter Signup",
+      html: `<p>New signup: <strong>${email}</strong></p>`
+    });
+
+    res.status(200).json({ message: 'Newsletter signup successful!' });
+
+  } catch (err) {
+    console.error('❌ Newsletter signup error:', err);
+    res.status(500).json({ error: 'Server error during signup' });
+  }
+});
+
 
 // ✅ Confirmation email
 function sendConfirmationEmail(toEmail, name, summary, amount, address = {}) {

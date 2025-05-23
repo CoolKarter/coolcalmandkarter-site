@@ -142,6 +142,7 @@
 
     /* ✅ Toast styling */
     #toast {
+      display: none; /* ✨ Key: initially hidden */
       position: fixed;
       bottom: 30px;
       left: 50%;
@@ -152,12 +153,12 @@
       border-radius: 8px;
       font-weight: bold;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      opacity: 0;
-      transition: opacity 0.3s ease;
       z-index: 1000;
+      font-size: 1rem;
     }
+
     #toast.show {
-      opacity: 1;
+      display: block; /* ✨ Key: now visible when shown */
     }
   </style>
 </head>
@@ -217,13 +218,13 @@
       const cart = JSON.parse(localStorage.getItem('cart') || '{}');
       cart[bookTitle] = (cart[bookTitle] || 0) + 1;
       localStorage.setItem('cart', JSON.stringify(cart));
-      showToast(`Added "${bookTitle}" to cart.`);
+      showToast(`✅ "${bookTitle}" added to cart`);
       updateCartCount();
     }
 
     function buyNow(bookTitle, price) {
-      const cart = {};
-      cart[bookTitle] = 1;
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      cart[bookTitle] = (cart[bookTitle] || 0) + 1;
       localStorage.setItem('cart', JSON.stringify(cart));
       window.location.href = '../cart.html';
     }

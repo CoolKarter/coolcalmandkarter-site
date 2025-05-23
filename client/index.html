@@ -17,7 +17,6 @@
   <meta name="twitter:card" content="summary_large_image" />
 
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cool, Calm & Karter</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
@@ -205,10 +204,10 @@
       color: #555;
     }
     @media screen and (max-width: 600px) {
-  .shop-button {
-    display: none;
-  }
-}
+      .shop-button {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -275,11 +274,11 @@
   <section class="newsletter">
     <h3>Stay in the Loop!</h3>
     <p>Sign up to hear about new books and special offers.</p>
-    <form onsubmit="event.preventDefault(); document.querySelector('.thank-you-message').style.display = 'block'; this.reset();">
-      <input type="email" placeholder="Your email address" required />
+    <form id="newsletterForm">
+      <input type="email" id="newsletterEmail" placeholder="Your email address" required />
       <br />
       <button type="submit">Subscribe</button>
-      <p class="thank-you-message">🎉 Thank you for signing up! You’re officially part of the family.</p>
+      <p class="thank-you-message" id="thankYouMsg">🎉 Thank you for signing up! You’re officially part of the family.</p>
     </form>
   </section>
 
@@ -294,7 +293,9 @@
     <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
   </footer>
 
+  <!-- JavaScript -->
   <script>
+    // Update cart counter
     function updateCartCount() {
       const cart = JSON.parse(localStorage.getItem('cart')) || {};
       let count = 0;
@@ -304,6 +305,25 @@
       document.getElementById('cart-count').textContent = count;
     }
     updateCartCount();
+
+    // Newsletter form handler
+    document.getElementById('newsletterForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const email = document.getElementById('newsletterEmail').value;
+
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      if (res.ok) {
+        document.getElementById('thankYouMsg').style.display = 'block';
+        this.reset();
+      } else {
+        alert('Oops! Something went wrong. Please try again.');
+      }
+    });
   </script>
 </body>
 </html>
