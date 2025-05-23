@@ -110,6 +110,11 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
+  // 👇 Add unique index to newsletter collection (only needs to run once)
+NewsletterEmail.collection.createIndex({ email: 1 }, { unique: true })
+  .then(() => console.log('✅ Unique index created on email field'))
+  .catch(err => console.error('❌ Failed to create unique index:', err.message));
+
 // ✅ Admin auth
 const basicAuth = require('express-basic-auth');
 app.use('/api/orders', basicAuth({
