@@ -208,14 +208,28 @@
         display: none;
       }
     }
+
+    .homepage-intro {
+      text-align: center;
+      margin-top: -1.5rem; /* Pull it closer to the logo if needed */
+    }
+
+    @media screen and (max-width: 600px) {
+      .shop-button {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
   <header class="logo-wrapper">
     <img src="images/coolcalm-logo TRANSPARENT.webp" alt="Cool, Calm & Karter Logo" class="logo" loading="lazy" />
+  </header>
+
+  <section class="homepage-intro">
     <p class="tagline">Books That Feel Like Home.</p>
     <button class="shop-button" onclick="window.location.href='shop.html'">Shop Now</button>
-  </header>
+  </section>
 
   <nav class="navbar-horizontal">
     <a href="index.html">Home</a>
