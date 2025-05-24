@@ -20,10 +20,13 @@ header.logo-wrapper {
 }
 
 .logo {
-  max-width: 280px;
+  max-width: 450px;
+  max-height: 180px; /* 👈 limit height */
   width: 100%;
   height: auto;
   display: block;
+  margin: 0 auto 1.25rem;
+  object-fit: contain; /* Ensures image scales proportionally */
 }
 
 
