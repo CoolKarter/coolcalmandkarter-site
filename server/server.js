@@ -22,9 +22,17 @@ const orderSchema = new mongoose.Schema({
 const Order = mongoose.model('Order', orderSchema);
 
 const newsletterSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true, // Adds a MongoDB index automatically
+  },
   ip: String,
-  date: { type: Date, default: Date.now }
+  date: {
+    type: Date,
+    default: Date.now
+  }
 });
 const NewsletterEmail = mongoose.model('NewsletterEmail', newsletterSchema);
 
@@ -217,11 +225,6 @@ app.post('/api/newsletter', async (req, res) => {
   }
 
   try {
-    const existing = await NewsletterEmail.findOne({ email });
-    if (existing) {
-      return res.status(409).json({ error: 'You’ve already signed up.' });
-    }
-
     const newSignup = new NewsletterEmail({ email, ip });
     await newSignup.save();
 
@@ -250,6 +253,11 @@ app.post('/api/newsletter', async (req, res) => {
     res.status(200).json({ message: 'Signup successful!' });
 
   } catch (err) {
+    if (err.code === 11000) {
+      // Duplicate key error
+      return res.status(409).json({ error: 'You’ve already signed up.' });
+    }
+
     console.error('❌ Newsletter signup error:', err);
     res.status(500).json({ error: 'Server error during signup' });
   }

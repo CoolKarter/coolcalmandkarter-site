@@ -16,15 +16,18 @@
       background-color: #efe1c6;
       color: #333;
     }
+
     header {
       text-align: center;
       padding: 2rem 1rem 0;
     }
+
     .logo {
       max-width: 450px;
       display: block;
       margin: 0 auto 1.25rem;
     }
+
     .navbar-horizontal {
       display: flex;
       justify-content: center;
@@ -37,13 +40,16 @@
       font-family: 'Nunito', sans-serif;
       margin-bottom: 2rem;
     }
+
     nav a {
       color: #195569;
       text-decoration: none;
     }
+
     nav a:hover {
       text-decoration: underline;
     }
+
     .cart-icon {
       position: relative;
       display: inline-block;
@@ -51,10 +57,12 @@
       height: 24px;
       cursor: pointer;
     }
+
     .cart-icon::before {
       content: "\1F6D2";
       font-size: 24px;
     }
+
     .badge {
       position: absolute;
       top: -10px;
@@ -66,56 +74,151 @@
       font-size: 12px;
       font-weight: bold;
     }
-    .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 2rem;
-      padding: 2rem;
-      max-width: 1200px;
-      margin: auto;
-    }
-    .book {
-      background-color: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+    h1 {
       text-align: center;
-    }
-    .book img {
-      width: 100%;
-      max-height: 300px;
-      object-fit: cover;
-      border-radius: 8px;
+      font-size: 2rem;
       margin-bottom: 1rem;
-    }
-    .book h2 {
-      font-size: 1.25rem;
       color: #195569;
-      margin: 0.5rem 0;
     }
-    .price {
-      font-weight: bold;
-      margin-bottom: 1rem;
+
+    .cart-container {
+      max-width: 900px;
+      margin: auto;
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    .book-buttons {
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #fff6e9;
+      color: #002d3d;
+    }
+
+    td img {
+      width: 50px;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+
+    .quantity-controls {
       display: flex;
-      justify-content: center;
-      gap: 0.5rem;
+      align-items: center;
+      gap: 8px;
     }
-    button {
-      padding: 10px 16px;
+
+    .quantity-controls button {
+      padding: 4px 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #fefefe;
+      cursor: pointer;
+    }
+
+    .remove-btn {
+      background-color: #d94c36;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .total {
+      text-align: right;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    form {
+      margin-top: 2rem;
+    }
+
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
       font-size: 1rem;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .checkout-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      color: #195569;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    button[type="submit"] {
       background-color: #f46045;
       color: white;
       border: none;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
       border-radius: 6px;
       cursor: pointer;
+      display: block;
+      margin: 1rem auto 0;
+      font-weight: bold;
     }
-    button:hover {
-      background-color: #d94c36;
+
+    button[type="submit"]:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
     }
-    #toast {
+
+    .empty-cart {
+      text-align: center;
+      font-size: 1.2rem;
+      margin-top: 2rem;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    #loading {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 1.5rem;
+      color: #195569;
       display: none;
+    }
+
+    #spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #195569;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #toast {
       position: fixed;
       bottom: 20px;
       left: 50%;
@@ -127,11 +230,12 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       font-weight: bold;
       z-index: 1000;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>
+  <header class="logo-wrapper">
     <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo"/>
   </header>
 

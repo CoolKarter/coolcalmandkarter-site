@@ -13,20 +13,21 @@
   <link rel="stylesheet" href="style.css">
   <style>
     body {
-      font-family: 'Nunito', sans-serif;
-      background-color: #efe1c6;
+      font-family: 'Baloo 2', cursive;
       margin: 0;
-      padding: 0;
-      color: #002d3d;
+      background-color: #efe1c6;
+      color: #333;
     }
 
     header {
       text-align: center;
-      padding: 2rem 1rem 1rem;
+      padding: 2rem 1rem 0;
     }
 
-    header img {
-      max-width: 400px;
+    .logo {
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
     }
 
     .navbar-horizontal {
@@ -43,9 +44,8 @@
     }
 
     nav a {
-      color: #002d3d;
+      color: #195569;
       text-decoration: none;
-      font-size: 1.1rem;
     }
 
     nav a:hover {
@@ -61,7 +61,7 @@
     }
 
     .cart-icon::before {
-      content: "🛒";
+      content: "\1F6D2";
       font-size: 24px;
     }
 
@@ -81,6 +81,7 @@
       text-align: center;
       font-size: 2rem;
       margin-bottom: 1rem;
+      color: #195569;
     }
 
     .cart-container {
@@ -150,19 +151,23 @@
       margin-top: 2rem;
     }
 
-    input[type="text"], input[type="email"] {
+    input[type="text"],
+    input[type="email"] {
       width: 100%;
       padding: 0.75rem;
       margin-bottom: 1rem;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 1rem;
+      font-family: 'Nunito', sans-serif;
     }
 
     .checkout-title {
       font-size: 1.5rem;
       margin-bottom: 1rem;
       text-align: center;
+      color: #195569;
+      font-family: 'Nunito', sans-serif;
     }
 
     button[type="submit"] {
@@ -187,6 +192,7 @@
       text-align: center;
       font-size: 1.2rem;
       margin-top: 2rem;
+      font-family: 'Nunito', sans-serif;
     }
 
     #loading {
@@ -216,28 +222,23 @@
 
     #toast {
       position: fixed;
-      bottom: 30px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background-color: #f46045;
+      background-color: #195569;
       color: white;
-      padding: 12px 24px;
+      padding: 1rem 1.5rem;
       border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       font-weight: bold;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      opacity: 0;
-      transition: opacity 0.3s ease;
       z-index: 1000;
-    }
-
-    #toast.show {
-      opacity: 1;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>
-    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" />
+  <header class="logo-wrapper">
+    <img src="images/coolcalm-logo TRANSPARENT.png" alt="Cool, Calm & Karter Logo" class="logo"/>
   </header>
 
   <nav class="navbar-horizontal">
@@ -250,31 +251,50 @@
 
   <div class="cart-container">
     <h1>Your Cart</h1>
-    <table id="cartTable">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Price</th>
-          <th>Quantity</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="cartItems"></tbody>
-    </table>
+<table id="cartTable" class="cart-table">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Price</th>
+      <th>Quantity</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="cartItems">
+    <!-- Example structure -->
+    <tr>
+      <td data-label="Item">
+        <img src="images/Florida Beach And Baby COVER.png" alt="Florida, Beach & Baby" class="cart-item-img">
+        <div>Florida, Beach & Baby</div>
+      </td>
+      <td data-label="Price">$9.99</td>
+      <td data-label="Quantity">
+        <div class="quantity-buttons">
+          <button>-</button>
+          <span>1</span>
+          <button>+</button>
+        </div>
+      </td>
+      <td data-label="Actions">
+        <button class="remove-button">Remove</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
     <p class="total">Total: $<span id="totalAmount">0.00</span></p>
 
-    <form id="checkoutForm">
-      <h2 class="checkout-title">Checkout</h2>
-      <input type="text" placeholder="Full name" required />
-      <input type="email" id="customerEmail" placeholder="Email address" required />
-      <input type="text" placeholder="Street Address" required />
-      <input type="text" placeholder="Apartment, suite, etc. (optional)" />
-      <input type="text" placeholder="City" required />
-      <input type="text" placeholder="State/Province" required />
-      <input type="text" placeholder="ZIP / Postal Code" required />
-      <input type="text" placeholder="Country" required />
-      <button type="submit" id="placeOrderBtn">Place Order</button>
-    </form>
+  <form id="checkoutForm" class="checkout-form">
+    <h2 class="checkout-title">Checkout</h2>
+    <input type="text" placeholder="Full name" required />
+    <input type="email" id="customerEmail" placeholder="Email address" required />
+    <input type="text" placeholder="Street Address" required />
+    <input type="text" placeholder="Apartment, suite, etc. (optional)" />
+    <input type="text" placeholder="City" required />
+    <input type="text" placeholder="State/Province" required />
+    <input type="text" placeholder="ZIP / Postal Code" required />
+    <input type="text" placeholder="Country" required />
+    <button type="submit" id="placeOrderBtn">Place Order</button>
+  </form>
 
     <div id="loading">🔄 Redirecting to secure checkout... <span id="spinner"></span></div>
     <p class="empty-cart" id="emptyCart" style="display: none;">Your cart is empty.</p>

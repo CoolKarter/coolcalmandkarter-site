@@ -8,25 +8,25 @@ body {
   text-align: center;
 }
 
-header {
-  padding: 2rem 1rem 0;
+
+header.logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 2rem;
+  padding-bottom: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .logo {
+  max-width: 280px;
   width: 100%;
-  max-width: 300px;
   height: auto;
   display: block;
-  margin: 0 auto 1.5rem;
 }
 
-/* Responsive logo size for mobile */
-@media (max-width: 500px) {
-  .logo {
-    max-width: 220px;
-    margin: 0 auto 1rem;
-  }
-}
+
 
 /* Navigation styles */
 nav {
@@ -111,6 +111,12 @@ button.shop-now:hover {
   width: 100%;
 }
 
+@media (min-width: 601px) {
+  .book-buttons button {
+    max-width: 250px;
+  }
+}
+
 /* Toast */
 #toast {
   position: fixed;
@@ -171,4 +177,87 @@ button.shop-now:hover {
   .logo {
     max-width: 300px;
   }
+}
+/* Mobile cart page fix */
+@media screen and (max-width: 600px) {
+  .cart-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .cart-table thead {
+    display: none;
+  }
+
+  .cart-table tr {
+    display: block;
+    margin-bottom: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 1rem;
+  }
+
+  .cart-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    padding: 0.5rem 0;
+  }
+
+  .cart-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: #195569;
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+  }
+
+  .cart-item-img {
+    max-width: 90px;
+    height: auto;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .quantity-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .remove-button {
+    width: 100%;
+    margin-top: 0.75rem;
+    background-color: #f46045;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+}
+
+  .remove-button:hover {
+    background-color: #d94c36;
+  }
+
+.checkout-form {
+  max-width: 400px;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.checkout-form input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
 }
