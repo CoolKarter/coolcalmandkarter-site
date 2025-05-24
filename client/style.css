@@ -20,8 +20,8 @@ header.logo-wrapper {
 }
 
 .logo {
-  max-width: 450px;
-  max-height: 180px; /* 👈 limit height */
+  max-width: 1000px;
+  max-height: 380px; /* 👈 limit height */
   width: 100%;
   height: auto;
   display: block;
