@@ -59,6 +59,7 @@
           <th>Book Title</th>
           <th>Amount</th>
           <th>Date</th>
+          <th>Shipping Address</th>
         </tr>
       </thead>
       <tbody id="ordersTableBody"></tbody>
@@ -101,12 +102,21 @@
           tbody.innerHTML = '';
           data.forEach(order => {
             const row = document.createElement('tr');
+            const addr = order.address || {};
+            const shipping = `
+              ${addr.line1 || ''}<br>
+              ${addr.line2 ? addr.line2 + '<br>' : ''}
+              ${addr.city || ''}, ${addr.state || ''} ${addr.postal_code || ''}<br>
+              ${addr.country || ''}
+            `;
+
             row.innerHTML = `
               <td>${order.name}</td>
               <td>${order.email}</td>
               <td>${order.bookTitle}</td>
               <td>$${(order.amount / 100).toFixed(2)}</td>
               <td>${new Date(order.date).toLocaleString()}</td>
+              <td>${shipping}</td>
             `;
             tbody.appendChild(row);
           });

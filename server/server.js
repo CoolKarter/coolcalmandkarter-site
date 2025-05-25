@@ -17,6 +17,14 @@ const orderSchema = new mongoose.Schema({
   email: String,
   bookTitle: String,
   amount: Number,
+  address: {
+    line1: String,
+    line2: String,
+    city: String,
+    state: String,
+    postal_code: String,
+    country: String
+  },
   date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
@@ -59,6 +67,7 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
 
     const customerEmail = session.customer_details?.email || 'no-email';
     const customerName = session.customer_details?.name || 'Customer';
+    const shipping = session.customer_details?.address || {};
     const amount = session.amount_total || 0;
     const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
 
@@ -68,7 +77,15 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
       name: customerName,
       email: customerEmail,
       bookTitle: bookTitleSummary,
-      amount: amount
+      amount: amount,
+      address: {
+        line1: shipping.line1,
+        line2: shipping.line2 || '',
+        city: shipping.city,
+        state: shipping.state,
+        postal_code: shipping.postal_code,
+        country: shipping.country
+      }
     });
 
     try {
@@ -79,10 +96,10 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     }
 
     console.log('📧 Sending customer confirmation email...');
-    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary, amount, address);
+    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary, amount, shipping);
 
     console.log('📧 Sending admin notification email...');
-    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id);
+    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id, shipping, customerName);
   }
 
   res.status(200).end();
@@ -165,6 +182,11 @@ app.post('/create-checkout-session', async (req, res) => {
       customer_email: customerEmail,
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
+      shipping_address_collection: {
+        allowed_countries: ['US'],
+      },
+        
+    
       expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
       automatic_tax: { enabled: true }
     });
@@ -324,7 +346,7 @@ function sendConfirmationEmail(toEmail, name, summary, amount, address = {}) {
 }
 
 // ✅ Admin notification
-function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
+function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId, address = {}, name = '') {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -332,6 +354,14 @@ function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
       pass: process.env.EMAIL_PASSWORD
     }
   });
+
+  const formattedAddress = `
+    ${name}<br>
+    ${address.line1 || ''}<br>
+    ${address.line2 ? address.line2 + '<br>' : ''}
+    ${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}<br>
+    ${address.country || ''}
+  `.trim();
 
   const mailOptions = {
     from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
@@ -345,6 +375,7 @@ function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId) {
         </div>
         <p><strong>Customer Email:</strong> ${customerEmail}</p>
         <p><strong>Books Ordered:</strong><br>${bookSummary}</p>
+        <p><strong>Shipping Address:</strong><br>${formattedAddress}</p>
         <p><strong>Stripe Session ID:</strong> ${sessionId}</p>
         <p style="margin-top: 2rem;">Log into your dashboard for more details.</p>
       </div>
