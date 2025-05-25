@@ -180,7 +180,8 @@
         if (Array.isArray(data.items)) {
           data.items.forEach(item => {
             const li = document.createElement('li');
-            li.textContent = `${item.title} × ${item.quantity}`;
+            li.textContent = `${item.title || item.name || 'Unknown'} × ${item.quantity || 1}`;
+
             itemList.appendChild(li);
           });
         } else {
