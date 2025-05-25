@@ -20,7 +20,7 @@ header.logo-wrapper {
 }
 
 .logo {
-  max-width: 1000px;
+  max-width: 600px;
   max-height: 380px; /* 👈 limit height */
   width: 100%;
   height: auto;
@@ -33,7 +33,9 @@ header.logo-wrapper {
 .background-wrapper {
   position: relative;
   overflow: hidden;
+  min-height: 100vh;
 }
+
 
 /* Clouds at top */
 .clouds-background {
@@ -55,9 +57,15 @@ header.logo-wrapper {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
+  height: auto;
   z-index: -1;
   pointer-events: none; /* Ensures users can click through */
+}
+
+.clouds-background,
+.leaves-overlay {
+  background-attachment: fixed;
 }
 
 /* Navigation styles */
@@ -258,7 +266,7 @@ button.shop-now:hover {
   }
 }
 
-@media (min-width: 601px) {
+@media (min-width: 600px) {
   nav {
     flex-direction: row;
   }
