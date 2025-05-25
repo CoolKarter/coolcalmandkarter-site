@@ -40,11 +40,8 @@ header.logo-wrapper {
 /* Wrapper to hold all layered backgrounds */
 .background-wrapper {
   position: relative;
-  overflow: hidden;
-  min-height: 120vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  overflow: visible;
+  padding-bottom: 2rem; /* small breathing room */
 }
 
 
