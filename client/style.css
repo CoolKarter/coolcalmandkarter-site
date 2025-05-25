@@ -105,9 +105,21 @@ nav a:hover {
   position: absolute;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: white; /* prevents black bars */
   opacity: 0;
   transition: opacity 1s ease-in-out;
+}
+
+.slideshow-wrapper {
+  position: relative;
+  width: 300px; /* was 250px */
+  height: 300px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  background-color: white;
 }
 
 .slideshow-image.active {
