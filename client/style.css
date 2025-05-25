@@ -29,7 +29,36 @@ header.logo-wrapper {
   object-fit: contain; /* Ensures image scales proportionally */
 }
 
+/* Wrapper to hold all layered backgrounds */
+.background-wrapper {
+  position: relative;
+  overflow: hidden;
+}
 
+/* Clouds at top */
+.clouds-background {
+  background: url('images/clouds-top.png') no-repeat top center;
+  background-size: cover;
+  width: 100%;
+  height: 250px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -2;
+}
+
+/* Leaves overlay on the sides */
+.leaves-overlay {
+  background: url('images/leaf-sides.png') no-repeat center center;
+  background-size: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none; /* Ensures users can click through */
+}
 
 /* Navigation styles */
 nav {
