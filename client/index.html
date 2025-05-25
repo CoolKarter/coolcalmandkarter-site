@@ -285,6 +285,22 @@
 
   <div class="divider"></div>
 
+  <!-- Customer Photo Slideshow -->
+  <div id="customer-slideshow-container">
+    <h2 class="slideshow-heading">Our Happy Readers 📸</h2>
+    <div class="slideshow-wrapper">
+      <img src="images/customer1.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer2.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer3.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer4.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer5.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer6.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer7.png" class="slideshow-image" alt="Customer with book">
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
   <!-- ✅ Reader Reviews Section -->
 <section style="background-color: white; padding: 2rem; max-width: 700px; margin: 2rem auto; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.08);">
   <h3 style="color: #195569;">What Readers Are Saying</h3>
@@ -390,6 +406,20 @@
     thankYou.style.display = "block";
   }
 });
+    const images = document.querySelectorAll('.slideshow-image');
+    let currentIndex = 0;
+
+    function showNextImage() {
+      images[currentIndex].classList.remove('active');
+      currentIndex = (currentIndex + 1) % images.length;
+      images[currentIndex].classList.add('active');
+    }
+
+    // Initial display
+    images[currentIndex].classList.add('active');
+
+    // Rotate every 3.5 seconds
+    setInterval(showNextImage, 3500);
   </script>
 </body>
 </html>
