@@ -81,13 +81,13 @@ nav a:hover {
 
 #customer-slideshow-container {
   text-align: center;
-  padding: 30px 0;
+  padding: 40px 0;
   background-color: #fff3e0;
 }
 
 .slideshow-heading {
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 28px;
+  margin-bottom: 30px;
   color: #195569;
 }
 
@@ -96,13 +96,13 @@ nav a:hover {
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 300px;
+  max-width: 500px;       /* ⬅️ Increased size */
   height: auto;
-  aspect-ratio: 1 / 1; /* Keeps it square */
+  aspect-ratio: 4 / 5;    /* ⬅️ Taller than square for full portraits */
   margin: 0 auto;
   overflow: hidden;
-  border-radius: 16px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
   background-color: white;
   position: relative;
 }
