@@ -150,7 +150,7 @@
     <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
   </footer>
   
-  <script>
+    <script>
     localStorage.removeItem('cart');
     document.getElementById('cartCount').textContent = '0';
 
@@ -167,7 +167,6 @@
 
       if (!sessionId) {
         itemList.innerHTML = '<li>We couldn’t find your order. Please check your email for confirmation or contact us.</li>';
-        emailDisplay.textContent = '';
         return;
       }
 
@@ -176,21 +175,34 @@
         if (!res.ok) throw new Error('Session expired or invalid');
         const data = await res.json();
 
+        // ✅ Book list
         itemList.innerHTML = '';
-        data.items.forEach(item => {
-          const li = document.createElement('li');
-          li.textContent = `${item.name} × ${item.quantity}`;
-          itemList.appendChild(li);
-        });
+        if (Array.isArray(data.items)) {
+          data.items.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = `${item.title} × ${item.quantity}`;
+            itemList.appendChild(li);
+          });
+        } else {
+          itemList.innerHTML = '<li>Could not load book titles.</li>';
+        }
 
-        nameDisplay.textContent = `Name: ${data.name || 'N/A'}`;
-        emailDisplay.textContent = `Email: ${data.customerEmail || 'N/A'}`;
-        amountDisplay.textContent = `Total Paid: $${(data.amount / 100).toFixed(2)}`;
+        // ✅ Customer info
+        nameDisplay.textContent = `Name: ${data.customer_name || 'N/A'}`;
+        emailDisplay.textContent = `Email: ${data.customer_email || 'N/A'}`;
+        amountDisplay.textContent = `Total Paid: $${(data.amount_total / 100).toFixed(2)}`;
         sessionDisplay.textContent = `Session ID: ${sessionId}`;
 
-        const addr = data.address || {};
-        const fullAddress = `${addr.street || ''} ${addr.apartment || ''}, ${addr.city || ''}, ${addr.state || ''} ${addr.zip || ''}, ${addr.country || ''}`;
-        addressDisplay.textContent = `Shipping Address: ${fullAddress.trim()}`;
+        // ✅ Shipping address
+        const addr = data.customer_address || {};
+        const fullAddress = `
+          ${addr.line1 || ''}<br>
+          ${addr.line2 ? addr.line2 + '<br>' : ''}
+          ${addr.city || ''}, ${addr.state || ''} ${addr.postal_code || ''}<br>
+          ${addr.country || ''}
+        `.trim();
+
+        addressDisplay.innerHTML = `Shipping Address:<br>${fullAddress}`;
       } catch (err) {
         console.error('❌ Error loading session:', err);
         itemList.innerHTML = '<li>We couldn’t load your order details. Please check your email for confirmation.</li>';

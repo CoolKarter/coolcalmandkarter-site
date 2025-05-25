@@ -16,6 +16,12 @@ const orderSchema = new mongoose.Schema({
   name: String,
   email: String,
   bookTitle: String,
+  items: [
+  {
+    title: String,
+    quantity: Number
+  }
+],
   amount: Number,
   address: {
     line1: String,
@@ -70,13 +76,16 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     const shipping = session.customer_details?.address || {};
     const amount = session.amount_total || 0;
     const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
-
-    const bookTitleSummary = items.map(i => `${i.name} x${i.quantity}`).join(', ');
+    const bookTitleSummary = items.map(i => `${i.title || i.name || 'Unknown'} x${i.quantity || 1}`).join(', ');
 
     const newOrder = new Order({
       name: customerName,
       email: customerEmail,
       bookTitle: bookTitleSummary,
+      items: items.map(i => ({
+        title: i.title || i.name || 'Unknown',
+        quantity: i.quantity || 1
+      })),
       amount: amount,
       address: {
         line1: shipping.line1,
@@ -296,12 +305,12 @@ function sendConfirmationEmail(toEmail, name, summary, amount, address = {}) {
     }
   });
 
-  const fullAddress = `
-    ${address.street || ''}<br>
-    ${address.apartment ? address.apartment + '<br>' : ''}
-    ${address.city || ''}, ${address.state || ''} ${address.zip || ''}<br>
-    ${address.country || ''}
-  `.trim();
+    const fullAddress = `
+      ${address.line1 || ''}<br>
+      ${address.line2 ? address.line2 + '<br>' : ''}
+      ${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}<br>
+      ${address.country || ''}
+    `.trim();
 
   const mailOptions = {
     from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
@@ -436,7 +445,8 @@ app.get('/api/session/:id', async (req, res) => {
       customer_name: session.customer_details.name,
       customer_email: session.customer_details.email,
       customer_address: session.customer_details.address,
-      amount_total: session.amount_total
+      amount_total: session.amount_total,
+      items: session.metadata?.items ? JSON.parse(session.metadata.items) : []
     });
   } catch (err) {
     console.error('Error fetching session:', err.message);
