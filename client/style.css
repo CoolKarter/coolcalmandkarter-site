@@ -45,25 +45,6 @@ header.logo-wrapper {
   padding-top: 0px; /* Pushes content down to avoid overlap with fixed cloud image */
 }
 
-/* Leaves overlay on the sides */
-.leaves-overlay {
-  background: url('images/leaf-sides.png') repeat-y center top;
-  background-size: cover;
-  background-attachment: fixed;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -3;
-  pointer-events: none;
-}
-
-.clouds-background,
-.leaves-overlay {
-  background-attachment: fixed;
-}
-
 /* Navigation styles */
 nav {
   display: flex;
@@ -110,6 +91,14 @@ nav a:hover {
   padding: 2px 6px;
   font-size: 12px;
   font-weight: bold;
+}
+
+.hero-background {
+  background: url('images/hero-background.png') no-repeat center top;
+  background-size: cover;
+  background-attachment: scroll;
+  padding-top: 100px; /* adjust spacing as needed */
+  padding-bottom: 80px;
 }
 
 #customer-slideshow-container {
