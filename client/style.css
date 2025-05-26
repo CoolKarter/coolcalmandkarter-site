@@ -42,33 +42,7 @@ header.logo-wrapper {
   position: relative;
   overflow: visible;
   padding-bottom: 2rem; /* small breathing room */
-  padding-top: 120px; /* Pushes content down to avoid overlap with fixed cloud image */
-}
-.clouds-background {
-  background: url('images/clouds-top.png') no-repeat top center;
-  background-size: 100% auto;
-  background-attachment: scroll;
-  width: 100%;
-  height: 300px;
-  position: relative;
-  top: 0;
-  left: 0;
-  z-index: -2;
-}
-
-/* Clouds at top */
-.clouds-background::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 80px;
-  background: linear-gradient(to bottom, rgba(239, 225, 198, 0) 0%, #efe1c6 100%);
-}
-@keyframes floatClouds {
-  0%   { background-position: top center; }
-  100% { background-position: top right; }
+  padding-top: 0px; /* Pushes content down to avoid overlap with fixed cloud image */
 }
 
 /* Leaves overlay on the sides */
