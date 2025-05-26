@@ -19,16 +19,6 @@ header.logo-wrapper {
   z-index: 1; /* keeps it above background */
 }
 
-.hero-background::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 100px;
-  width: 100%;
-  background: linear-gradient(to bottom, rgba(239, 225, 198, 0) 0%, #efe1c6 100%);
-}
-
 .logo {
   max-width: 600px;
   max-height: 380px; /* 👈 limit height */
