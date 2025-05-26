@@ -104,7 +104,7 @@ nav a:hover {
 #customer-slideshow-container {
   text-align: center;
   padding: 40px 0;
-  background-color: #fff3e0;
+  background-color: transparent; /* ✅ Remove background */
 }
 
 .slideshow-heading {
