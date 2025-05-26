@@ -179,32 +179,23 @@ app.post('/create-checkout-session', async (req, res) => {
     console.log("👉 Customer email:", customerEmail);
 
   // ✅ Add title to each item for the metadata
-  const itemsWithTitles = items.map(item => ({
+const itemsWithTitles = items.map(item => ({
     price: item.price,
     quantity: item.quantity,
     title: item.title || item.name || 'Unknown'
   }));
 
-  
   const line_items = items.map(item => ({
     price: item.price,
     quantity: item.quantity
   }));
-
-const line_items = items.map(item => ({
-  price: item.price,
-  quantity: item.quantity
-}));
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     mode: 'payment',
     line_items,
     metadata: {
-      items: JSON.stringify(items.map(i => ({
-        title: i.title || i.name || 'Unknown',
-        quantity: i.quantity
-      })))
+      items: JSON.stringify(itemsWithTitles)
     },
     customer_email: customerEmail,
     success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
