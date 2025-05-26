@@ -179,32 +179,51 @@ app.post('/create-checkout-session', async (req, res) => {
     console.log("👉 Customer email:", customerEmail);
 
   // ✅ Add title to each item for the metadata
-  const itemsWithTitles = items.map(item => ({
-    price: item.price,
-    quantity: item.quantity,
-    title: item.title || item.name || 'Unknown'
-  }));
+  const line_items = items.map(item => ({
+  price: item.price,
+  quantity: item.quantity
+}));
+
+const session = await stripe.checkout.sessions.create({
+  payment_method_types: ['card'],
+  mode: 'payment',
+  line_items,
+  metadata: {
+    items: JSON.stringify(items.map(i => ({
+      title: i.title || i.name || 'Unknown',
+      quantity: i.quantity
+    })))
+  },
 
   const line_items = items.map(item => ({
-    price: item.price,
-    quantity: item.quantity
-  }));
+  price: item.price,
+  quantity: item.quantity
+}));
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    mode: 'payment',
-    line_items,
-    metadata: { items: JSON.stringify(itemsWithTitles) },
-    customer_email: customerEmail,
-    success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
-    shipping_address_collection: {
-      allowed_countries: ['US'],
-    },
-    expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
-    automatic_tax: { enabled: true }
-  });
+const line_items = items.map(item => ({
+  price: item.price,
+  quantity: item.quantity
+}));
 
+const session = await stripe.checkout.sessions.create({
+  payment_method_types: ['card'],
+  mode: 'payment',
+  line_items,
+  metadata: {
+    items: JSON.stringify(items.map(i => ({
+      title: i.title || i.name || 'Unknown',
+      quantity: i.quantity
+    })))
+  },
+  customer_email: customerEmail,
+  success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
+  cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
+  shipping_address_collection: {
+    allowed_countries: ['US'],
+  },
+  expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
+  automatic_tax: { enabled: true }
+});
     res.json({ id: session.id });
 
   } catch (err) {
