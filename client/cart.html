@@ -422,15 +422,19 @@
       const email = document.getElementById('customerEmail').value;
       const items = [];
 
-      for (const book in cart) {
-        const priceId = priceIds[book];
-        const quantity = cart[book];
-        if (priceId && quantity > 0) {
-          items.push({ price: priceId, quantity });
-        } else {
-          console.warn(`Missing or invalid price ID for book: ${book}`);
-        }
+    for (const book in cart) {
+      const priceId = priceIds[book];
+      const quantity = cart[book];
+      if (priceId && quantity > 0) {
+        items.push({
+          price: priceId,
+          quantity,
+          title: book // ✅ Add the title field here
+        });
+      } else {
+        console.warn(`Missing or invalid price ID for book: ${book}`);
       }
+    }
 
       if (items.length === 0) {
         loadingIndicator.style.display = 'none';
