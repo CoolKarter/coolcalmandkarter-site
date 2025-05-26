@@ -177,16 +177,24 @@
 
         // ✅ Book list
         itemList.innerHTML = '';
-        if (Array.isArray(data.items)) {
-          data.items.forEach(item => {
-            const li = document.createElement('li');
-            li.textContent = `${item.title || item.name || 'Unknown'} × ${item.quantity || 1}`;
+      if (Array.isArray(data.items)) {
+        console.log('✅ Loaded items:', data.items);
+        itemList.innerHTML = '';
 
-            itemList.appendChild(li);
-          });
-        } else {
-          itemList.innerHTML = '<li>Could not load book titles.</li>';
-        }
+        data.items.forEach((item, index) => {
+          const title = item.title || item.name || 'Untitled';
+          const quantity = item.quantity || 1;
+
+          const li = document.createElement('li');
+          li.textContent = `${title} × ${quantity}`;
+          itemList.appendChild(li);
+
+          // Optional: debug log each item
+          console.log(`🛒 Item ${index + 1}:`, item);
+        });
+      } else {
+        itemList.innerHTML = '<li>Could not load book titles.</li>';
+      }
 
         // ✅ Customer info
         nameDisplay.textContent = `Name: ${data.customer_name || 'N/A'}`;
