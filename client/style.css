@@ -44,7 +44,17 @@ header.logo-wrapper {
   padding-bottom: 2rem; /* small breathing room */
   padding-top: 320px; /* Pushes content down to avoid overlap with fixed cloud image */
 }
-
+.clouds-background {
+  background: url('images/clouds-top.png') no-repeat center top;
+  background-size: cover;
+  background-attachment: fixed;
+  width: 100%;
+  height: 350px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -2;
+}
 
 /* Clouds at top */
 .clouds-background::after {
@@ -182,7 +192,7 @@ button.shop-now {
   border-radius: 8px;
   cursor: pointer;
   margin-bottom: 0; /* removes gap above nav */
-  padding-top: 300px; /* ensures content starts below the clouds */
+  
 }
 
 button.shop-now:hover {
