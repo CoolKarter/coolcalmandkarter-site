@@ -1,11 +1,16 @@
 /* Base styles */
 body {
   font-family: 'Nunito', sans-serif;
-  background-color: #efe1c6;
   margin: 0;
   padding: 0;
   color: #002d3d;
   text-align: center;
+  background-color: #efe1c6;
+  background-image: url('images/hero-background.png'); /* ✅ Use your full-height image */
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: top center;
+  background-attachment: fixed;
 }
 
 
@@ -18,6 +23,8 @@ header.logo-wrapper {
   position: relative;
   z-index: 1; /* keeps it above background */
 }
+
+
 
 .logo {
   max-width: 600px;
@@ -92,17 +99,7 @@ nav a:hover {
   font-weight: bold;
 }
 
-.hero-background {
-  background: url('images/hero-background.png') no-repeat center top;
-  background-size: cover;
-  background-attachment: scroll;
-  width: 100%;
-  height: 100vh;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: -1;
-}
+
 
 #customer-slideshow-container {
   text-align: center;
