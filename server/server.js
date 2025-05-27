@@ -202,7 +202,12 @@ const itemsWithTitles = items.map(item => ({
     cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
     shipping_address_collection: {
       allowed_countries: ['US'],
+      shipping_options: [
+      { shipping_rate: 'shr_1RTDNeGhPxJaSGWSdVEZHe3m' } // from Stripe dashboard
+    ]
     },
+    
+    
     expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
     automatic_tax: { enabled: true }
   });
