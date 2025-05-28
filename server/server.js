@@ -222,36 +222,36 @@ app.post('/create-checkout-session', async (req, res) => {
         {
           shipping_rate_data: {
             type: 'fixed_amount',
-            fixed_amount: { amount: 599, currency: 'usd' },
-            display_name: 'Standard Shipping (3–5 days)',
-            delivery_estimate: {
-              minimum: { unit: 'business_day', value: 3 },
-              maximum: { unit: 'business_day', value: 5 },
-            },
-          },
-        },
-        {
-          shipping_rate_data: {
-            type: 'fixed_amount',
-            fixed_amount: { amount: 899, currency: 'usd' },
-            display_name: 'US Extended Shipping (5–7 days)',
+            fixed_amount: { amount: 499, currency: 'usd' },
+            display_name: 'Standard Shipping (5–8 Business Days)',
             delivery_estimate: {
               minimum: { unit: 'business_day', value: 5 },
-              maximum: { unit: 'business_day', value: 7 },
+              maximum: { unit: 'business_day', value: 8 },
             },
-          },
+          }
         },
         {
           shipping_rate_data: {
             type: 'fixed_amount',
-            fixed_amount: { amount: 1599, currency: 'usd' },
-            display_name: 'International Shipping (7–14 days)',
+            fixed_amount: { amount: 1099, currency: 'usd' },
+            display_name: 'Expedited Shipping (2–3 Business Days)',
             delivery_estimate: {
-              minimum: { unit: 'business_day', value: 7 },
-              maximum: { unit: 'business_day', value: 14 },
+              minimum: { unit: 'business_day', value: 2 },
+              maximum: { unit: 'business_day', value: 3 },
             },
-          },
+          }
         },
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 1999, currency: 'usd' },
+            display_name: 'Express Shipping (1–2 Business Days)',
+            delivery_estimate: {
+              minimum: { unit: 'business_day', value: 1 },
+              maximum: { unit: 'business_day', value: 2 },
+            },
+          }
+        }
       ],
 
       metadata: {
