@@ -16,6 +16,7 @@ const orderSchema = new mongoose.Schema({
   name: String,
   email: String,
   bookTitle: String,
+  shippingMethod: String,
   items: [
   {
     title: String,
@@ -77,7 +78,12 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     const amount = session.amount_total || 0;
     const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
     const bookTitleSummary = items.map(i => `${i.title || i.name || 'Unknown'} x${i.quantity || 1}`).join(', ');
-    const shippingMethod = session.shipping?.shipping_rate || 'No shipping selected';
+    let shippingMethod = 'No shipping selected';
+
+    if (session.shipping_cost?.shipping_rate) {
+      const shippingRate = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
+      shippingMethod = shippingRate.display_name || 'No shipping selected';
+    }
     const shippingName = session.shipping?.name || 'No name';
     const shippingAddress = session.shipping?.address || {};
     const shippingSummary = `
@@ -103,7 +109,8 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
         state: shipping.state,
         postal_code: shipping.postal_code,
         country: shipping.country
-      }
+      },
+      shippingMethod: shippingMethod
     });
 
     try {
