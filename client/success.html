@@ -205,17 +205,18 @@
 
         // ✅ Shipping address
         const addr = data.customer_address || {};
-        const fullAddress = `
-          ${addr.line1 || ''}<br>
-          ${addr.line2 ? addr.line2 + '<br>' : ''}
-          ${addr.city || ''}, ${addr.state || ''} ${addr.postal_code || ''}<br>
-          ${addr.country || ''}
-        `.trim();
+        let addressHtml = 'Shipping Address:<br>';
+        if (addr.line1) addressHtml += `${addr.line1}<br>`;
+        if (addr.line2) addressHtml += `${addr.line2}<br>`;
+        if (addr.city || addr.state || addr.postal_code)
+          addressHtml += `${addr.city || ''}, ${addr.state || ''} ${addr.postal_code || ''}<br>`;
+        if (addr.country) addressHtml += `${addr.country}`;
 
+        addressDisplay.innerHTML = addressHtml;
 
-        addressDisplay.innerHTML = `Shipping Address:<br>${fullAddress}`;
         // ✅ Shipping method
         const shippingMethod = data.shipping_method || 'Not available';
+        console.log('📦 Shipping Method received:', shippingMethod);
         document.getElementById('shippingMethodDisplay').textContent = `Shipping Method: ${shippingMethod}`;        
 
       } catch (err) {
