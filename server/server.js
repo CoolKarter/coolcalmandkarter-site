@@ -80,7 +80,7 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     const bookTitleSummary = items.map(i => `${i.title || i.name || 'Unknown'} x${i.quantity || 1}`).join(', ');
     let shippingMethod = 'No shipping selected';
     if (session.shipping_cost?.shipping_rate) {
-      const shippingRate = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
+      const shippingRate = session.shipping_cost?.shipping_rate?.display_name || 'No shipping selected';
       shippingMethod = shippingRate.display_name || 'No shipping selected';
     }
     const shippingName = session.shipping?.name || 'No name';
@@ -123,7 +123,7 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     sendConfirmationEmail(customerEmail, customerName, bookTitleSummary, amount, shipping, shippingMethod);
 
     console.log('📧 Sending admin notification email...');
-    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id, shipping, customerName, shippingMethod);
+    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id, shipping, customerName, shippingMethod, amount);
   }
 
   res.status(200).end();
@@ -474,7 +474,7 @@ app.post('/api/contact', async (req, res) => {
 
 
 // ✅ Admin notification
-function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId, address = {}, name = '', shippingMethod = '') {
+function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId, address = {}, name = '', shippingMethod = '', amount = 0) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -506,6 +506,7 @@ function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId, addre
         <p><strong>Shipping Address:</strong><br>${formattedAddress}</p>
         <p><strong>Shipping Method:</strong><br>${shippingMethod}</p>
         <p><strong>Stripe Session ID:</strong> ${sessionId}</p>
+        <p><strong>Total Paid:</strong> $${(amount / 100).toFixed(2)}</p>
         <p style="margin-top: 2rem;">Log into your dashboard for more details.</p>
       </div>
     `
