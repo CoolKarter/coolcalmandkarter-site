@@ -163,6 +163,25 @@ app.use('/api/newsletter/emails', basicAuth({
 // ✅ Serve frontend
 app.use(express.static(path.join(__dirname, '../client')));
 
+// ✅ Calculate Shipping
+app.post('/calculate-shipping', async (req, res) => {
+  const { address } = req.body;
+
+  if (!address || !address.country || !address.postal_code) {
+    return res.status(400).json({ error: 'Invalid address' });
+  }
+
+  // 👇 Very basic example logic
+  let shippingCost = 500; // default $5.00
+
+  if (address.country !== 'US') {
+    shippingCost = 1500; // $15 for international
+  } else if (['HI', 'AK'].includes(address.state)) {
+    shippingCost = 800; // $8 for Hawaii or Alaska
+  }
+
+  res.json({ shippingCost });
+});
 
 
 // ✅ Stripe Checkout route
@@ -171,51 +190,81 @@ app.post('/create-checkout-session', async (req, res) => {
     const items = req.body.items;
     const customerEmail = req.body.customerEmail;
 
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Invalid items array' });
+    if (!Array.isArray(items) || items.length === 0 || !customerEmail) {
+      return res.status(400).json({ error: 'Invalid input' });
     }
 
-    console.log("👉 Received checkout items:", items);
-    console.log("👉 Customer email:", customerEmail);
+    const itemsWithTitles = items.map(item => ({
+      price: item.price,
+      quantity: item.quantity,
+      title: item.title || item.name || 'Unknown'
+    }));
 
-  // ✅ Add title to each item for the metadata
-const itemsWithTitles = items.map(item => ({
-    price: item.price,
-    quantity: item.quantity,
-    title: item.title || item.name || 'Unknown'
-  }));
+    const line_items = items.map(item => ({
+      price: item.price,
+      quantity: item.quantity
+    }));
 
-  const line_items = items.map(item => ({
-    price: item.price,
-    quantity: item.quantity
-  }));
+    // ✅ Determine shipping rate
+    let selectedShippingRate;
+    if (req.body.address?.country !== 'US') {
+      selectedShippingRate = {
+        type: 'fixed_amount',
+        fixed_amount: { amount: 1599, currency: 'usd' },
+        display_name: 'International Shipping (7–14 days)',
+        delivery_estimate: {
+          minimum: { unit: 'business_day', value: 7 },
+          maximum: { unit: 'business_day', value: 14 },
+        },
+      };
+    } else if (['HI', 'AK'].includes(req.body.address?.state)) {
+      selectedShippingRate = {
+        type: 'fixed_amount',
+        fixed_amount: { amount: 899, currency: 'usd' },
+        display_name: 'US Extended Shipping (5–7 days)',
+        delivery_estimate: {
+          minimum: { unit: 'business_day', value: 5 },
+          maximum: { unit: 'business_day', value: 7 },
+        },
+      };
+    } else {
+      selectedShippingRate = {
+        type: 'fixed_amount',
+        fixed_amount: { amount: 599, currency: 'usd' },
+        display_name: 'Standard Shipping (3–5 days)',
+        delivery_estimate: {
+          minimum: { unit: 'business_day', value: 3 },
+          maximum: { unit: 'business_day', value: 5 },
+        },
+      };
+    }
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    mode: 'payment',
-    line_items,
-    metadata: {
-      items: JSON.stringify(itemsWithTitles)
-    },
-    customer_email: customerEmail,
-    success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
-    shipping_address_collection: {
-      allowed_countries: ['US'],
-      shipping_options: [
-      { shipping_rate: 'shr_1RTDNeGhPxJaSGWSdVEZHe3m' } // from Stripe dashboard
-    ]
-    },
-    
-    
-    expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
-    automatic_tax: { enabled: true }
-  });
+    // ✅ Create Stripe Checkout session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        line_items,
+        customer_email: customerEmail,
+
+        shipping_address_collection: {
+          allowed_countries: ['US', 'CA'],
+        },
+
+        shipping_options: [selectedShippingRate],
+
+        metadata: {
+          items: JSON.stringify(itemsWithTitles),
+        },
+
+        success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
+        automatic_tax: { enabled: true }
+      });
 
     res.json({ id: session.id });
 
   } catch (err) {
-    console.error('❌ Stripe error in /create-checkout-session:', err.message);
+    console.error('❌ Error creating checkout session:', err.message);
     res.status(500).json({ error: 'Checkout failed' });
   }
 });
