@@ -284,11 +284,14 @@
     <p class="total">Total: $<span id="totalAmount">0.00</span></p>
 
     <form id="checkoutForm" class="checkout-form">   
-
-
       <h2 class="checkout-title">Checkout</h2>
       <input type="email" id="customerEmail" placeholder="Email address" required />
       <button type="submit" id="placeOrderBtn">Place Order</button>
+
+      <h3 class="checkout-title">Choose Shipping Method</h3>
+      <label><input type="radio" name="shipping" value="Standard Shipping" checked> Standard Shipping (5–8 days)</label><br>
+      <label><input type="radio" name="shipping" value="Expedited Shipping"> Expedited Shipping (2–3 days)</label><br>
+      <label><input type="radio" name="shipping" value="Express Shipping"> Express Shipping (1–2 days)</label><br><br>
     </form>
 
 
@@ -446,12 +449,14 @@ form.addEventListener('submit', async (e) => {
   }
 
   try {
+    const selectedShipping = document.querySelector('input[name="shipping"]:checked')?.value || 'No shipping selected';
     const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         items,
-        customerEmail: email
+        customerEmail: email,
+        shippingMethod: selectedShipping
       })
     });
 
