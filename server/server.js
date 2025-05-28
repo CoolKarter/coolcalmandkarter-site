@@ -80,8 +80,12 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     const bookTitleSummary = items.map(i => `${i.title || i.name || 'Unknown'} x${i.quantity || 1}`).join(', ');
     let shippingMethod = 'No shipping selected';
     if (session.shipping_cost?.shipping_rate) {
-      const shippingRate = session.shipping_cost?.shipping_rate?.display_name || 'No shipping selected';
-      shippingMethod = shippingRate.display_name || 'No shipping selected';
+      try {
+        const shippingRateObj = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
+        shippingMethod = shippingRateObj.display_name || 'No shipping selected';
+      } catch (err) {
+        console.error('❌ Failed to retrieve shipping rate from Stripe:', err.message);
+      }
     }
     const shippingName = session.shipping?.name || 'No name';
     const shippingAddress = session.shipping?.address || {};
@@ -567,8 +571,12 @@ app.get('/api/session/:id', async (req, res) => {
 
     let shippingMethod = 'No shipping selected';
     if (session.shipping_cost?.shipping_rate) {
-      const shippingRate = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
-      shippingMethod = shippingRate.display_name || 'No shipping selected';
+      try {
+        const shippingRateObj = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
+        shippingMethod = shippingRateObj.display_name || 'No shipping selected';
+      } catch (err) {
+        console.error('❌ Failed to retrieve shipping rate from Stripe:', err.message);
+      }
     }
 
     res.json({
