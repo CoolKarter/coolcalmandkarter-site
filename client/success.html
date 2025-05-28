@@ -165,8 +165,6 @@
       const addressDisplay = document.getElementById('addressDisplay');
       const amountDisplay = document.getElementById('amountDisplay');
       const sessionDisplay = document.getElementById('sessionDisplay');
-      const shippingMethodDisplay = document.createElement('p');
-      shippingMethodDisplay.className = 'summary-info';
 
       if (!sessionId) {
         itemList.innerHTML = '<li>We couldn’t find your order. Please check your email for confirmation or contact us.</li>';
@@ -183,7 +181,6 @@
         itemList.innerHTML = '';
       if (Array.isArray(data.items)) {
         console.log('✅ Loaded items:', data.items);
-        itemList.innerHTML = '';
 
         data.items.forEach((item, index) => {
           const title = item.title || item.name || 'Untitled';
@@ -214,8 +211,6 @@
           ${addr.city || ''}, ${addr.state || ''} ${addr.postal_code || ''}<br>
           ${addr.country || ''}
         `.trim();
-        shippingMethodDisplay.textContent = `Shipping Method: ${data.shipping_method || 'N/A'}`;
-        addressDisplay.parentNode.insertBefore(shippingMethodDisplay, addressDisplay.nextSibling);
 
 
         addressDisplay.innerHTML = `Shipping Address:<br>${fullAddress}`;
