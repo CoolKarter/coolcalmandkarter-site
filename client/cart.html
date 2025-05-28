@@ -416,71 +416,60 @@
       updateCartDisplay();
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      loadingIndicator.style.display = 'block';
-      placeOrderBtn.disabled = true;
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  loadingIndicator.style.display = 'block';
+  placeOrderBtn.disabled = true;
 
-      const email = document.getElementById('customerEmail').value;
-      const items = [];
+  const email = document.getElementById('customerEmail').value;
+  const items = [];
 
-    for (const book in cart) {
-      const priceId = priceIds[book];
-      const quantity = cart[book];
-      if (priceId && quantity > 0) {
-        items.push({
-          price: priceId,
-          quantity,
-          title: book // ✅ Add the title field here <!-- Trigger redeploy for shipping fix -->
-        });
-      } else {
-        console.warn(`Missing or invalid price ID for book: ${book}`);
-      }
+  for (const book in cart) {
+    const priceId = priceIds[book];
+    const quantity = cart[book];
+    if (priceId && quantity > 0) {
+      items.push({
+        price: priceId,
+        quantity,
+        title: book
+      });
+    } else {
+      console.warn(`Missing or invalid price ID for book: ${book}`);
     }
+  }
 
-      if (items.length === 0) {
-        loadingIndicator.style.display = 'none';
-        placeOrderBtn.disabled = false;
-        showToast('Cart is empty or invalid. Please try again.');
-        return;
-      }
+  if (items.length === 0) {
+    loadingIndicator.style.display = 'none';
+    placeOrderBtn.disabled = false;
+    showToast('Cart is empty or invalid. Please try again.');
+    return;
+  }
 
-      try {
-      const country = document.getElementById('country').value;
-      const state = document.getElementById('state').value;
-      const postal_code = document.getElementById('postal').value;
-
-      const address = { country, state, postal_code };
-
-      const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({
-                items,
-                customerEmail: email,
-                address
-              })
-
-
-              
-                
-              });
-
-        if (!res.ok) throw new Error('Failed to create session');
-
-        const data = await res.json();
-        localStorage.removeItem('cart');
-        await stripe.redirectToCheckout({ sessionId: data.id });
-      } catch (err) {
-        loadingIndicator.style.display = 'none';
-        placeOrderBtn.disabled = false;
-        console.error('Checkout Error:', err);
-        showToast('There was a problem starting checkout. Please try again.');
-      }
+  try {
+    const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items,
+        customerEmail: email
+      })
     });
+
+    if (!res.ok) throw new Error('Failed to create session');
+
+    const data = await res.json();
+    localStorage.removeItem('cart');
+    await stripe.redirectToCheckout({ sessionId: data.id });
+  } catch (err) {
+    loadingIndicator.style.display = 'none';
+    placeOrderBtn.disabled = false;
+    console.error('Checkout Error:', err);
+    showToast('There was a problem starting checkout. Please try again.');
+  }
+});
 
     updateCartDisplay();
   </script>
-  
+
 </body>
 </html>
