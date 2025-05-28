@@ -165,6 +165,8 @@
       const addressDisplay = document.getElementById('addressDisplay');
       const amountDisplay = document.getElementById('amountDisplay');
       const sessionDisplay = document.getElementById('sessionDisplay');
+      const shippingMethodDisplay = document.createElement('p');
+      shippingMethodDisplay.className = 'summary-info';
 
       if (!sessionId) {
         itemList.innerHTML = '<li>We couldn’t find your order. Please check your email for confirmation or contact us.</li>';
@@ -175,6 +177,7 @@
         const res = await fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`);
         if (!res.ok) throw new Error('Session expired or invalid');
         const data = await res.json();
+        console.log('✅ Full session data:', data)
 
         // ✅ Book list
         itemList.innerHTML = '';
@@ -211,6 +214,9 @@
           ${addr.city || ''}, ${addr.state || ''} ${addr.postal_code || ''}<br>
           ${addr.country || ''}
         `.trim();
+        shippingMethodDisplay.textContent = `Shipping Method: ${data.shipping_method || 'N/A'}`;
+        addressDisplay.parentNode.insertBefore(shippingMethodDisplay, addressDisplay.nextSibling);
+
 
         addressDisplay.innerHTML = `Shipping Address:<br>${fullAddress}`;
         // ✅ Shipping method

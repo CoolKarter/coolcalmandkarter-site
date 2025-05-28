@@ -562,9 +562,8 @@ app.get('/api/session/:id', async (req, res) => {
     });
 
     let shippingMethod = 'No shipping selected';
-    if (session.shipping_cost?.shipping_rate) {
-      const shippingRate = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
-      shippingMethod = shippingRate.display_name || 'No shipping selected';
+    if (session.shipping_cost?.shipping_rate?.display_name) {
+      shippingMethod = session.shipping_cost.shipping_rate.display_name;
     }
 
     res.json({
