@@ -451,7 +451,7 @@
         items.push({
           price: priceId,
           quantity,
-          title: book // ✅ Add the title field here
+          title: book // ✅ Add the title field here <!-- Trigger redeploy for shipping fix -->
         });
       } else {
         console.warn(`Missing or invalid price ID for book: ${book}`);
@@ -546,12 +546,14 @@
 
 <!-- Trigger redeploy for shipping fix -->
 
+
   // Hook up change event listeners
   document.getElementById('country').addEventListener('change', calculateShippingAndTotal);
   document.getElementById('state').addEventListener('input', calculateShippingAndTotal);
   document.getElementById('postal').addEventListener('input', calculateShippingAndTotal);
 
   // Trigger it once when page loads
+  
   window.addEventListener('DOMContentLoaded', () => {
     updateCartDisplay();
     calculateShippingAndTotal();
