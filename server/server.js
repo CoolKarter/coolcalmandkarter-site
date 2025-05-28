@@ -207,37 +207,48 @@ app.post('/create-checkout-session', async (req, res) => {
 
     // ✅ Determine shipping rate
     let selectedShippingRate;
-    if (req.body.address?.country !== 'US') {
-      selectedShippingRate = {
-        type: 'fixed_amount',
-        fixed_amount: { amount: 1599, currency: 'usd' },
-        display_name: 'International Shipping (7–14 days)',
-        delivery_estimate: {
-          minimum: { unit: 'business_day', value: 7 },
-          maximum: { unit: 'business_day', value: 14 },
-        },
-      };
-    } else if (['HI', 'AK'].includes(req.body.address?.state)) {
-      selectedShippingRate = {
-        type: 'fixed_amount',
-        fixed_amount: { amount: 899, currency: 'usd' },
-        display_name: 'US Extended Shipping (5–7 days)',
-        delivery_estimate: {
-          minimum: { unit: 'business_day', value: 5 },
-          maximum: { unit: 'business_day', value: 7 },
-        },
-      };
-    } else {
-      selectedShippingRate = {
-        type: 'fixed_amount',
-        fixed_amount: { amount: 599, currency: 'usd' },
-        display_name: 'Standard Shipping (3–5 days)',
-        delivery_estimate: {
-          minimum: { unit: 'business_day', value: 3 },
-          maximum: { unit: 'business_day', value: 5 },
-        },
-      };
-    }
+if (req.body.address?.country !== 'US') {
+  selectedShippingRate = {
+    type: 'fixed_amount',
+    fixed_amount: { amount: 1499, currency: 'usd' }, // $14.99
+    display_name: 'International Shipping (7–14 days)',
+    delivery_estimate: {
+      minimum: { unit: 'business_day', value: 7 },
+      maximum: { unit: 'business_day', value: 14 },
+    },
+  };
+} else if (['HI', 'AK'].includes(req.body.address?.state)) {
+  selectedShippingRate = {
+    type: 'fixed_amount',
+    fixed_amount: { amount: 899, currency: 'usd' }, // $8.99
+    display_name: 'US Extended Shipping (5–7 days)',
+    delivery_estimate: {
+      minimum: { unit: 'business_day', value: 5 },
+      maximum: { unit: 'business_day', value: 7 },
+    },
+  };
+} else if (req.body.address?.state === 'FL') {
+  selectedShippingRate = {
+    type: 'fixed_amount',
+    fixed_amount: { amount: 499, currency: 'usd' }, // ✅ $4.99 for Florida
+    display_name: 'Local Shipping (2–4 days)',
+    delivery_estimate: {
+      minimum: { unit: 'business_day', value: 2 },
+      maximum: { unit: 'business_day', value: 4 },
+    },
+  };
+} else {
+  selectedShippingRate = {
+    type: 'fixed_amount',
+    fixed_amount: { amount: 599, currency: 'usd' }, // $5.99 standard
+    display_name: 'Standard US Shipping (3–5 days)',
+    delivery_estimate: {
+      minimum: { unit: 'business_day', value: 3 },
+      maximum: { unit: 'business_day', value: 5 },
+    },
+  };
+}
+
 
     // ✅ Create Stripe Checkout session
       const session = await stripe.checkout.sessions.create({
