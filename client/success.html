@@ -134,6 +134,7 @@
     <p class="summary-info" id="nameDisplay"></p>
     <p class="summary-info" id="emailDisplay"></p>
     <p class="summary-info" id="addressDisplay"></p>
+    <p class="summary-info" id="shippingMethodDisplay"></p>
     <p class="summary-info" id="amountDisplay"></p>
     <p class="summary-info" id="sessionDisplay"></p>
     <a href="shop.html" class="button">← Browse More Books</a>
@@ -212,6 +213,10 @@
         `.trim();
 
         addressDisplay.innerHTML = `Shipping Address:<br>${fullAddress}`;
+        // ✅ Shipping method
+        const shippingMethod = data.shipping_method || 'Not available';
+        document.getElementById('shippingMethodDisplay').textContent = `Shipping Method: ${shippingMethod}`;        
+
       } catch (err) {
         console.error('❌ Error loading session:', err);
         itemList.innerHTML = '<li>We couldn’t load your order details. Please check your email for confirmation.</li>';

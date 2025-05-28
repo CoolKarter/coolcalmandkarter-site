@@ -79,7 +79,6 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
     const bookTitleSummary = items.map(i => `${i.title || i.name || 'Unknown'} x${i.quantity || 1}`).join(', ');
     let shippingMethod = 'No shipping selected';
-
     if (session.shipping_cost?.shipping_rate) {
       const shippingRate = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
       shippingMethod = shippingRate.display_name || 'No shipping selected';
@@ -121,7 +120,7 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     }
 
     console.log('📧 Sending customer confirmation email...');
-    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary, amount, shipping);
+    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary, amount, shipping, shippingMethod);
 
     console.log('📧 Sending admin notification email...');
     sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id, shipping, customerName, shippingMethod);
@@ -374,7 +373,8 @@ app.post('/api/newsletter', async (req, res) => {
 
 
 // ✅ Confirmation email
-function sendConfirmationEmail(toEmail, name, summary, amount, address = {}) {
+function sendConfirmationEmail(toEmail, name, summary, amount, address = {}, shippingMethod = '') {
+
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -412,6 +412,7 @@ function sendConfirmationEmail(toEmail, name, summary, amount, address = {}) {
         <div style="margin-top: 20px;">
           <p style="margin: 0 0 10px;"><strong>Shipping Address:</strong></p>
           <p style="margin: 0; line-height: 1.6;">${fullAddress}</p>
+          <p style="margin: 10px 0 0;"><strong>Shipping Method:</strong> ${shippingMethod}</p>
         </div>
 
         <div style="text-align: center; margin-top: 30px;">
@@ -556,8 +557,14 @@ app.get('/api/orders/export', async (req, res) => {
 app.get('/api/session/:id', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(req.params.id, {
-      expand: ['customer_details']
+      expand: ['customer_details', 'shipping_cost.shipping_rate']
     });
+
+    let shippingMethod = 'No shipping selected';
+    if (session.shipping_cost?.shipping_rate) {
+      const shippingRate = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
+      shippingMethod = shippingRate.display_name || 'No shipping selected';
+    }
 
     res.json({
       session_id: session.id,
@@ -565,6 +572,7 @@ app.get('/api/session/:id', async (req, res) => {
       customer_email: session.customer_details.email,
       customer_address: session.customer_details.address,
       amount_total: session.amount_total,
+      shipping_method: shippingMethod,
       items: session.metadata?.items ? JSON.parse(session.metadata.items) : []
     });
   } catch (err) {

@@ -60,6 +60,7 @@
           <th>Amount</th>
           <th>Date</th>
           <th>Shipping Address</th>
+          <th>Shipping Method</th>
         </tr>
       </thead>
       <tbody id="ordersTableBody"></tbody>
@@ -117,6 +118,7 @@
               <td>$${(order.amount / 100).toFixed(2)}</td>
               <td>${new Date(order.date).toLocaleString()}</td>
               <td>${shipping}</td>
+              <td>${order.shippingMethod || 'N/A'}</td>
             `;
             tbody.appendChild(row);
           });
