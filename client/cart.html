@@ -466,21 +466,23 @@
       }
 
       try {
-        const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            items,
-            customerEmail: email,
-            address: {
-              country: document.getElementById('country').value,
-              state: document.getElementById('state').value,
-              postal_code: document.getElementById('postal').value
-            }
-          })
+      const country = document.getElementById('country').value;
+      const state = document.getElementById('state').value;
+      const postal_code = document.getElementById('postal').value;
 
-          
-        });
+      const address = { country, state, postal_code };
+
+      const res = await fetch('https://coolcalmandkarter-site.onrender.com/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                items,
+                customerEmail: email,
+                address
+              })
+
+                
+              });
 
         if (!res.ok) throw new Error('Failed to create session');
 
@@ -517,7 +519,7 @@
     const address = { country, state, postal_code };
 
     try {
-      const res = await fetch('/calculate-shipping', {
+      const res = await fetch('https://coolcalmandkarter-site.onrender.com/calculate-shipping', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address })
