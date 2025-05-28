@@ -231,7 +231,7 @@ app.post('/create-checkout-session', async (req, res) => {
         {
           shipping_rate_data: {
             type: 'fixed_amount',
-            fixed_amount: { amount: 499, currency: 'usd' },
+            fixed_amount: { amount: 399, currency: 'usd' },
             display_name: 'Standard Shipping (5–8 Business Days)',
             delivery_estimate: {
               minimum: { unit: 'business_day', value: 5 },
@@ -242,7 +242,7 @@ app.post('/create-checkout-session', async (req, res) => {
         {
           shipping_rate_data: {
             type: 'fixed_amount',
-            fixed_amount: { amount: 1099, currency: 'usd' },
+            fixed_amount: { amount: 999, currency: 'usd' },
             display_name: 'Expedited Shipping (2–3 Business Days)',
             delivery_estimate: {
               minimum: { unit: 'business_day', value: 2 },
