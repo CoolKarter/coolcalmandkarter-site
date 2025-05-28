@@ -77,6 +77,15 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     const amount = session.amount_total || 0;
     const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
     const bookTitleSummary = items.map(i => `${i.title || i.name || 'Unknown'} x${i.quantity || 1}`).join(', ');
+    const shippingMethod = session.shipping?.shipping_rate || 'No shipping selected';
+    const shippingName = session.shipping?.name || 'No name';
+    const shippingAddress = session.shipping?.address || {};
+    const shippingSummary = `
+      Name: ${shippingName}
+      Address: ${shippingAddress.line1 || ''}, ${shippingAddress.city || ''}, ${shippingAddress.state || ''} ${shippingAddress.postal_code || ''}, ${shippingAddress.country || ''}
+      Shipping Rate ID: ${shippingMethod}
+    `;    
+
 
     const newOrder = new Order({
       name: customerName,
@@ -108,7 +117,7 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     sendConfirmationEmail(customerEmail, customerName, bookTitleSummary, amount, shipping);
 
     console.log('📧 Sending admin notification email...');
-    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id, shipping, customerName);
+    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id, shipping, customerName, shippingMethod);
   }
 
   res.status(200).end();
@@ -457,7 +466,7 @@ app.post('/api/contact', async (req, res) => {
 
 
 // ✅ Admin notification
-function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId, address = {}, name = '') {
+function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId, address = {}, name = '', shippingMethod = '') {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -487,6 +496,7 @@ function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId, addre
         <p><strong>Customer Email:</strong> ${customerEmail}</p>
         <p><strong>Books Ordered:</strong><br>${bookSummary}</p>
         <p><strong>Shipping Address:</strong><br>${formattedAddress}</p>
+        <p><strong>Shipping Method:</strong><br>${shippingMethod}</p>
         <p><strong>Stripe Session ID:</strong> ${sessionId}</p>
         <p style="margin-top: 2rem;">Log into your dashboard for more details.</p>
       </div>
