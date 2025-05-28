@@ -167,17 +167,18 @@ app.use(express.static(path.join(__dirname, '../client')));
 app.post('/calculate-shipping', async (req, res) => {
   const { address } = req.body;
 
-  if (!address || !address.country || !address.postal_code) {
+  if (!address || !address.country || !address.state) {
     return res.status(400).json({ error: 'Invalid address' });
   }
 
-  // 👇 Very basic example logic
-  let shippingCost = 500; // default $5.00
+  let shippingCost;
 
   if (address.country !== 'US') {
-    shippingCost = 1500; // $15 for international
-  } else if (['HI', 'AK'].includes(address.state)) {
-    shippingCost = 800; // $8 for Hawaii or Alaska
+    shippingCost = 1599; // $15.99 for international
+  } else if (['HI', 'AK'].includes(address.state.toUpperCase())) {
+    shippingCost = 799; // $7.99 for Hawaii/Alaska
+  } else {
+    shippingCost = 399; // $3.99 standard for all other US states (including FL)
   }
 
   res.json({ shippingCost });
@@ -189,6 +190,7 @@ app.post('/create-checkout-session', async (req, res) => {
   try {
     const items = req.body.items;
     const customerEmail = req.body.customerEmail;
+    const address = req.body.address;
 
     if (!Array.isArray(items) || items.length === 0 || !customerEmail) {
       return res.status(400).json({ error: 'Invalid input' });
@@ -205,77 +207,66 @@ app.post('/create-checkout-session', async (req, res) => {
       quantity: item.quantity
     }));
 
-    // ✅ Determine shipping rate
-    let selectedShippingRate;
-if (req.body.address?.country !== 'US') {
-  selectedShippingRate = {
-    type: 'fixed_amount',
-    fixed_amount: { amount: 1499, currency: 'usd' }, // $14.99
-    display_name: 'International Shipping (7–14 days)',
-    delivery_estimate: {
-      minimum: { unit: 'business_day', value: 7 },
-      maximum: { unit: 'business_day', value: 14 },
-    },
-  };
-} else if (['HI', 'AK'].includes(req.body.address?.state)) {
-  selectedShippingRate = {
-    type: 'fixed_amount',
-    fixed_amount: { amount: 899, currency: 'usd' }, // $8.99
-    display_name: 'US Extended Shipping (5–7 days)',
-    delivery_estimate: {
-      minimum: { unit: 'business_day', value: 5 },
-      maximum: { unit: 'business_day', value: 7 },
-    },
-  };
-} else if (req.body.address?.state === 'FL') {
-  selectedShippingRate = {
-    type: 'fixed_amount',
-    fixed_amount: { amount: 499, currency: 'usd' }, // ✅ $4.99 for Florida
-    display_name: 'Local Shipping (2–4 days)',
-    delivery_estimate: {
-      minimum: { unit: 'business_day', value: 2 },
-      maximum: { unit: 'business_day', value: 4 },
-    },
-  };
-} else {
-  selectedShippingRate = {
-    type: 'fixed_amount',
-    fixed_amount: { amount: 599, currency: 'usd' }, // $5.99 standard
-    display_name: 'Standard US Shipping (3–5 days)',
-    delivery_estimate: {
-      minimum: { unit: 'business_day', value: 3 },
-      maximum: { unit: 'business_day', value: 5 },
-    },
-  };
-}
+    // Dynamically determine shipping rate
+    let shippingOption;
+    if (address?.country !== 'US') {
+      shippingOption = {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: 1599, currency: 'usd' },
+          display_name: 'International Shipping (7–14 days)',
+          delivery_estimate: {
+            minimum: { unit: 'business_day', value: 7 },
+            maximum: { unit: 'business_day', value: 14 }
+          }
+        }
+      };
+    } else if (['HI', 'AK'].includes(address?.state?.toUpperCase())) {
+      shippingOption = {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: 899, currency: 'usd' },
+          display_name: 'US Extended Shipping (5–7 days)',
+          delivery_estimate: {
+            minimum: { unit: 'business_day', value: 5 },
+            maximum: { unit: 'business_day', value: 7 }
+          }
+        }
+      };
+    } else {
+      shippingOption = {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: 599, currency: 'usd' },
+          display_name: 'Standard Shipping (3–5 days)',
+          delivery_estimate: {
+            minimum: { unit: 'business_day', value: 3 },
+            maximum: { unit: 'business_day', value: 5 }
+          }
+        }
+      };
+    }
 
-
-    // ✅ Create Stripe Checkout session
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        mode: 'payment',
-        line_items,
-        customer_email: customerEmail,
-
-        shipping_address_collection: {
-          allowed_countries: ['US', 'CA'],
-        },
-
-        shipping_options: [selectedShippingRate],
-
-        metadata: {
-          items: JSON.stringify(itemsWithTitles),
-        },
-
-        success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
-        automatic_tax: { enabled: true }
-      });
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items,
+      customer_email: customerEmail,
+      shipping_address_collection: {
+        allowed_countries: ['US', 'CA']
+      },
+      shipping_options: [shippingOption],
+      metadata: {
+        items: JSON.stringify(itemsWithTitles)
+      },
+      success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
+      automatic_tax: { enabled: true }
+    });
 
     res.json({ id: session.id });
-
   } catch (err) {
-    console.error('❌ Error creating checkout session:', err.message);
+    console.error('❌ Stripe Session Error:', err.message);
     res.status(500).json({ error: 'Checkout failed' });
   }
 });
