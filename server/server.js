@@ -561,6 +561,10 @@ app.get('/api/session/:id', async (req, res) => {
       expand: ['customer_details', 'shipping_cost.shipping_rate']
     });
 
+    if (session.status !== 'complete') {
+      return res.status(400).json({ error: 'Session is not completed.' });
+    }
+
     let shippingMethod = 'No shipping selected';
     if (session.shipping_cost?.shipping_rate?.display_name) {
       shippingMethod = session.shipping_cost.shipping_rate.display_name;
