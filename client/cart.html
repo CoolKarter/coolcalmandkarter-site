@@ -283,27 +283,7 @@
 </table>
     <p class="total">Total: $<span id="totalAmount">0.00</span></p>
 
-    <form id="checkoutForm" class="checkout-form">
-
-    <h3>Shipping Address</h3>
-    <div>
-      <label>Country:</label>
-      <input type="text" id="country" value="US" required>
-    </div>
-    <div>
-      <label>State:</label>
-      <input type="text" id="state" required>
-    </div>
-    <div>
-      <label>Postal Code:</label>
-      <input type="text" id="postal" required>
-    </div>
-    <div id="shipping-cost-display" style="margin-top: 10px; font-weight: bold;">
-      Estimated Shipping: $0.00
-    </div>
-    <div id="total-cost-display" style="margin-top: 10px; font-weight: bold;">
-      Total (with Shipping): $0.00
-    </div>      
+    <form id="checkoutForm" class="checkout-form">   
 
 
       <h2 class="checkout-title">Checkout</h2>
@@ -501,63 +481,6 @@
 
     updateCartDisplay();
   </script>
-
-  <script>
-  function calculateSubtotal() {
-    let subtotal = 0;
-    for (const book in cart) {
-      if (prices[book]) {
-        subtotal += prices[book] * cart[book];
-      }
-    }
-    return subtotal;
-  }
-
-  async function calculateShippingAndTotal() {
-    const country = document.getElementById('country').value;
-    const state = document.getElementById('state').value;
-    const postal_code = document.getElementById('postal').value;
-
-    const address = { country, state, postal_code };
-
-    try {
-      const res = await fetch('https://coolcalmandkarter-site.onrender.com/calculate-shipping', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address })
-      });
-
-      const data = await res.json();
-
-      if (data.shippingCost != null) {
-        const shipping = data.shippingCost;
-        document.getElementById('shipping-cost-display').textContent =
-          `Estimated Shipping: $${(shipping / 100).toFixed(2)}`;
-
-        const subtotal = calculateSubtotal();
-        const totalWithShipping = subtotal + shipping;
-        document.getElementById('total-cost-display').textContent =
-          `Total (with Shipping): $${(totalWithShipping / 100).toFixed(2)}`;
-      }
-    } catch (err) {
-      console.error('Error calculating shipping:', err);
-    }
-  }
-
-<!-- Trigger redeploy for shipping fix -->
-
-
-  // Hook up change event listeners
-  document.getElementById('country').addEventListener('change', calculateShippingAndTotal);
-  document.getElementById('state').addEventListener('input', calculateShippingAndTotal);
-  document.getElementById('postal').addEventListener('input', calculateShippingAndTotal);
-
-  // Trigger it once when page loads
   
-  window.addEventListener('DOMContentLoaded', () => {
-    updateCartDisplay();
-    calculateShippingAndTotal();
-  });
-</script>
 </body>
 </html>

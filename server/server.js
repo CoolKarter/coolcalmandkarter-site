@@ -190,7 +190,6 @@ app.post('/create-checkout-session', async (req, res) => {
   try {
     const items = req.body.items;
     const customerEmail = req.body.customerEmail;
-    const address = req.body.address;
 
     if (!Array.isArray(items) || items.length === 0 || !customerEmail) {
       return res.status(400).json({ error: 'Invalid input' });
@@ -207,58 +206,58 @@ app.post('/create-checkout-session', async (req, res) => {
       quantity: item.quantity
     }));
 
-    // Dynamically determine shipping rate
-    let shippingOption;
-    if (address?.country !== 'US') {
-      shippingOption = {
-        shipping_rate_data: {
-          type: 'fixed_amount',
-          fixed_amount: { amount: 1599, currency: 'usd' },
-          display_name: 'International Shipping (7–14 days)',
-          delivery_estimate: {
-            minimum: { unit: 'business_day', value: 7 },
-            maximum: { unit: 'business_day', value: 14 }
-          }
-        }
-      };
-    } else if (['HI', 'AK'].includes(address?.state?.toUpperCase())) {
-      shippingOption = {
-        shipping_rate_data: {
-          type: 'fixed_amount',
-          fixed_amount: { amount: 899, currency: 'usd' },
-          display_name: 'US Extended Shipping (5–7 days)',
-          delivery_estimate: {
-            minimum: { unit: 'business_day', value: 5 },
-            maximum: { unit: 'business_day', value: 7 }
-          }
-        }
-      };
-    } else {
-      shippingOption = {
-        shipping_rate_data: {
-          type: 'fixed_amount',
-          fixed_amount: { amount: 599, currency: 'usd' },
-          display_name: 'Standard Shipping (3–5 days)',
-          delivery_estimate: {
-            minimum: { unit: 'business_day', value: 3 },
-            maximum: { unit: 'business_day', value: 5 }
-          }
-        }
-      };
-    }
-
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
       line_items,
       customer_email: customerEmail,
+
+      // ✅ Let Stripe collect the shipping address
       shipping_address_collection: {
-        allowed_countries: ['US', 'CA']
+        allowed_countries: ['US', 'CA'],
       },
-      shipping_options: [shippingOption],
+
+      // ✅ Add multiple shipping options
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 599, currency: 'usd' },
+            display_name: 'Standard Shipping (3–5 days)',
+            delivery_estimate: {
+              minimum: { unit: 'business_day', value: 3 },
+              maximum: { unit: 'business_day', value: 5 },
+            },
+          },
+        },
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 899, currency: 'usd' },
+            display_name: 'US Extended Shipping (5–7 days)',
+            delivery_estimate: {
+              minimum: { unit: 'business_day', value: 5 },
+              maximum: { unit: 'business_day', value: 7 },
+            },
+          },
+        },
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 1599, currency: 'usd' },
+            display_name: 'International Shipping (7–14 days)',
+            delivery_estimate: {
+              minimum: { unit: 'business_day', value: 7 },
+              maximum: { unit: 'business_day', value: 14 },
+            },
+          },
+        },
+      ],
+
       metadata: {
-        items: JSON.stringify(itemsWithTitles)
+        items: JSON.stringify(itemsWithTitles),
       },
+
       success_url: 'https://coolcalmandkarter.netlify.app/success.html?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://coolcalmandkarter.netlify.app/cancel.html',
       automatic_tax: { enabled: true }
@@ -266,7 +265,7 @@ app.post('/create-checkout-session', async (req, res) => {
 
     res.json({ id: session.id });
   } catch (err) {
-    console.error('❌ Stripe Session Error:', err.message);
+    console.error('❌ Error creating checkout session:', err.message);
     res.status(500).json({ error: 'Checkout failed' });
   }
 });
