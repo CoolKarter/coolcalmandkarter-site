@@ -122,7 +122,7 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     } catch (err) {
       console.error('❌ Error saving order:', err);
     }
-
+    
     console.log('📧 Sending customer confirmation email...');
     sendConfirmationEmail(customerEmail, customerName, bookTitleSummary, amount, shipping, shippingMethod);
 
@@ -348,6 +348,14 @@ app.post('/api/newsletter', async (req, res) => {
       }
     });
 
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('❌ Email sending failed:', error);
+      } else {
+        console.log('✅ Email sent:', info.response);
+      }
+    });    
+
     await transporter.sendMail({
       from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
       to: email,
@@ -569,15 +577,7 @@ app.get('/api/session/:id', async (req, res) => {
       return res.status(400).json({ error: 'Session is not completed.' });
     }
 
-    let shippingMethod = 'No shipping selected';
-    if (session.shipping_cost?.shipping_rate) {
-      try {
-        const shippingRateObj = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
-        shippingMethod = shippingRateObj.display_name || 'No shipping selected';
-      } catch (err) {
-        console.error('❌ Failed to retrieve shipping rate from Stripe:', err.message);
-      }
-    }
+    let shippingMethod = session.shipping_cost?.shipping_rate?.display_name || 'No shipping selected';
 
     res.json({
       session_id: session.id,
@@ -585,7 +585,7 @@ app.get('/api/session/:id', async (req, res) => {
       customer_email: session.customer_details.email,
       customer_address: session.customer_details.address,
       amount_total: session.amount_total,
-      shipping_method: shippingMethod,
+      shipping_method: shippingMethod, // ✅ Must match this exact key
       items: session.metadata?.items ? JSON.parse(session.metadata.items) : []
     });
   } catch (err) {
