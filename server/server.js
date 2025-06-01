@@ -348,14 +348,6 @@ app.post('/api/newsletter', async (req, res) => {
       }
     });
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('❌ Email sending failed:', error);
-      } else {
-        console.log('✅ Email sent:', info.response);
-      }
-    });    
-
     await transporter.sendMail({
       from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
       to: email,
