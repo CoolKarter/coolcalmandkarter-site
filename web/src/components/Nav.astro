@@ -11,10 +11,10 @@ const links = [
   <a class="brand" href="/">Cool, Calm &amp; Karter</a>
   <nav aria-label="Primary">
     {links.map((link) => <a href={link.href}>{link.label}</a>)}
-    <a class="cart-link" href="/cart" aria-label="View cart">
+    <span class="cart-link" aria-disabled="true" aria-label="Cart — setup in progress">
       <span aria-hidden="true">🛒</span>
       <span class="cart-count" id="cart-count">0</span>
-    </a>
+    </span>
   </nav>
 </header>
 
@@ -60,6 +60,8 @@ const links = [
     position: relative;
     display: inline-flex;
     align-items: center;
+    opacity: 0.55;
+    cursor: not-allowed;
   }
 
   .cart-count {

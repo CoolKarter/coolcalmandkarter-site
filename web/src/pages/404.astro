@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Page Not Found — Cool, Calm & Karter"
+  description="The page you're looking for couldn't be found."
+>
+  <section class="not-found" aria-labelledby="not-found-heading">
+    <p class="brand-mark">Cool, Calm &amp; Karter</p>
+    <h1 id="not-found-heading">Oops! Page Not Found</h1>
+    <p>Looks like you took a wrong turn. Let’s head back to where the magic happens.</p>
+    <div class="not-found-links">
+      <a class="home-button" href="/">← Back to Home</a>
+      <a class="shop-link" href="/shop">Browse the Shop</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .not-found {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 1.5rem;
+  }
+
+  .brand-mark {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-navy);
+    margin: 0 0 1rem;
+  }
+
+  .not-found h1 {
+    font-family: var(--font-display);
+    color: var(--color-coral);
+    font-size: 2.25rem;
+    margin: 0 0 1rem;
+  }
+
+  .not-found p {
+    font-size: 1.1rem;
+    max-width: 420px;
+    margin: 0 0 2rem;
+  }
+
+  .not-found-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .home-button {
+    background-color: var(--color-coral);
+    color: white;
+    padding: 0.75rem 1.8rem;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+  }
+
+  .home-button:hover,
+  .home-button:focus-visible {
+    background-color: #d94c36;
+  }
+
+  .shop-link {
+    color: var(--color-navy);
+    font-weight: 700;
+    text-decoration: underline;
+    padding: 0.75rem 0.5rem;
+  }
+</style>

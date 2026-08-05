@@ -3,6 +3,8 @@
 .env.*
 *.env
 Server/.env
+# ...except committed templates, which document required vars with no real values
+!**/.env.example
 
 # Dependencies
 node_modules/
