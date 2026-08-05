@@ -1,0 +1,20 @@
+# Environment variables / secrets
+.env
+.env.*
+*.env
+Server/.env
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.astro/
+.netlify/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+    h1 {
+      margin-bottom: 1rem;
+    }
+    .section {
+      margin-bottom: 3rem;
+    }
+    .search-bar {
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    .actions {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Dashboard</h1>
+
+  <div class="section">
+    <h2>Orders</h2>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search by email or book title..." size="40" />
+      <button onclick="fetchOrders()">Search</button>
+      <button onclick="exportCSV()">Export Orders</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Book Title</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th>Shipping Address</th>
+          <th>Shipping Method</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Newsletter Signups</h2>
+    <button onclick="fetchNewsletter()">Refresh</button>
+    <button onclick="exportNewsletter()">Export Emails</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="newsletterTableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const credentials = localStorage.getItem('adminAuth');
+
+    function fetchOrders() {
+      const search = document.getElementById('searchInput').value.trim();
+      let query = '';
+
+      if (search.includes('@')) query = `?email=${encodeURIComponent(search)}`;
+      else if (search) query = `?bookTitle=${encodeURIComponent(search)}`;
+
+      fetch(`https://coolcalmandkarter-site.onrender.com/api/orders${query}`, {
+        headers: {
+          'Authorization': `Basic ${credentials}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('ordersTableBody');
+          tbody.innerHTML = '';
+          data.forEach(order => {
+            const row = document.createElement('tr');
+            const addr = order.address || {};
+            const shipping = `
+              ${addr.line1 || ''}<br>
+              ${addr.line2 ? addr.line2 + '<br>' : ''}
+              ${addr.city || ''}, ${addr.state || ''} ${addr.postal_code || ''}<br>
+              ${addr.country || ''}
+            `;
+
+            row.innerHTML = `
+              <td>${order.name}</td>
+              <td>${order.email}</td>
+              <td>${order.bookTitle}</td>
+              <td>$${(order.amount / 100).toFixed(2)}</td>
+              <td>${new Date(order.date).toLocaleString()}</td>
+              <td>${shipping}</td>
+              <td>${order.shippingMethod || 'N/A'}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        })
+        .catch(err => {
+          alert('Unable to fetch orders.');
+          console.error(err);
+        });
+    }
+
+    function exportCSV() {
+      const search = document.getElementById('searchInput').value.trim();
+      let query = '';
+
+      if (search.includes('@')) query = `?email=${encodeURIComponent(search)}`;
+      else if (search) query = `?bookTitle=${encodeURIComponent(search)}`;
+
+      const link = document.createElement('a');
+      link.href = `https://coolcalmandkarter-site.onrender.com/api/orders/export${query}`;
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener noreferrer');
+
+      fetch(link.href, {
+        headers: {
+          'Authorization': `Basic ${credentials}`
+        }
+      })
+      .then(res => res.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'orders.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      })
+      .catch(err => {
+        alert('Failed to export orders');
+        console.error(err);
+      });
+    }
+
+    function fetchNewsletter() {
+      fetch(`https://coolcalmandkarter-site.onrender.com/api/newsletter`, {
+        headers: {
+          'Authorization': `Basic ${credentials}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('newsletterTableBody');
+          tbody.innerHTML = '';
+          data.forEach(entry => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${entry.email}</td>
+              <td>${new Date(entry.date).toLocaleString()}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        })
+        .catch(err => {
+          alert('Unable to fetch newsletter emails.');
+          console.error(err);
+        });
+    }
+
+    function exportNewsletter() {
+      fetch(`https://coolcalmandkarter-site.onrender.com/api/newsletter/export`, {
+        headers: {
+          'Authorization': `Basic ${credentials}`
+        }
+      })
+      .then(res => res.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'newsletter.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      })
+      .catch(err => {
+        alert('Failed to export newsletter');
+        console.error(err);
+      });
+    }
+
+    // Auto-load data
+    fetchOrders();
+    fetchNewsletter();
+  </script>
+</body>
+</html>

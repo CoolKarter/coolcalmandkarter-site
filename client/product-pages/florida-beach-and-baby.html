@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Florida, Beach & Baby - Cool, Calm & Karter</title>
+  <link rel="icon" href="../images/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    body {
+      font-family: 'Baloo 2', cursive;
+      margin: 0;
+      background-color: #efe1c6;
+      color: #333;
+      text-align: center;
+    }
+    header {
+      padding: 2rem 1rem 0;
+    }
+    .logo {
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
+    }
+    .navbar-horizontal {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+    }
+
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    .cart-icon::before {
+      content: "\1F6D2";
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: #f46045;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem;
+    }
+    .book-detail {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      margin: auto;
+    }
+    .book-cover {
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #195569;
+    }
+    .details {
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      color: #555;
+    }
+    p.description {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    .price {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin: 1rem 0;
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 1rem;
+      background-color: #f46045;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #d94c36;
+    }
+    footer {
+      background-color: #195569;
+      color: white;
+      padding: 2rem;
+      font-size: 0.9rem;
+      font-family: 'Nunito', sans-serif;
+      margin-top: 3rem;
+    }
+    footer .footer-links {
+      margin-bottom: 1rem;
+    }
+    footer a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ✅ Toast styling */
+    #toast {
+      display: none; /* ✨ Key: initially hidden */
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #f46045;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      font-size: 1rem;
+    }
+
+    #toast.show {
+      display: block; /* ✨ Key: now visible when shown */
+    }
+  </style>
+</head>
+<body>
+  <header class="logo-wrapper">
+    <img src="../images/coolcalm-logo-transparent.png" alt="Cool, Calm & Karter Logo" class="logo" />
+  </header>
+
+  <nav class="navbar-horizontal">
+    <a href="../index.html">Home</a>
+    <a href="../shop.html">Shop</a>
+    <a href="../about.html">About</a>
+    <a href="../contact.html">Contact</a>
+    <a href="../cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav><!-- Force save to trigger Git -->
+
+  <div class="container">
+    <div class="book-detail">
+      <img src="../images/florida-beach-and-baby-cover.png" alt="Florida, Beach & Baby Cover" class="book-cover" />
+      <h1>Florida, Beach & Baby</h1>
+      <div class="details">Published: March 5, 2024 · ★★★★★ 5.0 Rating</div>
+      <p class="description">
+        "Florida, Beach & Baby" is a sunny, joyful story that captures the magic of a day at the beach. Perfect for toddlers and young readers, this beautifully illustrated book follows Baby’s beachside adventures through sandcastles, seashells, waves, and wonder. It's a celebration of nature, fun, and family bonding in a coastal paradise.
+      </p>
+
+      <!-- ⭐⭐ Updated Review Section ⭐⭐ -->
+      <div class="review-section" style="margin: 1.5rem 0;">
+        <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+        <p style="font-style: italic; margin-top: 0.5rem; font-size: 0.95rem; color: #555;">
+          “My child loves this book! The pictures are beautiful and the story is so warm and happy.”
+        </p>
+          <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+        <p style="font-style: italic; font-size: 0.95rem; color: #555;">“Bought this book for the illustration at first, but when I read it to my twins I absolutely LOVED IT!! They even loved it. They wanted me to read it to them the next day! I highly recommend this cute book. Your babies will love it as much as mine.” – M.A.V.</p>
+
+        <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+        <p style="font-style: italic; font-size: 0.95rem; color: #555;">“The illustrations are top quality. I definitely recommend this book to read to your child/grandchild or give as a gift. Job well done to this author/father!” – L.W.</p>
+
+        <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+        <p style="font-style: italic; font-size: 0.95rem; color: #555;">“My niece lives in Florida, loves the beach, and is a baby. I purchased this book for her and she can’t get enough of it.” – M.D.</p>
+
+        <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+        <p style="font-style: italic; font-size: 0.95rem; color: #555;">“Bought this for my nephew and he lovessssss it! Plus we were able to print out our beach day photos and put them in there too.” – A.</p>
+      </div>
+      <div class="price">$9.99</div>
+      <div class="buttons">
+        <button onclick="addToCart('Florida, Beach & Baby', 999)">Add to Cart</button>
+        <button onclick="buyNow('Florida, Beach & Baby', 999)">Buy Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Toast message -->
+  <div id="toast"></div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="../shop.html">Shop</a>
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+    <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
+  </footer>
+
+  <script>
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function addToCart(bookTitle, price) {
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      cart[bookTitle] = (cart[bookTitle] || 0) + 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      showToast(`✅ "${bookTitle}" added to cart`);
+      updateCartCount();
+    }
+
+    function buyNow(bookTitle, price) {
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      cart[bookTitle] = (cart[bookTitle] || 0) + 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.location.href = '../cart.html';
+    }
+
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      let count = 0;
+      for (const book in cart) {
+        count += cart[book];
+      }
+      document.getElementById('cartCount').textContent = count;
+    }
+
+    updateCartCount();
+  </script>
+</body>
+</html>

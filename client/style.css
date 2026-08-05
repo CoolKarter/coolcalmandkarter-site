@@ -1,0 +1,358 @@
+/* Base styles */
+body {
+  font-family: 'Nunito', sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #002d3d;
+  text-align: center;
+  background-color: #efe1c6;
+  background-image: url('images/hero-background.png'); /* ✅ Use your full-height image */
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: top center;
+  background-attachment: fixed;
+}
+
+
+header.logo-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  position: relative;
+  z-index: 1; /* keeps it above background */
+}
+.boxed-section {
+  position: relative;
+  z-index: 0;
+  margin: 2rem auto;
+  padding: 2rem 1rem;
+  max-width: 1100px; /* 👈 tighten width */
+  width: 90%;
+}
+
+.section-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #fffaf0; /* or transparent if needed */
+  border: 3px solid #f4c27e;
+  border-radius: 30px;
+  z-index: -1;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.logo {
+  max-width: 600px;
+  max-height: 380px; /* 👈 limit height */
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 1.25rem;
+  object-fit: contain; /* Ensures image scales proportionally */
+}
+
+.tagline {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #195569;
+  margin: 1rem 0;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Wrapper to hold all layered backgrounds */
+.background-wrapper {
+  position: relative;
+  overflow: visible;
+  padding-top: 0;
+}
+
+/* Navigation styles */
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+nav a {
+  color: #002d3d;
+  text-decoration: none;
+  padding: 0.3rem 0.5rem;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* Cart icon styles */
+.cart-icon {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.cart-icon::before {
+  content: "🛒";
+  font-size: 24px;
+}
+
+.badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #f46045;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+
+
+#customer-slideshow-container {
+  text-align: center;
+  padding: 40px 0;
+  background-color: transparent; /* ✅ Remove background */
+}
+
+.slideshow-heading {
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #195569;
+}
+
+.slideshow-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;       /* ⬅️ Increased size */
+  height: auto;
+  aspect-ratio: 4 / 5;    /* ⬅️ Taller than square for full portraits */
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  background-color: white;
+  position: relative;
+}
+
+.slideshow-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  object-fit: contain;
+  position: absolute;
+}
+
+.slideshow-image.active {
+  opacity: 1;
+}
+
+/* CTA Button */
+button.shop-now {
+  background-color: #f46045;
+  color: white;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 0; /* removes gap above nav */
+
+}
+
+button.shop-now:hover {
+  background-color: #d94c36;
+}
+
+/* Book detail image */
+.book-cover {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin: 0 auto 1rem;
+  display: block;
+}
+
+/* Book buttons */
+.book-buttons {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.book-buttons button {
+  width: 100%;
+}
+
+.books picture {
+  width: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 1rem;
+}
+
+.books img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.featured-book {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+} 
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background-color: #195569;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  max-width: 90%;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  display: none;
+  z-index: 1000;
+}
+
+/* Shop grid mobile optimization */
+@media (max-width: 600px) {
+  .container {
+    padding: 1rem;
+    grid-template-columns: 1fr;
+  }
+
+  .book {
+    padding: 1rem;
+  }
+
+  button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  nav {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .cart-icon {
+    margin-top: 5px;
+  }
+}
+
+@media (min-width: 600px) {
+  nav {
+    flex-direction: row;
+  }
+  .book-buttons button {
+    max-width: 250px;
+  }
+}
+
+/* Mobile cart page fix */
+@media screen and (max-width: 600px) {
+  .cart-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .cart-table thead {
+    display: none;
+  }
+
+  .cart-table tr {
+    display: block;
+    margin-bottom: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 1rem;
+  }
+
+  .cart-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    padding: 0.5rem 0;
+  }
+
+  .cart-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: #195569;
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+  }
+
+  .cart-item-img {
+    max-width: 90px;
+    height: auto;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .quantity-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .remove-button {
+    width: 100%;
+    margin-top: 0.75rem;
+    background-color: #f46045;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+}
+
+  .remove-button:hover {
+    background-color: #d94c36;
+  }
+
+.checkout-form {
+  max-width: 400px;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.checkout-form input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+}

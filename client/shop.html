@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shop - Cool, Calm & Karter</title>
+  <link rel="icon" href="/images/favicon.ico" type="image/x-icon"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Baloo 2', cursive;
+      margin: 0;
+      background-color: #efe1c6;
+      color: #333;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem 0;
+    }
+    .logo {
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
+    }
+    .navbar-horizontal {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+    }
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    .cart-icon::before {
+      content: "\1F6D2";
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: #f46045;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .book {
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .book img {
+      width: 100%;
+      max-width: 200px;
+      height: auto;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .book h2 {
+      font-size: 1.25rem;
+      color: #195569;
+      margin: 0.5rem 0;
+    }
+    .price {
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+    .book-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 1rem;
+      background-color: #f46045;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #d94c36;
+    }
+    #toast {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #195569;
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      font-weight: bold;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <header class="logo-wrapper">
+    <img src="/images/coolcalm-logo-transparent.png" alt="Cool, Calm & Karter Logo" class="logo"/>
+  </header>
+
+  <nav class="navbar-horizontal">
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav>
+
+  <div class="container">
+    <div class="book">
+      <a href="product-pages/florida-beach-and-baby.html">
+        <img src="/images/florida-beach-and-baby-cover.png" alt="Florida, Beach & Baby">
+      </a>
+      <h2>Florida, Beach & Baby</h2>
+      <div class="price">$9.99</div>
+      <div class="book-buttons">
+        <button onclick="window.location.href='product-pages/florida-beach-and-baby.html'">View Details</button>
+        <button onclick="addToCart('Florida, Beach & Baby')">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="book">
+      <a href="product-pages/black-beautiful-and-baby.html">
+        <img src="/images/black-beautiful-baby-cover.png" alt="Black, Beautiful & Baby">
+      </a>
+      <h2>Black, Beautiful & Baby</h2>
+      <div class="price">$9.99</div>
+      <div class="book-buttons">
+        <button onclick="window.location.href='product-pages/black-beautiful-and-baby.html'">View Details</button>
+        <button onclick="addToCart('Black, Beautiful & Baby')">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="book">
+      <a href="product-pages/black-puerto-rican-and-baby.html">
+        <img src="/images/black-puertorican-and-baby-cover.png" alt="Black, Puerto Rican & Baby">
+      </a>
+      <h2>Black, Puerto Rican & Baby</h2>
+      <div class="price">$9.99</div>
+      <div class="book-buttons">
+        <button onclick="window.location.href='product-pages/black-puerto-rican-and-baby.html'">View Details</button>
+        <button onclick="addToCart('Black, Puerto Rican & Baby')">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="book">
+      <a href="product-pages/adventure-fun-and-baby.html">
+        <img src="/images/adventure-fun-and-baby-cover.png" alt="Adventure, Fun & Baby">
+      </a>
+      <h2>Adventure, Fun & Baby</h2>
+      <div class="price">$9.99</div>
+      <div class="book-buttons">
+        <button onclick="window.location.href='product-pages/adventure-fun-and-baby.html'">View Details</button>
+        <button onclick="addToCart('Adventure, Fun & Baby')">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="book">
+      <a href="product-pages/go-to-sleep-karter.html">
+        <img src="/images/go-to-sleep-karter-cover.png" alt="Go To Sleep, Karter!">
+      </a>
+      <h2>Go To Sleep, Karter!</h2>
+      <div class="price">$9.99</div>
+      <div class="book-buttons">
+        <button onclick="window.location.href='product-pages/go-to-sleep-karter.html'">View Details</button>
+        <button onclick="addToCart('Go To Sleep, Karter!')">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="#">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+    <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
+  </footer>
+  
+  <script>
+    const prices = {
+      "Florida, Beach & Baby": 999,
+      "Black, Beautiful & Baby": 999,
+      "Black, Puerto Rican & Baby": 999,
+      "Adventure, Fun & Baby": 999,
+      "Go To Sleep, Karter!": 999
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2500);
+    }
+
+    function addToCart(title) {
+      const price = prices[title];
+      const cart = JSON.parse(localStorage.getItem('cart')) || {};
+      cart[title] = (cart[title] || 0) + 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartCount();
+      showToast(`✅ "${title}" added to cart`);
+    }
+
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart')) || {};
+      let count = 0;
+      for (const book in cart) {
+        count += cart[book];
+      }
+      document.getElementById('cartCount').textContent = count;
+    }
+
+    updateCartCount();
+  </script>
+</body>
+</html>

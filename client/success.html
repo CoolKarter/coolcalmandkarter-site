@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thank You - Cool, Calm & Karter</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Baloo 2', cursive;
+      background-color: #efe1c6;
+      margin: 0;
+      padding: 0;
+      color: #195569;
+      text-align: center;
+    }
+    header {
+      padding: 2rem 1rem 0;
+    }
+    .logo {
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
+    }
+    .navbar-horizontal {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+    }
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .cart-icon {
+      position: relative;
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    .cart-icon::before {
+      content: "\1F6D2";
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: #f46045;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 700px;
+      margin: 2rem auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .checkmark {
+      font-size: 64px;
+      color: #4CAF50;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2rem;
+      color: #f46045;
+      margin-bottom: 1rem;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 1rem;
+    }
+    ul li {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .email, .summary-info {
+      font-size: 1rem;
+      color: #195569;
+      font-style: italic;
+      margin-bottom: 0.75rem;
+    }
+    .button {
+      display: inline-block;
+      background-color: #f46045;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 0.75rem 2rem;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    .button:hover {
+      background-color: #d94c36;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/images/coolcalm-logo-transparent.png" alt="Cool, Calm & Karter Logo" class="logo" />
+  </header>
+
+  <nav class="navbar-horizontal">
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="cart-icon"><span class="badge" id="cartCount">0</span></a>
+  </nav>
+
+  <div class="container">
+    <div class="checkmark">✔</div>
+    <h1>Thank you, your order has been placed!</h1>
+    <p>Here’s a summary of your order:</p>
+    <ul id="itemList"></ul>
+    <p class="summary-info" id="nameDisplay"></p>
+    <p class="summary-info" id="emailDisplay"></p>
+    <p class="summary-info" id="addressDisplay"></p>
+    <p class="summary-info" id="shippingMethodDisplay"></p>
+    <p class="summary-info" id="amountDisplay"></p>
+    <p class="summary-info" id="sessionDisplay"></p>
+    <a href="shop.html" class="button">← Browse More Books</a>
+  </div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="#">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+    <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
+  </footer>
+  
+    <script>
+    localStorage.removeItem('cart');
+    document.getElementById('cartCount').textContent = '0';
+
+    async function loadSessionDetails() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+
+      const itemList = document.getElementById('itemList');
+      const nameDisplay = document.getElementById('nameDisplay');
+      const emailDisplay = document.getElementById('emailDisplay');
+      const addressDisplay = document.getElementById('addressDisplay');
+      const amountDisplay = document.getElementById('amountDisplay');
+      const sessionDisplay = document.getElementById('sessionDisplay');
+
+      if (!sessionId) {
+        itemList.innerHTML = '<li>We couldn’t find your order. Please check your email for confirmation or contact us.</li>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://coolcalmandkarter-site.onrender.com/api/session/${sessionId}`);
+        if (!res.ok) throw new Error('Session expired or invalid');
+        const data = await res.json();
+        console.log('✅ Full session data:', data)
+
+        // ✅ Book list
+        itemList.innerHTML = '';
+      if (Array.isArray(data.items)) {
+        console.log('✅ Loaded items:', data.items);
+
+        data.items.forEach((item, index) => {
+          const title = item.title || item.name || 'Untitled';
+          const quantity = item.quantity || 1;
+
+          const li = document.createElement('li');
+          li.textContent = `${title} × ${quantity}`;
+          itemList.appendChild(li);
+
+          // Optional: debug log each item
+          console.log(`🛒 Item ${index + 1}:`, item);
+        });
+      } else {
+        itemList.innerHTML = '<li>Could not load book titles.</li>';
+      }
+
+        // ✅ Customer info
+        nameDisplay.textContent = `Name: ${data.customer_name || 'N/A'}`;
+        emailDisplay.textContent = `Email: ${data.customer_email || 'N/A'}`;
+        amountDisplay.textContent = `Total Paid: $${(data.amount_total / 100).toFixed(2)}`;
+        sessionDisplay.textContent = `Session ID: ${sessionId}`;
+
+        // ✅ Shipping address
+        const addr = data.customer_address || {};
+        let addressHtml = 'Shipping Address:<br>';
+        if (addr.line1) addressHtml += `${addr.line1}<br>`;
+        if (addr.line2) addressHtml += `${addr.line2}<br>`;
+        if (addr.city || addr.state || addr.postal_code)
+          addressHtml += `${addr.city || ''}, ${addr.state || ''} ${addr.postal_code || ''}<br>`;
+        if (addr.country) addressHtml += `${addr.country}`;
+
+        addressDisplay.innerHTML = addressHtml;
+
+        // ✅ Shipping method
+        const shippingMethod = data.shipping_method || 'Not available';
+        console.log('📦 Shipping Method received:', shippingMethod);
+        document.getElementById('shippingMethodDisplay').textContent = `Shipping Method: ${shippingMethod}`;        
+
+      } catch (err) {
+        console.error('❌ Error loading session:', err);
+        itemList.innerHTML = '<li>We couldn’t load your order details. Please check your email for confirmation.</li>';
+        emailDisplay.textContent = '';
+      }
+    }
+
+    loadSessionDetails();
+  </script>
+</body>
+</html>

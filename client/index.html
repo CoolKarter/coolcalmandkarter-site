@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+
+  <!-- SEO Metadata -->
+  <meta name="description" content="Cool, Calm & Karter creates beautifully diverse children’s books filled with culture, joy, and love." />
+  <meta name="keywords" content="children's books, diverse books, kids books, baby books, bedtime stories" />
+  <meta name="author" content="Cool, Calm & Karter" />
+  <meta property="og:title" content="Cool, Calm & Karter | Books That Feel Like Home" />
+  <meta property="og:description" content="Explore beautifully illustrated, inclusive stories your child will love." />
+  <meta property="og:image" content="https://coolcalmandkarter.netlify.app/images/coolcalm-logo.png" />
+  <meta property="og:url" content="https://coolcalmandkarter.netlify.app" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <meta charset="UTF-8" />
+  <title>Cool, Calm & Karter</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Baloo 2', cursive;
+      background-color: #efe1c6;
+      color: #195569;
+      text-align: center;
+    }
+    header {
+      padding: 2rem 1rem 0rem;
+    }
+    .logo {
+      max-width: 450px;
+      display: block;
+      margin: 0 auto 1.25rem;
+    }
+    .tagline {
+      margin: 0.5rem auto 1.5rem;
+      font-size: 1.25rem;
+      font-weight: bold;
+      max-width: 500px;
+      font-family: 'Nunito', sans-serif;
+    }
+    .shop-button {
+      background-color: #f46045;
+      color: white;
+      padding: 0.75rem 2.2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 0 auto 2rem;
+    }
+    .navbar-horizontal {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 2rem;
+    }
+    nav a {
+      color: #195569;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .cart-container {
+      position: relative;
+      display: inline-block;
+    }
+    .cart-container img {
+      width: 24px;
+      height: 24px;
+      vertical-align: middle;
+    }
+    .cart-count {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: red;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 50%;
+    }
+    .section-title {
+      margin-top: 2rem;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+    .books {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin: 2rem auto;
+      max-width: 90%;
+    }
+    .books picture {
+      width: 250px;
+      display: block;
+      margin: 0 auto;
+    }
+    .books img {
+      width: 100%;
+      height: auto;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+    .view-all-button {
+      background-color: #195569;
+      color: white;
+      padding: 0.6rem 1.6rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      cursor: pointer;
+    }
+    .divider {
+      width: 60px;
+      height: 4px;
+      background-color: #f46045;
+      margin: 2rem auto;
+      border-radius: 2px;
+    }
+    .newsletter {
+      background-color: #ffffff;
+      padding: 2rem;
+      max-width: 500px;
+      margin: 2rem auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+    .newsletter h3 {
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+    .newsletter input[type="email"] {
+      padding: 0.5rem;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .newsletter button {
+      background-color: #f46045;
+      color: white;
+      padding: 0.5rem 1.2rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .thank-you-message {
+      margin-top: 1rem;
+      color: green;
+      font-weight: bold;
+      display: none;
+    }
+    footer {
+      background-color: #195569;
+      color: white;
+      padding: 2rem;
+      font-size: 0.9rem;
+      font-family: 'Nunito', sans-serif;
+    }
+    footer .footer-links {
+      margin-bottom: 1rem;
+    }
+    footer a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+    .featured-book {
+      text-align: left;
+      background: white;
+      padding: 2.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 200px;
+    }
+    .featured-book h4 {
+      margin: 0.2rem 0;
+      font-size: 1rem;
+    }
+    .featured-book p {
+      font-size: 0.9rem;
+      color: #555;
+    }
+    @media screen and (max-width: 600px) {
+      .shop-button {
+        display: none;
+      }
+    }
+
+    .homepage-intro {
+      text-align: center;
+      margin-top: -1.5rem; /* Pull it closer to the logo if needed */
+    }
+
+    @media screen and (max-width: 600px) {
+      .shop-button {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="background-wrapper">
+    
+      <header class="logo-wrapper">
+        <img src="images/coolcalm-logo-transparent.webp" alt="Cool, Calm & Karter Logo" class="logo" />
+        <p class="tagline">Books That Feel Like Home.</p>
+        <button class="shop-now" onclick="window.location.href='shop.html'">Shop Now</button>
+      </header>
+
+  <nav class="navbar-horizontal">
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="about.html">About the Author</a>
+    <a href="#">Contact</a>
+    <a href="cart.html" class="cart-container">
+      <img src="images/cart-icon.webp" alt="Cart Icon" loading="lazy">
+      <span class="cart-count" id="cart-count">0</span>
+    </a>
+  </nav>
+
+  <div class="divider"></div>
+  <section class="boxed-section">
+    <div class="section-box"></div>  
+    <h2 class="section-title">Featured Books</h2>
+    <div class="books">
+      <div class="featured-book">
+        <a href="product-pages/florida-beach-and-baby.html">
+          <picture>
+            <source srcset="images/florida-beach-and-baby-cover.webp" type="image/webp">
+            <img src="images/florida-beach-and-baby-cover.png" alt="Florida, Beach & Baby" loading="lazy">
+          </picture>
+        </a>
+        <h4>Florida, Beach & Baby</h4>
+        <p>A sunny adventure filled with waves, seashells, and joy.</p>
+      </div>
+
+      <div class="featured-book">
+        <a href="product-pages/black-beautiful-and-baby.html">
+          <picture>
+            <source srcset="images/black-beautiful-baby-cover.webp" type="image/webp">
+            <img src="images/black-beautiful-baby-cover.png" alt="Black, Beautiful & Baby" loading="lazy">
+          </picture>
+        </a>
+        <h4>Black, Beautiful & Baby</h4>
+        <p>Uplifting rhymes that celebrate Black joy and identity.</p>
+      </div>
+
+      <div class="featured-book">
+        <a href="product-pages/go-to-sleep-karter.html">
+          <picture>
+            <source srcset="images/go-to-sleep-karter-cover.webp" type="image/webp">
+            <img src="images/go-to-sleep-karter-cover.png" alt="Go To Sleep, Karter!" loading="lazy">
+          </picture>
+        </a>
+        <h4>Go To Sleep, Karter!</h4>
+        <p>A hilarious bedtime struggle every parent can relate to.</p>
+      </div>
+    </div>
+    <button class="view-all-button" onclick="window.location.href='shop.html'">View All Books</button>
+  </section>
+
+  <div class="divider"></div>
+  <!-- Customer Photo Slideshow -->
+  <section class="boxed-section" id="customer-slideshow-container">
+    <div class="section-box"></div>
+    <h2 class="slideshow-heading">Our Happy Readers 📸</h2>
+    <div class="slideshow-wrapper">
+      <img src="images/customer1.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer2.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer3.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer4.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer5.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer6.png" class="slideshow-image" alt="Customer with book">
+      <img src="images/customer7.png" class="slideshow-image" alt="Customer with book">
+    </div>
+  </section>
+
+  
+  <div class="divider"></div>
+  <!-- ✅ Reader Reviews Section -->
+<section class="boxed-section">
+  <div class="section-box"></div>
+  <h3 style="color: #195569;">What Readers Are Saying</h3>
+
+  <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+  <p style="font-style: italic; font-size: 0.95rem; color: #555;">
+    “My child loves this book! The pictures are beautiful and the story is so warm and happy.” – B.T.
+  </p>
+
+  <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+  <p style="font-style: italic; font-size: 0.95rem; color: #555;">
+    “Bought this book for the illustration at first, but when I read it to my twins I absolutely LOVED IT!! They even loved it. They wanted me to read it to them the next day! I highly recommend this cute book. Your babies will love it as much as mine.” – M.A.V.
+  </p>
+
+  <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+  <p style="font-style: italic; font-size: 0.95rem; color: #555;">
+    “I absolutely enjoyed reading this book! The illustrations are top quality. I definitely recommend this book to read to your child/grandchild or give as a gift to someone to read to a child/children. Job well done to this author/father! 👏” – L.W.
+  </p>
+
+  <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+  <p style="font-style: italic; font-size: 0.95rem; color: #555;">
+    “My niece lives in Florida, loves the beach, and is a baby. I purchased the book for her and I just spoke with my brother. He said she can’t get enough of it. He reads it to her each morning and at night for bedtime. 5 Stars” – M.D.
+  </p>
+
+  <div style="font-size: 1.5rem; color: #f4a261;">★★★★★</div>
+  <p style="font-style: italic; font-size: 0.95rem; color: #555;">
+    “Bought this for my nephew and he lovessssss it! Plus we were able to print out our beach day photos and put them in there too.” – A.
+  </p>
+</section>
+  <div class="divider"></div>
+  <section class="newsletter boxed-section">
+    <div class="section-box"></div>
+    <h3>Stay in the Loop!</h3>
+    <p>Sign up to hear about new books and special offers.</p>
+    <form id="newsletterForm">
+      <input type="email" id="newsletterEmail" placeholder="Your email address" required />
+      <br />
+      <button type="submit">Subscribe</button>
+      <p class="thank-you-message" id="thankYouMsg">🎉 Thank you for signing up! You’re officially part of the family.</p>
+    </form>
+  </section>
+
+  <footer>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="#">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+    <p>&copy; 2025 Cool, Calm & Karter. All rights reserved.</p>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // Update cart counter
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart')) || {};
+      let count = 0;
+      for (const item in cart) {
+        count += cart[item];
+      }
+      document.getElementById('cart-count').textContent = count;
+    }
+    updateCartCount();
+
+    // Newsletter form handler
+    document.getElementById('newsletterForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const email = document.getElementById('newsletterEmail').value;
+  const thankYou = document.getElementById('thankYouMsg');
+
+  // Basic email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    thankYou.textContent = "❌ Please enter a valid email address.";
+    thankYou.style.color = "red";
+    thankYou.style.display = "block";
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/newsletter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    if (res.ok) {
+      thankYou.textContent = "🎉 Thank you for signing up! You’re officially part of the family.";
+      thankYou.style.color = "green";
+    } else {
+      const result = await res.json();
+      thankYou.textContent = `❌ ${result.error || 'Signup failed. Try again.'}`;
+      thankYou.style.color = "red";
+    }
+    thankYou.style.display = "block";
+    this.reset();
+  } catch (err) {
+    thankYou.textContent = "❌ Network error. Please try again.";
+    thankYou.style.color = "red";
+    thankYou.style.display = "block";
+  }
+});
+    const images = document.querySelectorAll('.slideshow-image');
+    let currentIndex = 0;
+
+    function showNextImage() {
+      images[currentIndex].classList.remove('active');
+      currentIndex = (currentIndex + 1) % images.length;
+      images[currentIndex].classList.add('active');
+    }
+
+    // Initial display
+    images[currentIndex].classList.add('active');
+
+    // Rotate every 3.5 seconds
+    setInterval(showNextImage, 3500);
+  </script>
+</body>
+</html>
