@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Checkout Canceled — Cool, Calm & Karter"
+  description="Your checkout was canceled. Your cart is unchanged."
+>
+  <section class="checkout-return" aria-labelledby="cancel-heading">
+    <h1 id="cancel-heading">Checkout Canceled</h1>
+    <p class="status-text" role="status">
+      Your checkout was canceled and no new order was confirmed. Your cart is exactly as you left it.
+    </p>
+
+    <nav class="return-links" aria-label="Continue shopping">
+      <a href="/cart">Return to Cart</a>
+      <a href="/shop">Continue Shopping</a>
+    </nav>
+  </section>
+</BaseLayout>
+
+<style>
+  .checkout-return {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+    text-align: center;
+  }
+
+  .checkout-return h1 {
+    font-family: var(--font-display);
+    color: var(--color-coral);
+    font-size: 2.25rem;
+    margin: 0 0 1.25rem;
+  }
+
+  .status-text {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    font-weight: 700;
+    color: var(--color-navy);
+    margin: 0 0 2rem;
+  }
+
+  .return-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .return-links a {
+    color: var(--color-coral);
+    font-weight: 700;
+    text-decoration: underline;
+    padding: 0.25rem;
+  }
+
+  .return-links a:hover,
+  .return-links a:focus-visible {
+    color: #d94c36;
+  }
+
+  .return-links a:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 2px;
+  }
+</style>

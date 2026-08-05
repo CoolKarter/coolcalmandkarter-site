@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Checkout Status — Cool, Calm & Karter"
+  description="Check the status of your Cool, Calm & Karter checkout."
+>
+  <section class="checkout-return" aria-labelledby="success-heading">
+    <h1 id="success-heading">Thank You!</h1>
+    <p class="lede">We appreciate you shopping with Cool, Calm &amp; Karter.</p>
+
+    <p id="checkout-status" class="status-text" role="status" aria-live="polite">
+      Checking your order status&hellip;
+    </p>
+
+    <nav class="return-links" aria-label="Continue browsing">
+      <a href="/">Home</a>
+      <a href="/shop">Shop</a>
+    </nav>
+  </section>
+</BaseLayout>
+
+<style>
+  .checkout-return {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+    text-align: center;
+  }
+
+  .checkout-return h1 {
+    font-family: var(--font-display);
+    color: var(--color-navy);
+    font-size: 2.25rem;
+    margin: 0 0 0.75rem;
+  }
+
+  .lede {
+    font-size: 1.05rem;
+    margin: 0 0 1.5rem;
+  }
+
+  .status-text {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    font-weight: 700;
+    color: var(--color-navy);
+    margin: 0 0 2rem;
+  }
+
+  .return-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .return-links a {
+    color: var(--color-coral);
+    font-weight: 700;
+    text-decoration: underline;
+    padding: 0.25rem;
+  }
+
+  .return-links a:hover,
+  .return-links a:focus-visible {
+    color: #d94c36;
+  }
+
+  .return-links a:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 2px;
+  }
+</style>
+
+<script>
+  // Read-only: whether a session_id query param is present. Never read its
+  // value, never displayed, never stored — this page does not verify
+  // anything with the server yet (that's a later phase), so it must not
+  // claim the order is confirmed.
+  const statusEl = document.getElementById('checkout-status');
+  const params = new URLSearchParams(window.location.search);
+  const hasSessionId = params.has('session_id');
+
+  if (statusEl) {
+    statusEl.textContent = hasSessionId
+      ? 'We received checkout return information. Your order has not been verified yet. Secure order verification will appear here once staging checkout is connected.'
+      : 'We could not find checkout information for this visit.';
+  }
+</script>

@@ -20,3 +20,6 @@ build/
 Thumbs.db
 *.log
 npm-debug.log*
+
+# Local Claude Code harness settings (machine-specific, not app content)
+.claude/settings.local.json
