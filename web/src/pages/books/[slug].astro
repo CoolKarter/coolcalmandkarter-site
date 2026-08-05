@@ -22,11 +22,10 @@ const { data } = book;
 const cover = resolveCoverImage(data.coverImage);
 const priceDisplay = data.price != null ? `$${(data.price / 100).toFixed(2)}` : null;
 const isAvailable = data.availability === 'available';
-// Cart wiring doesn't exist yet (deferred to a later phase), so no book —
-// including the 5 with real Stripe Price IDs — gets a functional checkout
-// control here. The Price ID stays in the content data either way; this
-// only controls what's rendered.
-const hasStripePriceId = Boolean(data.stripePriceId);
+// Only books with checkoutEnabled + a real Stripe Price ID can be added to
+// the cart. This still isn't Stripe Checkout itself (that's a later phase)
+// — it only controls whether the book can enter the local cart at all.
+const canAddToCart = data.checkoutEnabled && Boolean(data.stripePriceId);
 const pageTitle = data.seoTitle ?? `${data.title} — Cool, Calm & Karter`;
 const pageDescription = data.seoDescription ?? data.shortDescription ?? data.description;
 ---
@@ -68,16 +67,19 @@ const pageDescription = data.seoDescription ?? data.shortDescription ?? data.des
       </dl>
 
       {
-        hasStripePriceId ? (
-          <button
-            type="button"
-            class="buy-button"
-            disabled
-            aria-disabled="true"
-            data-stripe-price-id={data.stripePriceId}
-          >
-            Add to Cart — setup in progress
-          </button>
+        canAddToCart ? (
+          <div class="purchase-controls">
+            <button
+              type="button"
+              class="buy-button"
+              id="add-to-cart-button"
+              data-slug={book.id}
+              data-title={data.title}
+            >
+              Add to Cart — {priceDisplay}
+            </button>
+            <p id="add-to-cart-status" class="add-to-cart-status" role="status" aria-live="polite" />
+          </div>
         ) : (
           <p class="checkout-pending" role="status">
             Available — website checkout setup in progress.
@@ -169,20 +171,36 @@ const pageDescription = data.seoDescription ?? data.shortDescription ?? data.des
     color: var(--color-navy);
   }
 
+  .purchase-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
   .buy-button {
-    background-color: #ccc;
-    color: #555;
+    background-color: var(--color-coral);
+    color: white;
     border: none;
     padding: 0.85rem 1.75rem;
     font-size: 1rem;
     font-weight: 700;
     font-family: var(--font-body);
     border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
   }
 
-  .buy-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.85;
+  .buy-button:hover,
+  .buy-button:focus-visible {
+    background-color: #d94c36;
+  }
+
+  .add-to-cart-status {
+    margin: 0;
+    font-weight: 700;
+    color: #1a7a3c;
+    min-height: 1.2em;
   }
 
   .checkout-pending {
@@ -226,3 +244,20 @@ const pageDescription = data.seoDescription ?? data.shortDescription ?? data.des
     font-style: normal;
   }
 </style>
+
+<script>
+  import { addToCart } from '../../lib/cart';
+
+  const button = document.getElementById('add-to-cart-button');
+  const status = document.getElementById('add-to-cart-status');
+
+  button?.addEventListener('click', () => {
+    const slug = button.getAttribute('data-slug');
+    const title = button.getAttribute('data-title') ?? 'Item';
+    if (!slug) return;
+
+    addToCart(slug, 1);
+
+    if (status) status.textContent = `${title} added to your cart.`;
+  });
+</script>

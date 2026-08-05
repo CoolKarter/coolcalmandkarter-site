@@ -11,10 +11,10 @@ const links = [
   <a class="brand" href="/">Cool, Calm &amp; Karter</a>
   <nav aria-label="Primary">
     {links.map((link) => <a href={link.href}>{link.label}</a>)}
-    <span class="cart-link" aria-disabled="true" aria-label="Cart — setup in progress">
+    <a class="cart-link" href="/cart" aria-label="View cart">
       <span aria-hidden="true">🛒</span>
       <span class="cart-count" id="cart-count">0</span>
-    </span>
+    </a>
   </nav>
 </header>
 
@@ -60,8 +60,6 @@ const links = [
     position: relative;
     display: inline-flex;
     align-items: center;
-    opacity: 0.55;
-    cursor: not-allowed;
   }
 
   .cart-count {
@@ -76,3 +74,18 @@ const links = [
     border-radius: 999px;
   }
 </style>
+
+<script>
+  import { getCartCount, CART_UPDATED_EVENT, CART_STORAGE_KEY } from '../lib/cart';
+
+  function updateCartBadge() {
+    const el = document.getElementById('cart-count');
+    if (el) el.textContent = String(getCartCount());
+  }
+
+  updateCartBadge();
+  window.addEventListener(CART_UPDATED_EVENT, updateCartBadge);
+  window.addEventListener('storage', (event) => {
+    if (event.key === CART_STORAGE_KEY) updateCartBadge();
+  });
+</script>

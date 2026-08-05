@@ -1,0 +1,395 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import { resolveCoverImage } from '../lib/images';
+
+// Only books that can actually be added to the cart (checkoutEnabled with a
+// real Stripe Price ID) get a catalog entry here. If a non-purchasable slug
+// ever ends up in localStorage (e.g. via manual devtools edits), the client
+// script below simply won't find it in this catalog and will ignore it.
+const purchasableBooks = (await getCollection('books')).filter(
+  (book) => book.data.checkoutEnabled && Boolean(book.data.stripePriceId),
+);
+
+const catalog = await Promise.all(
+  purchasableBooks.map(async (book) => {
+    const cover = resolveCoverImage(book.data.coverImage);
+    const optimized = await getImage({ src: cover, width: 160 });
+    return {
+      slug: book.id,
+      title: book.data.title,
+      price: book.data.price ?? 0,
+      imageSrc: optimized.src,
+      imageAlt: book.data.coverImageAlt,
+    };
+  }),
+);
+
+// Defensive escaping so no book title could ever break out of the inline
+// JSON <script> tag (all our own trusted copy today, but cheap to guard).
+const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
+---
+
+<BaseLayout
+  title="Your Cart — Cool, Calm & Karter"
+  description="Review the books in your Cool, Calm & Karter cart."
+>
+  <section class="cart-page" aria-labelledby="cart-heading">
+    <h1 id="cart-heading">Your Cart</h1>
+
+    <p id="cart-live-region" class="visually-hidden" role="status" aria-live="polite"></p>
+
+    <p id="cart-empty" class="cart-empty" hidden>
+      Your cart is empty. <a href="/shop">Browse the shop</a> to find your next favorite book.
+    </p>
+
+    <div id="cart-summary" class="cart-summary" hidden>
+      <ul id="cart-items" class="cart-items"></ul>
+
+      <div class="cart-total-row">
+        <span>Total</span>
+        <span id="cart-total">$0.00</span>
+      </div>
+
+      <button type="button" class="checkout-button" disabled aria-disabled="true">
+        Secure checkout setup in progress.
+      </button>
+    </div>
+  </section>
+
+  <script type="application/json" id="cart-catalog" set:html={catalogJson} />
+</BaseLayout>
+
+<style>
+  .cart-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .cart-page h1 {
+    text-align: center;
+    font-family: var(--font-display);
+    color: var(--color-navy);
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cart-empty {
+    text-align: center;
+    font-size: 1.1rem;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  .cart-empty a {
+    color: var(--color-coral);
+    font-weight: 700;
+  }
+
+  .cart-summary {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  .cart-items {
+    list-style: none;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .cart-item {
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(25, 85, 105, 0.12);
+  }
+
+  .cart-item-image {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    background: #fffaf0;
+    border-radius: 8px;
+    padding: 0.25rem;
+  }
+
+  .cart-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .cart-item-title {
+    font-weight: 700;
+    color: var(--color-navy);
+    text-decoration: none;
+  }
+
+  .cart-item-title:hover,
+  .cart-item-title:focus-visible {
+    text-decoration: underline;
+  }
+
+  .cart-item-price {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .cart-item-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+
+  .cart-item-quantity {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cart-item-quantity button {
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid rgba(25, 85, 105, 0.3);
+    background: #fff;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .cart-item-quantity button:hover,
+  .cart-item-quantity button:focus-visible {
+    background: var(--color-cream);
+  }
+
+  .cart-item-subtotal {
+    margin: 0;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+
+  .remove-button {
+    background: none;
+    border: none;
+    color: var(--color-coral);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+  }
+
+  .cart-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    padding: 1rem 0;
+    border-top: 1px solid rgba(25, 85, 105, 0.15);
+    margin-bottom: 1rem;
+  }
+
+  .checkout-button {
+    display: block;
+    width: 100%;
+    background-color: #ccc;
+    color: #555;
+    border: none;
+    padding: 0.9rem;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: var(--font-body);
+    border-radius: 8px;
+    cursor: not-allowed;
+    opacity: 0.85;
+  }
+
+  :global(button:focus-visible),
+  :global(a:focus-visible) {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 2px;
+  }
+</style>
+
+<script>
+  import {
+    readCart,
+    setQuantity,
+    removeFromCart,
+    CART_STORAGE_KEY,
+    CART_UPDATED_EVENT,
+  } from '../lib/cart';
+
+  interface CatalogEntry {
+    slug: string;
+    title: string;
+    price: number;
+    imageSrc: string;
+    imageAlt: string;
+  }
+
+  const catalogScript = document.getElementById('cart-catalog');
+  const catalog: CatalogEntry[] = catalogScript ? JSON.parse(catalogScript.textContent ?? '[]') : [];
+  const catalogMap = new Map(catalog.map((entry) => [entry.slug, entry]));
+
+  const itemsContainer = document.getElementById('cart-items');
+  const emptyState = document.getElementById('cart-empty');
+  const summarySection = document.getElementById('cart-summary');
+  const totalEl = document.getElementById('cart-total');
+  const liveRegion = document.getElementById('cart-live-region');
+
+  function formatPrice(cents: number): string {
+    return `$${(cents / 100).toFixed(2)}`;
+  }
+
+  function announce(message: string): void {
+    if (liveRegion) liveRegion.textContent = message;
+  }
+
+  function render(): void {
+    if (!itemsContainer || !emptyState || !summarySection || !totalEl) return;
+
+    const rawCart = readCart();
+
+    // Self-heal: a slug that isn't in the purchasable catalog (e.g. one of
+    // the 7 non-purchasable books, however it got there) never renders and
+    // is pruned from storage so the nav badge count stays accurate too.
+    // Written directly (not via addToCart/removeFromCart) so it doesn't
+    // dispatch CART_UPDATED_EVENT and re-enter this same render() call.
+    let needsPrune = false;
+    const cart: typeof rawCart = {};
+    for (const [slug, quantity] of Object.entries(rawCart)) {
+      if (catalogMap.has(slug)) {
+        cart[slug] = quantity;
+      } else {
+        needsPrune = true;
+      }
+    }
+    if (needsPrune) {
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    }
+
+    const entries = Object.entries(cart)
+      .map(([slug, quantity]) => ({ slug, quantity, product: catalogMap.get(slug) }))
+      .filter((entry): entry is { slug: string; quantity: number; product: CatalogEntry } =>
+        Boolean(entry.product) && entry.quantity > 0,
+      );
+
+    itemsContainer.innerHTML = '';
+
+    if (entries.length === 0) {
+      emptyState.hidden = false;
+      summarySection.hidden = true;
+      return;
+    }
+
+    emptyState.hidden = true;
+    summarySection.hidden = false;
+
+    let total = 0;
+
+    for (const { slug, quantity, product } of entries) {
+      const subtotal = product.price * quantity;
+      total += subtotal;
+
+      const li = document.createElement('li');
+      li.className = 'cart-item';
+
+      const img = document.createElement('img');
+      img.className = 'cart-item-image';
+      img.src = product.imageSrc;
+      img.alt = product.imageAlt;
+      img.width = 64;
+      img.height = 64;
+
+      const details = document.createElement('div');
+      details.className = 'cart-item-details';
+      const titleLink = document.createElement('a');
+      titleLink.className = 'cart-item-title';
+      titleLink.href = `/books/${slug}`;
+      titleLink.textContent = product.title;
+      const priceEl = document.createElement('p');
+      priceEl.className = 'cart-item-price';
+      priceEl.textContent = `${formatPrice(product.price)} each`;
+      details.append(titleLink, priceEl);
+
+      const actions = document.createElement('div');
+      actions.className = 'cart-item-actions';
+
+      const quantityRow = document.createElement('div');
+      quantityRow.className = 'cart-item-quantity';
+
+      const decreaseButton = document.createElement('button');
+      decreaseButton.type = 'button';
+      decreaseButton.textContent = '−';
+      decreaseButton.setAttribute('aria-label', `Decrease quantity of ${product.title}`);
+      decreaseButton.addEventListener('click', () => {
+        const next = quantity - 1;
+        setQuantity(slug, next);
+        announce(
+          next <= 0
+            ? `${product.title} removed from cart.`
+            : `Quantity for ${product.title} updated to ${next}.`,
+        );
+        render();
+      });
+
+      const quantityLabel = document.createElement('span');
+      quantityLabel.textContent = String(quantity);
+      quantityLabel.setAttribute('aria-label', `Quantity of ${product.title}: ${quantity}`);
+
+      const increaseButton = document.createElement('button');
+      increaseButton.type = 'button';
+      increaseButton.textContent = '+';
+      increaseButton.setAttribute('aria-label', `Increase quantity of ${product.title}`);
+      increaseButton.addEventListener('click', () => {
+        const next = quantity + 1;
+        setQuantity(slug, next);
+        announce(`Quantity for ${product.title} updated to ${next}.`);
+        render();
+      });
+
+      quantityRow.append(decreaseButton, quantityLabel, increaseButton);
+
+      const subtotalEl = document.createElement('p');
+      subtotalEl.className = 'cart-item-subtotal';
+      subtotalEl.textContent = formatPrice(subtotal);
+
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'remove-button';
+      removeButton.textContent = 'Remove';
+      removeButton.setAttribute('aria-label', `Remove ${product.title} from cart`);
+      removeButton.addEventListener('click', () => {
+        removeFromCart(slug);
+        announce(`${product.title} removed from cart.`);
+        render();
+      });
+
+      actions.append(quantityRow, subtotalEl, removeButton);
+      li.append(img, details, actions);
+      itemsContainer.appendChild(li);
+    }
+
+    totalEl.textContent = formatPrice(total);
+  }
+
+  render();
+  window.addEventListener(CART_UPDATED_EVENT, render);
+</script>

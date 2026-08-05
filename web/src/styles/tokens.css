@@ -49,3 +49,18 @@ body {
   object-fit: contain;
   display: block;
 }
+
+/* Visually hides content while keeping it available to screen readers —
+   used for aria-live status regions that announce updates (e.g. cart
+   changes) without showing duplicate visible text. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
