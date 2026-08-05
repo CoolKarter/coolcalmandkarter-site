@@ -1,0 +1,45 @@
+---
+const year = new Date().getFullYear();
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/shop', label: 'Shop' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
+---
+
+<footer class="site-footer">
+  <nav aria-label="Footer">
+    {links.map((link) => <a href={link.href}>{link.label}</a>)}
+  </nav>
+  <p>&copy; {year} Cool, Calm &amp; Karter. All rights reserved.</p>
+</footer>
+
+<style>
+  .site-footer {
+    background-color: var(--color-navy);
+    color: white;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+  }
+
+  .site-footer nav {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .site-footer a {
+    color: white;
+    text-decoration: none;
+  }
+
+  .site-footer a:hover,
+  .site-footer a:focus-visible {
+    text-decoration: underline;
+  }
+</style>

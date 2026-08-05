@@ -1,0 +1,24 @@
+:root {
+  /* Brand colors (from the current live site) */
+  --color-navy: #195569;
+  --color-coral: #f46045;
+  --color-cream: #efe1c6;
+
+  /* Brand typography (existing fonts, preserved as-is for now) */
+  --font-display: 'Pacifico', cursive;
+  --font-heading: 'Baloo 2', cursive;
+  --font-body: 'Nunito', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-cream);
+  color: var(--color-navy);
+  font-family: var(--font-body);
+}

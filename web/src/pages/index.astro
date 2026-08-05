@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Cool, Calm & Karter — Rebuild Preview">
+  <section class="placeholder">
+    <h1>Cool, Calm &amp; Karter</h1>
+    <p>
+      This is a placeholder homepage proving the shared Astro layout,
+      navigation, footer, and design tokens are wired up correctly.
+    </p>
+    <p>
+      No product data, images, or integrations have been added yet — this
+      page exists only to verify Phase 3 of the migration plan.
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .placeholder {
+    max-width: 640px;
+    margin: 4rem auto;
+    padding: 0 1.5rem;
+    text-align: center;
+  }
+
+  .placeholder h1 {
+    font-family: var(--font-display);
+    color: var(--color-navy);
+    font-size: 2.5rem;
+  }
+</style>
