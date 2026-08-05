@@ -1,6 +1,11 @@
 ---
 title: "Go To Sleep, Karter!"
-shortDescription: "A hilarious bedtime struggle every parent can relate to."
+shortDescription: >-
+  "Go To Sleep, Karter!" is a funny, relatable bedtime story about the
+  nightly challenge many families know well — convincing Baby Karter it
+  is time for sleep. Told through playful rhyme and hilarious bedtime
+  chaos, it brings laughter, warmth, and familiar family moments to the
+  bedtime routine.
 description: >-
   "Go To Sleep, Karter!" is a funny and relatable bedtime story for both
   children and parents. Through playful rhyme and hilarious nighttime
@@ -10,10 +15,11 @@ description: >-
 price: 999
 currency: "usd"
 stripePriceId: "price_1RRkgaGhPxJaSGWSZAUINxDe"
-coverImage: "/images/go-to-sleep-karter-cover.png"
+coverImage: "src/assets/books/go-to-sleep-karter-cover.webp"
 coverImageAlt: "Go To Sleep, Karter!"
 publishedDate: "May 18, 2024"
 rating: 5
+ageRange: "0–6"
 availability: "available"
 legacyProductPageUrl: "/product-pages/go-to-sleep-karter.html"
 reviews:

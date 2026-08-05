@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BookCard from '../components/BookCard.astro';
+import { getCollection } from 'astro:content';
+
+const books = (await getCollection('books')).sort((a, b) =>
+  a.data.title.localeCompare(b.data.title),
+);
+---
+
+<BaseLayout
+  title="Shop — Cool, Calm & Karter"
+  description="Browse the full Cool, Calm & Karter picture book catalog."
+>
+  <section class="shop" aria-labelledby="shop-heading">
+    <h1 id="shop-heading">Shop</h1>
+    <ul class="book-grid">
+      {
+        books.map((book) => (
+          <li>
+            <BookCard book={book} />
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .shop {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .shop h1 {
+    text-align: center;
+    font-family: var(--font-display);
+    color: var(--color-navy);
+    font-size: 2.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .book-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .book-grid > li {
+    display: flex;
+  }
+
+  .book-grid > li > :global(.book-card) {
+    width: 100%;
+  }
+
+  @media (min-width: 700px) {
+    .book-grid {
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 2rem;
+    }
+  }
+</style>

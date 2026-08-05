@@ -1,0 +1,228 @@
+---
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import ProductLayout from '../../layouts/ProductLayout.astro';
+import { resolveCoverImage } from '../../lib/images';
+
+export async function getStaticPaths() {
+  const books = await getCollection('books');
+  return books.map((book) => ({
+    params: { slug: book.id },
+    props: { book },
+  }));
+}
+
+interface Props {
+  book: CollectionEntry<'books'>;
+}
+
+const { book } = Astro.props;
+const { data } = book;
+const cover = resolveCoverImage(data.coverImage);
+const priceDisplay = data.price != null ? `$${(data.price / 100).toFixed(2)}` : null;
+const isAvailable = data.availability === 'available';
+// Cart wiring doesn't exist yet (deferred to a later phase), so no book —
+// including the 5 with real Stripe Price IDs — gets a functional checkout
+// control here. The Price ID stays in the content data either way; this
+// only controls what's rendered.
+const hasStripePriceId = Boolean(data.stripePriceId);
+const pageTitle = data.seoTitle ?? `${data.title} — Cool, Calm & Karter`;
+const pageDescription = data.seoDescription ?? data.shortDescription ?? data.description;
+---
+
+<ProductLayout title={pageTitle} description={pageDescription}>
+  <article class="product">
+    <div class="product-cover">
+      <div class="cover-frame">
+        <Image src={cover} alt={data.coverImageAlt} width={700} loading="eager" />
+      </div>
+    </div>
+
+    <div class="product-info">
+      <h1>{data.title}</h1>
+      {data.hook && <p class="hook">{data.hook}</p>}
+      <p class="description">{data.description}</p>
+
+      <dl class="product-facts">
+        {
+          priceDisplay && (
+            <div class="fact">
+              <dt>Price</dt>
+              <dd>{priceDisplay}</dd>
+            </div>
+          )
+        }
+        {
+          data.ageRange && (
+            <div class="fact">
+              <dt>Age range</dt>
+              <dd>Ages {data.ageRange}</dd>
+            </div>
+          )
+        }
+        <div class="fact">
+          <dt>Availability</dt>
+          <dd>{isAvailable ? 'Available' : 'Coming Soon'}</dd>
+        </div>
+      </dl>
+
+      {
+        hasStripePriceId ? (
+          <button
+            type="button"
+            class="buy-button"
+            disabled
+            aria-disabled="true"
+            data-stripe-price-id={data.stripePriceId}
+          >
+            Add to Cart — setup in progress
+          </button>
+        ) : (
+          <p class="checkout-pending" role="status">
+            Available — website checkout setup in progress.
+          </p>
+        )
+      }
+    </div>
+
+    {
+      data.reviews && data.reviews.length > 0 && (
+        <section class="reviews" aria-label="Reader reviews">
+          <h2>What Readers Are Saying</h2>
+          {data.reviews.map((review) => (
+            <blockquote>
+              <p>“{review.quote}”</p>
+              {review.author && <cite>— {review.author}</cite>}
+            </blockquote>
+          ))}
+        </section>
+      )
+    }
+  </article>
+</ProductLayout>
+
+<style>
+  .product {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 750px) {
+    .product {
+      grid-template-columns: minmax(260px, 360px) 1fr;
+      align-items: start;
+    }
+  }
+
+  .product-cover .cover-frame {
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .product-info h1 {
+    font-family: var(--font-display);
+    color: var(--color-navy);
+    font-size: 2rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .hook {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    color: var(--color-coral);
+    margin: 0 0 1rem;
+  }
+
+  .description {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #333;
+    margin: 0 0 1.5rem;
+  }
+
+  .product-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 0 0 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(25, 85, 105, 0.15);
+    border-bottom: 1px solid rgba(25, 85, 105, 0.15);
+  }
+
+  .fact dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #666;
+    margin: 0 0 0.2rem;
+  }
+
+  .fact dd {
+    margin: 0;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+
+  .buy-button {
+    background-color: #ccc;
+    color: #555;
+    border: none;
+    padding: 0.85rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: var(--font-body);
+    border-radius: 8px;
+  }
+
+  .buy-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.85;
+  }
+
+  .checkout-pending {
+    display: inline-block;
+    background: rgba(25, 85, 105, 0.08);
+    color: var(--color-navy);
+    font-weight: 700;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    margin: 0;
+  }
+
+  .reviews {
+    grid-column: 1 / -1;
+    margin-top: 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(25, 85, 105, 0.15);
+  }
+
+  .reviews h2 {
+    font-family: var(--font-heading);
+    color: var(--color-navy);
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .reviews blockquote {
+    margin: 0 0 1.25rem;
+    padding: 0;
+  }
+
+  .reviews blockquote p {
+    font-style: italic;
+    color: #444;
+    margin: 0 0 0.25rem;
+  }
+
+  .reviews cite {
+    font-size: 0.85rem;
+    color: #666;
+    font-style: normal;
+  }
+</style>

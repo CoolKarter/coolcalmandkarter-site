@@ -1,6 +1,10 @@
 ---
 title: "Black, Beautiful & Baby"
-shortDescription: "Uplifting rhymes that celebrate Black joy and identity."
+shortDescription: >-
+  "Black, Beautiful & Baby" is a heartwarming celebration of identity,
+  pride, and love, told through rhythm and rhyme. This vibrant picture
+  book uplifts Black babies and affirms the beauty in Blackness — a
+  joyful story of self-worth, representation, and everyday joy.
 description: >-
   "Black, Beautiful & Baby" is a heartwarming celebration of identity,
   pride, and love. Through rhythm and rhyme, this vibrant picture book
@@ -10,10 +14,11 @@ description: >-
 price: 999
 currency: "usd"
 stripePriceId: "price_1RRkfTGhPxJaSGWStZuZP6pI"
-coverImage: "/images/black-beautiful-baby-cover.png"
+coverImage: "src/assets/books/black-beautiful-baby-cover.webp"
 coverImageAlt: "Black, Beautiful & Baby Cover"
 publishedDate: "April 8, 2024"
 rating: 5
+ageRange: "0–6"
 availability: "available"
 legacyProductPageUrl: "/product-pages/black-beautiful-and-baby.html"
 reviews:

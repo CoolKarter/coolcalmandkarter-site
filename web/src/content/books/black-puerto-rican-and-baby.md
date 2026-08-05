@@ -1,5 +1,11 @@
 ---
 title: "Black, Puerto Rican & Baby"
+shortDescription: >-
+  "Black, Puerto Rican & Baby" is a heartwarming celebration of
+  multicultural identity, embracing the beauty of being Afro-Latino
+  through vibrant illustrations and affirming rhymes. It highlights
+  pride in heritage and joy in family — a perfect addition for diverse
+  bookshelves everywhere.
 description: >-
   "Black, Puerto Rican & Baby" is a heartwarming celebration of
   multicultural identity. This book embraces the beauty of being
@@ -10,10 +16,11 @@ description: >-
 price: 999
 currency: "usd"
 stripePriceId: "price_1RRkfwGhPxJaSGWSMGZyeaDW"
-coverImage: "/images/black-puertorican-and-baby-cover.png"
+coverImage: "src/assets/books/black-puertorican-and-baby-cover.webp"
 coverImageAlt: "Black, Puerto Rican & Baby"
 publishedDate: "May 2, 2024"
 rating: 5
+ageRange: "0–6"
 availability: "available"
 legacyProductPageUrl: "/product-pages/black-puerto-rican-and-baby.html"
 reviews:

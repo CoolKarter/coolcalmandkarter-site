@@ -22,3 +22,30 @@ body {
   color: var(--color-navy);
   font-family: var(--font-body);
 }
+
+/*
+ * Shared cover frame — used on the shop grid and product pages so portrait
+ * (1971x2000) and square (1254x1254) book covers sit inside one consistent
+ * shape. object-fit: contain guarantees the artwork is never cropped,
+ * stretched, or distorted regardless of its source aspect ratio.
+ */
+.cover-frame {
+  aspect-ratio: 4 / 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.cover-frame img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}

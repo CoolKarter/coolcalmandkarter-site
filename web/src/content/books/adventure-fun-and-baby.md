@@ -1,5 +1,10 @@
 ---
 title: "Adventure, Fun & Baby"
+shortDescription: >-
+  "Adventure, Fun & Baby" is an energetic journey through imagination,
+  play, and discovery, packed with cheerful rhymes and colorful scenes.
+  This uplifting read encourages curiosity and celebrates everyday
+  adventure — perfect for inspiring little explorers at every turn.
 description: >-
   "Adventure, Fun & Baby" is an energetic journey through imagination, play,
   and discovery. Packed with cheerful rhymes and colorful scenes, it
@@ -8,10 +13,11 @@ description: >-
 price: 999
 currency: "usd"
 stripePriceId: "price_1RRkgEGhPxJaSGWSZ6Q5rQNn"
-coverImage: "/images/adventure-fun-and-baby-cover.png"
+coverImage: "src/assets/books/adventure-fun-and-baby-cover.webp"
 coverImageAlt: "Adventure, Fun & Baby"
 publishedDate: "May 10, 2024"
 rating: 5
+ageRange: "0–6"
 availability: "available"
 legacyProductPageUrl: "/product-pages/adventure-fun-and-baby.html"
 reviews:
