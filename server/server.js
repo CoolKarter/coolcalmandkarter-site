@@ -7,6 +7,10 @@ const path = require('path');
 const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
 const { Parser } = require('json2csv');
+const { getCatalog } = require('./lib/checkout-catalog');
+const { validateCheckoutRequest } = require('./lib/validate-checkout-request');
+const { resolveOrderItems } = require('./lib/resolve-order-items');
+const { buildCheckoutRedirectUrls } = require('./lib/frontend-url');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -76,8 +80,12 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
     const customerName = session.customer_details?.name || 'Customer';
     const shipping = session.customer_details?.address || {};
     const amount = session.amount_total || 0;
-    const items = session.metadata?.items ? JSON.parse(session.metadata.items) : [];
-    const bookTitleSummary = items.map(i => `${i.title || i.name || 'Unknown'} x${i.quantity || 1}`).join(', ');
+    // Titles/quantities come from Stripe's own line-items record for this
+    // session (mapped back to our catalog for the title), never from
+    // anything the browser submitted — falls back to the compact,
+    // catalog-resolved metadata only if that lookup fails.
+    const items = await resolveOrderItems({ session, stripeClient: stripe, catalog: getCatalog() });
+    const bookTitleSummary = items.map(i => `${i.title} x${i.quantity}`).join(', ');
     let shippingMethod = 'No shipping selected';
     if (session.shipping_cost?.shipping_rate) {
       try {
@@ -101,8 +109,8 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
       email: customerEmail,
       bookTitle: bookTitleSummary,
       items: items.map(i => ({
-        title: i.title || i.name || 'Unknown',
-        quantity: i.quantity || 1
+        title: i.title,
+        quantity: i.quantity
       })),
       amount: amount,
       address: {
@@ -205,7 +213,13 @@ app.post('/calculate-shipping', async (req, res) => {
 });
 
 
-// ✅ Stripe Checkout route
+// ⚠️ LEGACY CHECKOUT ROUTE — remove only after the Astro production cutover.
+// This is the exact original /create-checkout-session behavior, restored
+// verbatim so client/cart.html (the current live frontend) keeps working
+// unmodified if this branch is ever deployed before the Astro cart is
+// cut over to /api/checkout/session below. Do not strengthen, validate,
+// or redesign this route — it must stay behaviorally identical to what
+// production already calls.
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const items = req.body.items;
@@ -284,6 +298,112 @@ app.post('/create-checkout-session', async (req, res) => {
     });
 
     res.json({ id: session.id });
+  } catch (err) {
+    console.error('❌ Error creating checkout session:', err.message);
+    res.status(500).json({ error: 'Checkout failed' });
+  }
+});
+
+// ✅ Secure checkout route — target for the new Astro cart.
+//
+// Contract: { items: [{ slug, quantity }], customerEmail? }
+// The browser never supplies a price, title, or Stripe Price ID — every
+// line item is resolved server-side from the catalog (server/lib/*), and
+// only known, checkout-enabled slugs with a validated 1–20 quantity (40
+// per cart) are accepted. customerEmail is optional — if omitted, Stripe
+// Checkout collects it directly — but if supplied, it must be a
+// reasonably-shaped, reasonably-sized email address. See
+// server/lib/validate-checkout-request.js for the full rules.
+app.post('/api/checkout/session', async (req, res) => {
+  try {
+    const catalog = getCatalog();
+    const validation = validateCheckoutRequest(req.body, catalog);
+    if (!validation.ok) {
+      return res.status(400).json({ error: validation.error });
+    }
+
+    const redirectUrls = buildCheckoutRedirectUrls();
+    if (!redirectUrls.ok) {
+      console.error('❌ Cannot create checkout session:', redirectUrls.error);
+      return res.status(500).json({ error: 'Checkout is temporarily unavailable.' });
+    }
+
+    const line_items = validation.items.map(item => ({
+      price: item.stripePriceId,
+      quantity: item.quantity,
+    }));
+
+    // Compact and server-generated from validated catalog data only (slug +
+    // quantity, not full titles) — kept small since Stripe caps each
+    // metadata value at 500 characters. This is a fallback source for order
+    // titles; the webhook prefers Stripe's own line-items record (see
+    // server/lib/resolve-order-items.js) and only falls back to parsing
+    // this if that lookup fails.
+    const metadataItems = validation.items.map(item => `${item.slug}:${item.quantity}`).join(',');
+
+    const sessionParams = {
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items,
+
+      // ✅ Let Stripe collect the shipping address
+      shipping_address_collection: {
+        allowed_countries: ['US', 'CA'],
+      },
+
+      // ✅ Add multiple shipping options
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 350, currency: 'usd' },
+            display_name: 'Standard Shipping (5–8 Business Days)',
+            delivery_estimate: {
+              minimum: { unit: 'business_day', value: 5 },
+              maximum: { unit: 'business_day', value: 8 },
+            },
+          }
+        },
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 999, currency: 'usd' },
+            display_name: 'Expedited Shipping (2–3 Business Days)',
+            delivery_estimate: {
+              minimum: { unit: 'business_day', value: 2 },
+              maximum: { unit: 'business_day', value: 3 },
+            },
+          }
+        },
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 1999, currency: 'usd' },
+            display_name: 'Express Shipping (1–2 Business Days)',
+            delivery_estimate: {
+              minimum: { unit: 'business_day', value: 1 },
+              maximum: { unit: 'business_day', value: 2 },
+            },
+          }
+        }
+      ],
+
+      metadata: {
+        items: metadataItems,
+      },
+
+      success_url: redirectUrls.successUrl,
+      cancel_url: redirectUrls.cancelUrl,
+      automatic_tax: { enabled: true },
+    };
+
+    if (validation.customerEmail) {
+      sessionParams.customer_email = validation.customerEmail;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    res.json({ url: session.url });
   } catch (err) {
     console.error('❌ Error creating checkout session:', err.message);
     res.status(500).json({ error: 'Checkout failed' });
