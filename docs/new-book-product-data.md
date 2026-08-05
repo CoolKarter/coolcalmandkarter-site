@@ -19,7 +19,7 @@ Once a title's fields below are filled in, it can be added to `web/src/content/b
 | Full product-page description | |
 | Price | |
 | Stripe Price ID | |
-| Age range | |
+| Age range | Ages 0–6 |
 | Availability | **Confirmed available** — checkout configuration incomplete until price + Stripe Price ID are supplied |
 | Reviews | *(none supplied — do not fabricate)* |
 | SEO title | |
@@ -38,7 +38,7 @@ Once a title's fields below are filled in, it can be added to `web/src/content/b
 | Full product-page description | |
 | Price | |
 | Stripe Price ID | |
-| Age range | |
+| Age range | Ages 0–6 |
 | Availability | **Confirmed available** — checkout configuration incomplete until price + Stripe Price ID are supplied |
 | Reviews | *(none supplied — do not fabricate)* |
 | SEO title | |
@@ -57,7 +57,7 @@ Once a title's fields below are filled in, it can be added to `web/src/content/b
 | Full product-page description | |
 | Price | |
 | Stripe Price ID | |
-| Age range | |
+| Age range | Ages 0–6 |
 | Availability | **Confirmed available** — checkout configuration incomplete until price + Stripe Price ID are supplied |
 | Reviews | *(none supplied — do not fabricate)* |
 | SEO title | |
@@ -76,7 +76,7 @@ Once a title's fields below are filled in, it can be added to `web/src/content/b
 | Full product-page description | |
 | Price | |
 | Stripe Price ID | |
-| Age range | |
+| Age range | Ages 0–6 |
 | Availability | **Confirmed available** — checkout configuration incomplete until price + Stripe Price ID are supplied |
 | Reviews | *(none supplied — do not fabricate)* |
 | SEO title | |
@@ -95,7 +95,7 @@ Once a title's fields below are filled in, it can be added to `web/src/content/b
 | Full product-page description | |
 | Price | |
 | Stripe Price ID | |
-| Age range | |
+| Age range | Ages 0–6 |
 | Availability | **Confirmed available** — checkout configuration incomplete until price + Stripe Price ID are supplied |
 | Reviews | *(none supplied — do not fabricate)* |
 | SEO title | |
@@ -114,7 +114,7 @@ Once a title's fields below are filled in, it can be added to `web/src/content/b
 | Full product-page description | |
 | Price | |
 | Stripe Price ID | |
-| Age range | |
+| Age range | Ages 0–6 |
 | Availability | **Confirmed available** — checkout configuration incomplete until price + Stripe Price ID are supplied |
 | Reviews | *(none supplied — do not fabricate)* |
 | SEO title | |
@@ -133,7 +133,7 @@ Once a title's fields below are filled in, it can be added to `web/src/content/b
 | Full product-page description | |
 | Price | |
 | Stripe Price ID | |
-| Age range | |
+| Age range | Ages 0–6 |
 | Availability | **Confirmed available** — checkout configuration incomplete until price + Stripe Price ID are supplied |
 | Reviews | *(none supplied — do not fabricate)* |
 | SEO title | |

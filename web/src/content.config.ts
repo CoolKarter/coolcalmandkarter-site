@@ -10,11 +10,16 @@ const books = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/books' }),
   schema: z.object({
     title: z.string(),
+    hook: z.string().optional(),
     shortDescription: z.string().optional(),
     description: z.string(),
     price: z.number().int().nonnegative().optional(),
     currency: z.string().default('usd'),
     stripePriceId: z.string().optional(),
+    // Defaults to true so the 5 currently-live books (which predate this
+    // field) remain purchasable without needing a retroactive edit. Titles
+    // without a real Stripe Price ID must explicitly set this to false.
+    checkoutEnabled: z.boolean().default(true),
     coverImage: z.string(),
     coverImageAlt: z.string(),
     publishedDate: z.string().optional(),
@@ -22,6 +27,8 @@ const books = defineCollection({
     ageRange: z.string().optional(),
     availability: z.enum(['available', 'coming-soon']),
     legacyProductPageUrl: z.string().optional(),
+    seoTitle: z.string().optional(),
+    seoDescription: z.string().optional(),
     reviews: z
       .array(
         z.object({

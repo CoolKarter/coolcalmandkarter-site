@@ -22,8 +22,8 @@ These 7 titles (14 files: PNG + WEBP each) are **new, unreleased catalog additio
 | `Halloween & Baby Cover.webp` | WEBP | 1254×1254 (square) | 511 KB | No | `halloween-and-baby-cover.webp` |
 | `Mexican & Baby Cover.png` | PNG | 1254×1254 (square) | 3.0 MB | No | `mexican-and-baby-cover.png` |
 | `Mexican & Baby Cover.webp` | WEBP | 1254×1254 (square) | 647 KB | No | `mexican-and-baby-cover.webp` |
-| `Puertorican, Boricua & Baby COVER.png` | PNG | 1971×2000 (portrait) | 5.0 MB | No | `puerto-rican-boricua-and-baby-cover.png` |
-| `Puertorican, Boricua & Baby COVER.webp` | WEBP | 1971×2000 (portrait) | 768 KB | No | `puerto-rican-boricua-and-baby-cover.webp` |
+| `Puertorican, Boricua & Baby COVER.png` | PNG | 1971×2000 (portrait) | 5.0 MB | No | `puertorican-boricua-and-baby-cover.png` |
+| `Puertorican, Boricua & Baby COVER.webp` | WEBP | 1971×2000 (portrait) | 768 KB | No | `puertorican-boricua-and-baby-cover.webp` |
 | `Thanksgiving & Baby Cover.png` | PNG | 1254×1254 (square) | 2.6 MB | No | `thanksgiving-and-baby-cover.png` |
 | `Thanksgiving & Baby Cover.webp` | WEBP | 1254×1254 (square) | 455 KB | No | `thanksgiving-and-baby-cover.webp` |
 
