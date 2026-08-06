@@ -11,6 +11,7 @@ const { getCatalog } = require('./lib/checkout-catalog');
 const { validateCheckoutRequest } = require('./lib/validate-checkout-request');
 const { resolveOrderItems } = require('./lib/resolve-order-items');
 const { buildCheckoutRedirectUrls } = require('./lib/frontend-url');
+const { getAllowedOrigins } = require('./lib/cors-origins');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -145,12 +146,11 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
 app.use(webhookApp);
 
 // ✅ Now apply other middleware
-const allowedOrigins = [
-  'http://127.0.0.1:5500',
-  'http://localhost:3000',
-  'https://coolcalmandkarter.netlify.app',
-  'https://coolcalmandkarter.com'
-];
+// Always includes the fixed production/localhost origins, plus (if
+// configured) the exact origin derived from FRONTEND_BASE_URL — so a
+// staging frontend is allowed automatically without hardcoding its URL
+// here. See server/lib/cors-origins.js.
+const allowedOrigins = getAllowedOrigins();
 
 app.use(cors({
   origin: function (origin, callback) {

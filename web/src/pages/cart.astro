@@ -52,9 +52,8 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
         <span id="cart-total">$0.00</span>
       </div>
 
-      <button type="button" class="checkout-button" disabled aria-disabled="true">
-        Secure checkout setup in progress.
-      </button>
+      <button type="button" id="checkout-button" class="checkout-button">Checkout</button>
+      <p id="checkout-status" class="checkout-status" role="status" aria-live="polite"></p>
     </div>
   </section>
 
@@ -208,16 +207,40 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
   .checkout-button {
     display: block;
     width: 100%;
-    background-color: #ccc;
-    color: #555;
+    background-color: var(--color-coral);
+    color: white;
     border: none;
     padding: 0.9rem;
     font-size: 1rem;
     font-weight: 700;
     font-family: var(--font-body);
     border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .checkout-button:hover,
+  .checkout-button:focus-visible {
+    background-color: #d94c36;
+  }
+
+  .checkout-button:disabled {
+    background-color: #ccc;
+    color: #555;
     cursor: not-allowed;
     opacity: 0.85;
+  }
+
+  .checkout-status {
+    margin: 0.75rem 0 0;
+    text-align: center;
+    font-weight: 700;
+    min-height: 1.2em;
+    color: var(--color-navy);
+  }
+
+  .checkout-status.error {
+    color: #b3261e;
   }
 
   :global(button:focus-visible),
@@ -235,6 +258,7 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
     CART_STORAGE_KEY,
     CART_UPDATED_EVENT,
   } from '../lib/cart';
+  import { createCheckoutSession } from '../lib/api';
 
   interface CatalogEntry {
     slug: string;
@@ -392,4 +416,41 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
 
   render();
   window.addEventListener(CART_UPDATED_EVENT, render);
+
+  const checkoutButton = document.getElementById('checkout-button') as HTMLButtonElement | null;
+  const checkoutStatus = document.getElementById('checkout-status');
+
+  checkoutButton?.addEventListener('click', async () => {
+    // Only slug + quantity ever leave the browser — no Stripe Price ID,
+    // title, or price. The server resolves all of that itself from its
+    // own catalog (see server/lib/validate-checkout-items.js).
+    const cart = readCart();
+    const items = Object.entries(cart)
+      .filter(([slug, quantity]) => catalogMap.has(slug) && quantity > 0)
+      .map(([slug, quantity]) => ({ slug, quantity }));
+
+    if (items.length === 0) {
+      return;
+    }
+
+    checkoutButton.disabled = true;
+    if (checkoutStatus) {
+      checkoutStatus.textContent = 'Redirecting to secure checkout…';
+      checkoutStatus.classList.remove('error');
+    }
+
+    try {
+      const url = await createCheckoutSession(items);
+      // Cart is intentionally left untouched here — it only clears once
+      // an order is verified as complete, which isn't wired up yet.
+      window.location.href = url;
+    } catch (error) {
+      checkoutButton.disabled = false;
+      if (checkoutStatus) {
+        checkoutStatus.textContent =
+          error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+        checkoutStatus.classList.add('error');
+      }
+    }
+  });
 </script>
