@@ -77,17 +77,47 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </style>
 
 <script>
-  // Read-only: whether a session_id query param is present. Never read its
-  // value, never displayed, never stored — this page does not verify
-  // anything with the server yet (that's a later phase), so it must not
-  // claim the order is confirmed.
-  const statusEl = document.getElementById('checkout-status');
-  const params = new URLSearchParams(window.location.search);
-  const hasSessionId = params.has('session_id');
+  import { verifyCheckoutSession } from '../lib/api';
+  import { clearCart } from '../lib/cart';
 
-  if (statusEl) {
-    statusEl.textContent = hasSessionId
-      ? 'We received checkout return information. Your order has not been verified yet. Secure order verification will appear here once staging checkout is connected.'
-      : 'We could not find checkout information for this visit.';
+  const statusEl = document.getElementById('checkout-status');
+
+  function setStatus(message: string): void {
+    if (statusEl) statusEl.textContent = message;
   }
+
+  async function run(): Promise<void> {
+    // Read-only: the session_id itself is only ever used to ask the
+    // server to verify it — it's never displayed, stored, or logged.
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+
+    if (!sessionId) {
+      setStatus('We could not find checkout information for this visit.');
+      return;
+    }
+
+    setStatus('Verifying your payment…');
+
+    // The only source of truth for whether an order is real: the backend
+    // asking Stripe directly. A missing/invalid session, an unpaid or
+    // incomplete session, a network failure, and a malformed API response
+    // all resolve to the same { verified: false } shape here — none of
+    // them ever reach the cart-clearing branch below.
+    const result = await verifyCheckoutSession(sessionId);
+
+    if (result.verified) {
+      // Runs at most once per page load — this is the only place the cart
+      // is ever cleared on this page, and only after server-confirmed
+      // payment.
+      clearCart();
+      setStatus('Your order is confirmed! Thank you for shopping with Cool, Calm & Karter.');
+    } else {
+      setStatus(
+        'We could not confirm your payment yet. If you completed checkout, this can take a moment — please check back shortly, or contact us if you need help.',
+      );
+    }
+  }
+
+  run();
 </script>

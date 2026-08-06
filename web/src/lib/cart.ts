@@ -1,7 +1,7 @@
 // Client-side cart, backed by localStorage. Keyed by book slug (content
 // collection id) rather than title, so it stays correct if a title changes.
 // This module only manages local cart state — it never calls the backend
-// or Stripe. Checkout wiring is a later phase.
+// or Stripe itself (see lib/api.ts for that).
 
 export const CART_STORAGE_KEY = 'cart';
 export const CART_UPDATED_EVENT = 'cart:updated';
@@ -68,4 +68,14 @@ export function removeFromCart(slug: string): CartState {
   delete cart[slug];
   writeCart(cart);
   return cart;
+}
+
+/**
+ * Empties the cart entirely. Callers must only invoke this after a
+ * server-verified event (e.g. a confirmed, paid order) — never based on
+ * the browser's own assumption that checkout succeeded.
+ */
+export function clearCart(): CartState {
+  writeCart({});
+  return {};
 }

@@ -12,6 +12,7 @@ const { validateCheckoutRequest } = require('./lib/validate-checkout-request');
 const { resolveOrderItems } = require('./lib/resolve-order-items');
 const { buildCheckoutRedirectUrls } = require('./lib/frontend-url');
 const { getAllowedOrigins } = require('./lib/cors-origins');
+const { verifyCheckoutSession } = require('./lib/verify-checkout-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -407,6 +408,28 @@ app.post('/api/checkout/session', async (req, res) => {
   } catch (err) {
     console.error('❌ Error creating checkout session:', err.message);
     res.status(500).json({ error: 'Checkout failed' });
+  }
+});
+
+// ✅ Secure checkout session verification — for the success page.
+//
+// GET /api/checkout/session-status?session_id=cs_...
+// Never trusts anything the browser claims about payment status — always
+// asks Stripe directly for the session and only reports back the minimal
+// { verified, paymentStatus, sessionStatus } shape. Never the full Stripe
+// session object, payment method details, billing address, or any other
+// unnecessary personal information. Read-only — never touches Order
+// records (the webhook remains the only thing that writes orders).
+app.get('/api/checkout/session-status', async (req, res) => {
+  try {
+    const result = await verifyCheckoutSession({
+      sessionId: req.query.session_id,
+      stripeClient: stripe,
+    });
+    res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error('❌ Error verifying checkout session:', err.message);
+    res.status(500).json({ error: 'Unable to verify checkout session.' });
   }
 });
 

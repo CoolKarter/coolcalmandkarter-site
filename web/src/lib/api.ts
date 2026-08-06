@@ -1,6 +1,7 @@
 // Centralized API access — every fetch to the Express backend (server/server.js)
 // should go through here instead of hardcoding the Render URL in page code.
 import { extractCheckoutUrl } from './checkout-response.js';
+import { parseSessionStatusResponse, VERIFICATION_FAILURE } from './session-status-response.js';
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL;
 
@@ -88,4 +89,40 @@ export async function createCheckoutSession(items: CheckoutItem[]): Promise<stri
   }
 
   return url;
+}
+
+export interface CheckoutVerification {
+  verified: boolean;
+  paymentStatus: string | null;
+  sessionStatus: string | null;
+}
+
+/**
+ * Verifies a Checkout Session server-side via the secure
+ * /api/checkout/session-status endpoint. Never trusts the browser's own
+ * idea of payment status — this is the only source of truth the success
+ * page is allowed to act on. Unlike submitContactForm/createCheckoutSession,
+ * this never throws: a network error, a non-2xx response, or a malformed
+ * response body all resolve to the same safe "not verified" result, since
+ * that's itself a normal, expected state the page needs to render, not an
+ * exceptional one.
+ */
+export async function verifyCheckoutSession(sessionId: string): Promise<CheckoutVerification> {
+  if (!API_BASE_URL || typeof sessionId !== 'string' || sessionId.trim() === '') {
+    return VERIFICATION_FAILURE;
+  }
+
+  let status: number;
+  let data: unknown = null;
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/checkout/session-status?session_id=${encodeURIComponent(sessionId)}`,
+    );
+    status = res.status;
+    data = await res.json().catch(() => null);
+  } catch {
+    return VERIFICATION_FAILURE;
+  }
+
+  return parseSessionStatusResponse(status, data);
 }
