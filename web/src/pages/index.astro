@@ -1,11 +1,17 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import BookCard from '../components/BookCard.astro';
+import HomeHero from '../components/HomeHero.astro';
+import FeaturedBooks from '../components/FeaturedBooks.astro';
+import StorySection from '../components/StorySection.astro';
+import TrustSection from '../components/TrustSection.astro';
+import FinalCta from '../components/FinalCta.astro';
 import { getEntry } from 'astro:content';
 
-// Same 3 titles the legacy homepage featured, pulled from the content
-// collection instead of being hardcoded.
-const featuredSlugs = ['florida-beach-and-baby', 'black-beautiful-and-baby', 'go-to-sleep-karter'];
+// Owner-selected featured trio. "Black, Puerto Rican & Baby" is the
+// best seller and always takes the center slot with the visual emphasis —
+// in both the hero stage and the Featured Books section.
+const bestSellerSlug = 'black-puerto-rican-and-baby';
+const featuredSlugs = ['puertorican-boricua-and-baby', bestSellerSlug, 'black-beautiful-and-baby'];
 const featuredBooks = (
   await Promise.all(featuredSlugs.map((slug) => getEntry('books', slug)))
 ).filter((book) => book !== undefined);
@@ -14,163 +20,11 @@ const featuredBooks = (
 <BaseLayout
   title="Cool, Calm & Karter — Books That Feel Like Home"
   description="Cool, Calm & Karter creates beautifully diverse children’s books filled with culture, joy, and love."
+  heroNav
 >
-  <section class="hero" aria-labelledby="hero-heading">
-    <p class="brand-mark">Cool, Calm &amp; Karter</p>
-    <h1 id="hero-heading">Books That Feel Like Home.</h1>
-    <p class="hero-subtext">
-      Cool, Calm &amp; Karter creates beautifully diverse children’s books filled with
-      culture, joy, and love.
-    </p>
-    <a class="shop-now" href="/shop">Shop Now</a>
-  </section>
-
-  <section class="story" aria-labelledby="story-heading">
-    <h2 id="story-heading">Our Story</h2>
-    <p>
-      Cool, Calm &amp; Karter was born out of fatherhood. Author Ki-Jana Thomas started
-      writing after the birth of his son, Karter, capturing the everyday magic of family
-      life in stories that celebrate identity, culture, and confidence.
-    </p>
-    <p>
-      Baby Karter appears throughout the series — from bedtime battles to holiday
-      traditions — as the heart of a growing collection of books made for every family
-      to see themselves in.
-    </p>
-    <a class="story-link" href="/about">Meet the Author →</a>
-  </section>
-
-  <section class="featured" aria-labelledby="featured-heading">
-    <h2 id="featured-heading">Featured Books</h2>
-    <ul class="featured-grid">
-      {
-        featuredBooks.map((book) => (
-          <li>
-            <BookCard book={book} />
-          </li>
-        ))
-      }
-    </ul>
-    <a class="view-all" href="/shop">View All Books</a>
-  </section>
+  <HomeHero books={featuredBooks} />
+  <FeaturedBooks books={featuredBooks} highlightId={bestSellerSlug} />
+  <StorySection />
+  <TrustSection />
+  <FinalCta />
 </BaseLayout>
-
-<style>
-  .hero {
-    text-align: center;
-    padding: 3rem 1.5rem 2.5rem;
-  }
-
-  .brand-mark {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    color: var(--color-navy);
-    font-size: 1.1rem;
-    margin: 0 0 0.5rem;
-  }
-
-  .hero h1 {
-    font-family: var(--font-display);
-    color: var(--color-navy);
-    font-size: 2.5rem;
-    margin: 0 0 1rem;
-  }
-
-  .hero-subtext {
-    max-width: 520px;
-    margin: 0 auto 1.75rem;
-    font-size: 1.1rem;
-    line-height: 1.6;
-  }
-
-  .shop-now {
-    display: inline-block;
-    background-color: var(--color-coral);
-    color: white;
-    padding: 0.75rem 2.2rem;
-    font-weight: 700;
-    border-radius: 10px;
-    text-decoration: none;
-    transition: background-color 0.15s ease;
-  }
-
-  .shop-now:hover,
-  .shop-now:focus-visible {
-    background-color: #d94c36;
-  }
-
-  .story,
-  .featured {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem;
-    text-align: center;
-  }
-
-  .story {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  }
-
-  .story h2,
-  .featured h2 {
-    font-family: var(--font-heading);
-    color: var(--color-navy);
-    font-size: 1.75rem;
-    margin: 0 0 1.25rem;
-  }
-
-  .story p {
-    font-size: 1.05rem;
-    line-height: 1.7;
-    text-align: left;
-    max-width: 640px;
-    margin: 0 auto 1.1rem;
-  }
-
-  .story-link {
-    display: inline-block;
-    margin-top: 0.5rem;
-    color: var(--color-coral);
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .story-link:hover,
-  .story-link:focus-visible {
-    text-decoration: underline;
-  }
-
-  .featured-grid {
-    list-style: none;
-    margin: 0 0 2rem;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
-    text-align: left;
-  }
-
-  .view-all {
-    display: inline-block;
-    background-color: var(--color-navy);
-    color: white;
-    padding: 0.6rem 1.6rem;
-    font-weight: 700;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: background-color 0.15s ease;
-  }
-
-  .view-all:hover,
-  .view-all:focus-visible {
-    background-color: #123f4d;
-  }
-
-  @media (min-width: 700px) {
-    .hero h1 {
-      font-size: 3rem;
-    }
-  }
-</style>

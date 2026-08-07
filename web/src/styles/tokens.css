@@ -4,8 +4,18 @@
   --color-coral: #f46045;
   --color-cream: #efe1c6;
 
-  /* Brand typography (existing fonts, preserved as-is for now) */
+  /* Cinematic-redesign supporting tones (derived from the approved sky
+     artwork — soft light cream for section surfaces, deep night navy for
+     text shadows/overlays on the darker backgrounds). */
+  --color-cream-light: #fdf7ec;
+  --color-night: #0f2c40;
+  --color-coral-deep: #d94c36;
+
+  /* Brand typography. Pacifico = script accents/eyebrows, Fraunces = premium
+     storybook display headlines, Baloo 2 = friendly UI chrome (nav, buttons,
+     badges), Nunito = body text. */
   --font-display: 'Pacifico', cursive;
+  --font-headline: 'Fraunces', Georgia, serif;
   --font-heading: 'Baloo 2', cursive;
   --font-body: 'Nunito', sans-serif;
 }
@@ -14,6 +24,13 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+html,
+body {
+  /* Cinematic sections position large artwork at the viewport edges;
+     clip guarantees no stray horizontal scroll on any page. */
+  overflow-x: clip;
 }
 
 body {
@@ -48,6 +65,30 @@ body {
   height: auto;
   object-fit: contain;
   display: block;
+}
+
+/* Shared cinematic headline treatment: Fraunces display serif with a short
+   warm coral underline swash. The swash is the one repeated accent motif
+   across homepage sections (it echoes the trust-pillar rules), so coral
+   dividers always read as an intentional system rather than stray lines. */
+.section-title {
+  font-family: var(--font-headline);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.section-title::after {
+  content: '';
+  display: block;
+  width: 58px;
+  height: 4px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--color-coral), #ffb56b);
+  margin: 0.6rem auto 0;
+}
+
+.section-title--left::after {
+  margin-left: 0;
 }
 
 /* Visually hides content while keeping it available to screen readers —

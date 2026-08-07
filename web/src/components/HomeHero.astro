@@ -1,0 +1,433 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { resolveCoverImage } from '../lib/images';
+import { visualAssets } from '../data/visualAssets';
+
+interface Props {
+  books: CollectionEntry<'books'>[];
+}
+
+const { books } = Astro.props;
+const stagedBooks = books.slice(0, 3);
+---
+
+<section class="hero" aria-labelledby="hero-heading">
+  {/* Desktop and mobile hero art are split via <picture> so the browser
+      only ever downloads the one that matches the viewport. */}
+  <picture class="hero-bg" aria-hidden="true">
+    <source media="(max-width: 767px)" srcset={visualAssets.backgrounds.heroMobile} />
+    <img src={visualAssets.backgrounds.heroDesktop} alt="" fetchpriority="high" decoding="async" />
+  </picture>
+
+  <div class="hero-inner">
+    {/* Final approved homepage title artwork, tightly cropped derivative
+        (see visualAssets.ts) — the welcome line right below already
+        announces the brand name to screen readers, so this is decorative. */}
+    <img
+      class="hero-title"
+      src={visualAssets.logos.homepageTitleCropped}
+      alt=""
+      aria-hidden="true"
+      width="1333"
+      height="677"
+      fetchpriority="high"
+      decoding="async"
+    />
+
+    <div class="hero-copy">
+      <p class="hero-eyebrow">Welcome to Cool, Calm &amp; Karter</p>
+      <h1 id="hero-heading">Books That Feel Like&nbsp;Home.</h1>
+      <p class="hero-sub">
+        Beautifully diverse children&rsquo;s books filled with culture, joy, and love —
+        where every little reader gets to see themselves in the story.
+      </p>
+      <div class="hero-ctas">
+        <a class="cta cta-primary" href="/shop">Shop the Books</a>
+        <a class="cta cta-ghost" href="/about">Our Story</a>
+      </div>
+    </div>
+
+    <div class="hero-stage">
+      <ul class="stage-books">
+        {
+          stagedBooks.map((book, i) => (
+            <li class={`stage-slot slot-${i}`}>
+              <a href={`/books/${book.id}`}>
+                <Image
+                  src={resolveCoverImage(book.data.coverImage)}
+                  alt={book.data.coverImageAlt}
+                  width={360}
+                  loading="eager"
+                />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <img
+        class="stage-karter"
+        src={visualAssets.characters.waving}
+        alt="Baby Karter waving hello"
+        width="1024"
+        height="1536"
+        decoding="async"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    min-height: min(94svh, 940px);
+    display: flex;
+    align-items: center;
+    background-color: var(--color-night);
+    color: #fff;
+  }
+
+  .hero-bg,
+  .hero-bg img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero-bg img {
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(3.75rem, 7.5vh, 5rem) 1.5rem 3.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+    align-items: center;
+    gap: 0 2rem;
+  }
+
+  /* ---- Approved homepage title artwork ---- */
+
+  .hero-title {
+    grid-column: 1 / -1;
+    justify-self: center;
+    display: block;
+    /* Cropped derivative fills its box edge-to-edge with visible artwork
+       (no baked-in transparent padding), so this width IS the on-screen
+       size — ~454px at a 1440px viewport (~432px + 5%). */
+    width: clamp(357px, 31.5vw, 483px);
+    height: auto;
+    object-fit: contain;
+    margin: 0 0 clamp(2.3rem, 6vh, 3.7rem);
+    /* `top` (not `transform`) for the static "nudge up" offset — the
+       rise-in/gentle-float entrance animation already owns `transform` on
+       this element, and `position` offsets don't affect sibling layout the
+       way a negative margin would. */
+    position: relative;
+    top: -10px;
+  }
+
+  .hero-copy {
+    max-width: 34rem;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-display);
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+    color: #ffdcae;
+    margin: 0 0 0.9rem;
+    text-shadow: 0 2px 14px rgba(9, 26, 43, 0.7);
+  }
+
+  .hero h1 {
+    font-family: var(--font-headline);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    font-size: clamp(2.5rem, 5.2vw, 3.9rem);
+    line-height: 1.06;
+    margin: 0 0 1.1rem;
+    text-shadow: 0 3px 26px rgba(9, 26, 43, 0.65);
+  }
+
+  .hero-sub {
+    font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+    line-height: 1.65;
+    margin: 0 0 1.9rem;
+    max-width: 30rem;
+    text-shadow: 0 2px 16px rgba(9, 26, 43, 0.75);
+  }
+
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+  }
+
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 0.75rem 1.9rem;
+    border-radius: 999px;
+    text-decoration: none;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .cta:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+  }
+
+  .cta-primary {
+    background-color: var(--color-coral);
+    color: #fff;
+    box-shadow:
+      0 14px 30px -12px rgba(244, 96, 69, 0.65),
+      0 3px 10px rgba(9, 26, 43, 0.35);
+  }
+
+  .cta-primary:hover,
+  .cta-primary:focus-visible {
+    background-color: var(--color-coral-deep);
+  }
+
+  .cta-ghost {
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    background-color: rgba(9, 26, 43, 0.22);
+  }
+
+  .cta-ghost:hover,
+  .cta-ghost:focus-visible {
+    background-color: rgba(255, 255, 255, 0.16);
+  }
+
+  /* ---- Book stage: platform + fanned covers + Karter ---- */
+
+  .hero-stage {
+    position: relative;
+    min-height: 480px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .stage-books {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 17%;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    transform: translateX(-24%);
+  }
+
+  .stage-slot a {
+    display: block;
+    border-radius: 8px;
+  }
+
+  .stage-slot a:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 4px;
+  }
+
+  .stage-slot img {
+    display: block;
+    width: clamp(124px, 11.6vw, 170px);
+    height: auto;
+    border-radius: 7px;
+    box-shadow:
+      0 22px 34px -16px rgba(6, 20, 34, 0.75),
+      0 6px 14px -6px rgba(6, 20, 34, 0.4);
+    transition: transform 0.25s ease;
+  }
+
+  .slot-0 {
+    transform: rotate(-8deg) translate(14px, 6px);
+    z-index: 1;
+  }
+
+  .slot-1 {
+    z-index: 2;
+    transform: translateY(-8px) scale(1.07);
+  }
+
+  .slot-2 {
+    transform: rotate(8deg) translate(-14px, 6px);
+    z-index: 1;
+  }
+
+  .stage-slot a:hover img {
+    transform: translateY(-8px);
+  }
+
+  /* Karter stands in front-right of the display, welcoming visitors. The
+     books sit raised (extra stage padding) so his overlap lands only on the
+     lower-right corner of the rightmost cover — below its title and beside
+     its character art — keeping all three covers readable. */
+  .stage-karter {
+    position: absolute;
+    right: -3%;
+    bottom: 0;
+    width: clamp(185px, 18vw, 254px);
+    height: auto;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  /* ---- Responsive ---- */
+
+  @media (max-width: 960px) {
+    .hero-inner {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+      padding-top: clamp(5rem, 10vh, 6.5rem);
+      text-align: center;
+    }
+
+    .hero-title {
+      width: clamp(294px, 39.9vw, 368px);
+      margin-bottom: clamp(1.6rem, 3.8vh, 2.4rem);
+    }
+
+    .hero-copy {
+      margin: 0 auto;
+    }
+
+    .hero-sub {
+      margin-inline: auto;
+    }
+
+    .hero-ctas {
+      justify-content: center;
+    }
+
+    .hero-stage {
+      min-height: 400px;
+      max-width: 560px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .stage-books {
+      transform: translateX(-16%);
+    }
+
+    .stage-slot img {
+      width: clamp(104px, 22vw, 150px);
+    }
+
+    .stage-karter {
+      right: -1%;
+      width: clamp(160px, 26vw, 208px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero {
+      min-height: 100svh;
+    }
+
+    /* The overlay nav wraps to two rows on narrow phones — give the hero
+       title enough top clearance so it never collides with the links row. */
+    .hero-inner {
+      padding-top: 7.25rem;
+    }
+
+    .hero-title {
+      width: clamp(226px, 60.9vw, 273px);
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-stage {
+      min-height: 340px;
+    }
+
+    .stage-books {
+      transform: translateX(-18%);
+    }
+
+    .stage-slot img {
+      width: clamp(84px, 23vw, 112px);
+    }
+
+    .stage-karter {
+      width: clamp(126px, 34vw, 158px);
+      right: -4%;
+    }
+  }
+
+  /* ---- Motion (fully gated) ---- */
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-bg img {
+      animation: hero-drift 48s ease-in-out infinite alternate;
+    }
+
+    .hero-title,
+    .hero-copy,
+    .hero-stage {
+      animation: rise-in 0.9s ease-out both;
+    }
+
+    .hero-copy {
+      animation-delay: 0.12s;
+    }
+
+    .hero-stage {
+      animation-delay: 0.26s;
+    }
+
+    .stage-karter {
+      animation:
+        rise-in 0.9s ease-out 0.4s both,
+        gentle-float 7s ease-in-out 1.4s infinite alternate;
+    }
+  }
+
+  @keyframes hero-drift {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.055);
+    }
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(22px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes gentle-float {
+    from {
+      translate: 0 0;
+    }
+    to {
+      translate: 0 -9px;
+    }
+  }
+</style>

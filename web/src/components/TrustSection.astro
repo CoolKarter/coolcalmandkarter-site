@@ -1,0 +1,151 @@
+---
+import { visualAssets } from '../data/visualAssets';
+
+// Every pillar below is grounded in the real catalog — no invented awards,
+// numbers, reviews, or claims.
+const pillars = [
+  {
+    title: 'Every Child Belongs',
+    text: 'Stories where every child can feel seen, celebrated, and at home — on every page.',
+  },
+  {
+    title: 'Culture, Family & Adventure',
+    text: 'From beach days and bedtime battles to abuelita’s love and holiday traditions, every book starts at home.',
+  },
+  {
+    title: 'Made for Ages 0–6',
+    text: 'Written for little ears and growing hearts — simple, warm, and perfect for reading aloud together.',
+  },
+  {
+    title: 'One Growing World',
+    text: 'Baby Karter grows with your family across an ever-expanding collection of stories.',
+  },
+];
+---
+
+<section class="trust" aria-labelledby="trust-heading">
+  <img
+    class="trust-clouds"
+    src={visualAssets.ui.cloudCornerOverlay}
+    alt=""
+    aria-hidden="true"
+    loading="lazy"
+    decoding="async"
+    width="1536"
+    height="1024"
+  />
+
+  <div class="trust-inner">
+    <p class="section-eyebrow">Why families love these books</p>
+    <h2 id="trust-heading" class="section-title">Made With Love, For Little Readers</h2>
+
+    <ul class="trust-grid">
+      {
+        pillars.map((pillar) => (
+          <li class="trust-pillar">
+            <h3>{pillar.title}</h3>
+            <p>{pillar.text}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .trust {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-cream-light);
+    padding: clamp(3.5rem, 8vw, 5.5rem) 1.5rem;
+  }
+
+  .trust-clouds {
+    position: absolute;
+    top: -4%;
+    right: -6%;
+    width: clamp(240px, 30vw, 430px);
+    height: auto;
+    opacity: 0.85;
+    pointer-events: none;
+  }
+
+  .trust-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1080px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .section-eyebrow {
+    font-family: var(--font-display);
+    color: var(--color-coral);
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .trust h2 {
+    color: var(--color-navy);
+    font-size: clamp(2rem, 3.6vw, 2.8rem);
+    margin: 0 0 2.4rem;
+  }
+
+  .trust-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: clamp(1.25rem, 3vw, 2.25rem);
+    text-align: left;
+  }
+
+  .trust-pillar {
+    border-top: 3px solid rgba(244, 96, 69, 0.55);
+    padding-top: 1.1rem;
+  }
+
+  .trust-pillar h3 {
+    font-family: var(--font-headline);
+    font-weight: 600;
+    color: var(--color-navy);
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .trust-pillar p {
+    margin: 0;
+    line-height: 1.65;
+    color: #33586a;
+    font-size: 0.98rem;
+  }
+
+  @media (max-width: 640px) {
+    .trust-grid {
+      text-align: center;
+    }
+
+    .trust-pillar {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .trust-pillar h3 {
+      position: relative;
+      padding-top: 0.9rem;
+    }
+
+    .trust-pillar h3::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 44px;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(244, 96, 69, 0.55);
+    }
+  }
+</style>

@@ -6,9 +6,15 @@ import Footer from '../components/Footer.astro';
 interface Props {
   title: string;
   description?: string;
+  /** Homepage only: float the nav transparently over the cinematic hero. */
+  heroNav?: boolean;
 }
 
-const { title, description = 'Cool, Calm & Karter — books that feel like home.' } = Astro.props;
+const {
+  title,
+  description = 'Cool, Calm & Karter — books that feel like home.',
+  heroNav = false,
+} = Astro.props;
 ---
 
 <html lang="en">
@@ -21,12 +27,12 @@ const { title, description = 'Cool, Calm & Karter — books that feel like home.
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&family=Nunito:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Pacifico&family=Baloo+2:wght@400;700&family=Nunito:wght@400;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap"
     />
     <link rel="icon" href="/favicon.ico" />
   </head>
   <body>
-    <Nav />
+    <Nav overlay={heroNav} />
     <main>
       <slot />
     </main>

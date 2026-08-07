@@ -1,0 +1,250 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { resolveCoverImage } from '../lib/images';
+
+interface Props {
+  books: CollectionEntry<'books'>[];
+  /** Slug of the owner's best seller — gets center emphasis + badge. */
+  highlightId?: string;
+}
+
+const { books, highlightId } = Astro.props;
+
+function priceDisplay(price: number | undefined): string | null {
+  return price != null ? `$${(price / 100).toFixed(2)}` : null;
+}
+---
+
+<section class="featured" aria-labelledby="featured-heading">
+  <div class="featured-inner">
+    <p class="section-eyebrow">Little readers, big worlds</p>
+    <h2 id="featured-heading" class="section-title">Featured Books</h2>
+
+    <ul class="featured-grid">
+      {
+        books.map((book) => (
+          <li>
+            <a
+              class:list={['featured-card', { 'is-highlight': book.id === highlightId }]}
+              href={`/books/${book.id}`}
+            >
+              {book.id === highlightId && <span class="bestseller-badge">Best Seller</span>}
+              <div class="featured-cover">
+                <Image
+                  src={resolveCoverImage(book.data.coverImage)}
+                  alt={book.data.coverImageAlt}
+                  width={520}
+                  loading="lazy"
+                />
+              </div>
+              <div class="featured-body">
+                <h3>{book.data.title}</h3>
+                <p class="featured-meta">
+                  {priceDisplay(book.data.price) && (
+                    <span class="featured-price">{priceDisplay(book.data.price)}</span>
+                  )}
+                  {book.data.ageRange && <span class="featured-age">Ages {book.data.ageRange}</span>}
+                </p>
+                <span class="featured-link" aria-hidden="true">
+                  See the book &rarr;
+                </span>
+              </div>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <a class="featured-all" href="/shop">Browse All Books</a>
+  </div>
+</section>
+
+<style>
+  .featured {
+    background: linear-gradient(to bottom, #f6efe0, var(--color-cream-light) 30%, var(--color-cream));
+    padding: clamp(3.5rem, 8vw, 5.5rem) 1.5rem clamp(3.5rem, 7vw, 5rem);
+  }
+
+  .featured-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .section-eyebrow {
+    font-family: var(--font-display);
+    color: var(--color-coral);
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .featured h2 {
+    color: var(--color-navy);
+    font-size: clamp(2rem, 3.6vw, 2.8rem);
+    margin: 0 0 2.2rem;
+  }
+
+  .featured-grid {
+    list-style: none;
+    margin: 0 0 2.5rem;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .featured-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.4rem 1.4rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow:
+      0 2px 6px rgba(25, 85, 105, 0.06),
+      0 18px 38px -22px rgba(25, 85, 105, 0.35);
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  /* Best-seller emphasis: gently larger, warmer shadow, coral badge. */
+  .featured-card.is-highlight {
+    box-shadow:
+      0 3px 8px rgba(25, 85, 105, 0.08),
+      0 26px 48px -20px rgba(244, 96, 69, 0.38);
+    outline: 2px solid rgba(244, 96, 69, 0.35);
+    outline-offset: -2px;
+  }
+
+  .bestseller-badge {
+    position: absolute;
+    top: -0.85rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, var(--color-coral), #f97f52);
+    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.02em;
+    padding: 0.28rem 1rem;
+    border-radius: 999px;
+    box-shadow: 0 6px 14px -6px rgba(244, 96, 69, 0.7);
+    white-space: nowrap;
+  }
+
+  @media (min-width: 780px) {
+    .featured-card.is-highlight {
+      transform: scale(1.045);
+    }
+
+    .featured-card.is-highlight:hover,
+    .featured-card.is-highlight:focus-visible {
+      transform: scale(1.045) translateY(-6px);
+    }
+  }
+
+  .featured-card:hover,
+  .featured-card:focus-visible {
+    transform: translateY(-6px);
+    box-shadow:
+      0 4px 10px rgba(25, 85, 105, 0.08),
+      0 30px 48px -22px rgba(25, 85, 105, 0.45);
+  }
+
+  .featured-card:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 3px;
+  }
+
+  .featured-cover {
+    aspect-ratio: 1 / 1.015;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.1rem;
+  }
+
+  .featured-cover img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 14px 26px -14px rgba(25, 85, 105, 0.5);
+  }
+
+  .featured-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    flex: 1;
+  }
+
+  .featured-body h3 {
+    font-family: var(--font-headline);
+    font-weight: 600;
+    color: var(--color-navy);
+    font-size: 1.22rem;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  .featured-meta {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.8rem;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  .featured-price {
+    font-weight: 800;
+    color: var(--color-navy);
+    font-size: 1.05rem;
+  }
+
+  .featured-age {
+    color: #5b7381;
+  }
+
+  .featured-link {
+    margin-top: auto;
+    padding-top: 0.35rem;
+    color: var(--color-coral);
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .featured-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #fff;
+    background-color: var(--color-navy);
+    padding: 0.7rem 2rem;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+
+  .featured-all:hover,
+  .featured-all:focus-visible {
+    background-color: #123f4d;
+  }
+
+  .featured-all:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 3px;
+  }
+</style>

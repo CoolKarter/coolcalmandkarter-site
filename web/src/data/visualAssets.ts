@@ -30,6 +30,19 @@ export const visualAssets = {
   },
   logos: {
     primary: '/images/logos/coolcalm-logo-transparent.webp',
+    // Cloud-only symbol, derived by cropping the approved transparent logo
+    // (same pixels, wordmark band removed) — used where the full lockup
+    // would be too small to read, e.g. the nav brand.
+    cloudMark: '/images/logos/coolcalm-clouds-transparent.webp',
+    // Final approved dimensional homepage hero title artwork — same source
+    // pixels as client/images/logos/cck-homepage-title.png, unmodified.
+    homepageTitle: '/images/logos/cck-homepage-title.png',
+    // Tightly cropped derivative of the same artwork (excess transparent
+    // canvas padding removed, ~24px safety margin kept around the visible
+    // glow/sparkles) — the source PNG's real content only filled ~84% of
+    // its width and ~61% of its height, making the hero title read smaller
+    // than intended. Used in the hero for accurate, larger on-screen sizing.
+    homepageTitleCropped: '/images/logos/cck-homepage-title-cropped.png',
     favicon: '/images/logos/favicon.ico',
   },
   ui: {

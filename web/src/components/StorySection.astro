@@ -1,0 +1,163 @@
+---
+import { visualAssets } from '../data/visualAssets';
+---
+
+<section class="story" aria-labelledby="story-heading">
+  <img
+    class="story-bg"
+    src={visualAssets.backgrounds.storySection}
+    alt=""
+    aria-hidden="true"
+    loading="lazy"
+    decoding="async"
+    width="1916"
+    height="821"
+  />
+
+  <div class="story-inner">
+    <div class="story-panel">
+      <p class="section-eyebrow">Our Story</p>
+      <h2 id="story-heading" class="section-title section-title--left">Born Out of Fatherhood</h2>
+      <p>
+        Author Ki-Jana Thomas started writing after the birth of his son, Karter —
+        capturing the everyday magic of family life in stories that celebrate identity,
+        culture, and confidence.
+      </p>
+      <p>
+        From bedtime battles to holiday traditions, Baby Karter is the heart of a growing
+        collection of books made for every family to see themselves in.
+      </p>
+      <a class="story-link" href="/about">Meet the Author &rarr;</a>
+    </div>
+
+    <img
+      class="story-karter"
+      src={visualAssets.characters.reading}
+      alt="Baby Karter happily reading a picture book"
+      loading="lazy"
+      decoding="async"
+      width="1024"
+      height="1024"
+    />
+  </div>
+</section>
+
+<style>
+  .story {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(3.5rem, 9vw, 6.5rem) 1.5rem;
+    background-color: #dcedf5;
+  }
+
+  .story-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .story-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1080px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+    align-items: center;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+  }
+
+  .story-panel {
+    background: linear-gradient(160deg, rgba(253, 250, 244, 0.92), rgba(253, 250, 244, 0.78));
+    border-radius: 22px;
+    padding: clamp(1.75rem, 4vw, 2.75rem);
+    box-shadow: 0 24px 48px -30px rgba(25, 85, 105, 0.45);
+  }
+
+  .section-eyebrow {
+    font-family: var(--font-display);
+    color: var(--color-coral);
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .story h2 {
+    color: var(--color-navy);
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    margin: 0 0 1.1rem;
+  }
+
+  @media (max-width: 820px) {
+    /* Centered layout on small screens — recenter the underline swash. */
+    .story h2.section-title--left::after {
+      margin-inline: auto;
+    }
+  }
+
+  .story p:not(.section-eyebrow) {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin: 0 0 1rem;
+    color: #22485a;
+    max-width: 36rem;
+  }
+
+  .story-link {
+    display: inline-block;
+    margin-top: 0.3rem;
+    color: var(--color-coral-deep);
+    font-weight: 800;
+    text-decoration: none;
+    border-radius: 6px;
+  }
+
+  .story-link:hover,
+  .story-link:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .story-link:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 3px;
+  }
+
+  .story-karter {
+    width: min(100%, 340px);
+    height: auto;
+    justify-self: center;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .story-karter {
+      animation: gentle-float 8s ease-in-out infinite alternate;
+    }
+  }
+
+  @keyframes gentle-float {
+    from {
+      translate: 0 0;
+    }
+    to {
+      translate: 0 -10px;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .story-inner {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+
+    .story p:not(.section-eyebrow) {
+      margin-inline: auto;
+    }
+
+    .story-karter {
+      width: min(62vw, 280px);
+    }
+  }
+</style>

@@ -1,4 +1,6 @@
 ---
+import { visualAssets } from '../data/visualAssets';
+
 const year = new Date().getFullYear();
 const links = [
   { href: '/', label: 'Home' },
@@ -9,37 +11,93 @@ const links = [
 ---
 
 <footer class="site-footer">
-  <nav aria-label="Footer">
-    {links.map((link) => <a href={link.href}>{link.label}</a>)}
-  </nav>
-  <p>&copy; {year} Cool, Calm &amp; Karter. All rights reserved.</p>
+  <div class="footer-inner">
+    <a class="footer-brand" href="/">
+      <img
+        src={visualAssets.logos.primary}
+        alt="Cool, Calm & Karter — home"
+        width="1499"
+        height="1255"
+        loading="lazy"
+        decoding="async"
+      />
+    </a>
+    <p class="footer-tagline">Books that feel like home.</p>
+    <nav aria-label="Footer">
+      {links.map((link) => <a href={link.href}>{link.label}</a>)}
+    </nav>
+    <p class="footer-copyright">&copy; {year} Cool, Calm &amp; Karter. All rights reserved.</p>
+  </div>
 </footer>
 
 <style>
   .site-footer {
-    background-color: var(--color-navy);
+    background-color: var(--color-night);
     color: white;
-    padding: 2rem 1.5rem;
+    padding: 2.75rem 1.5rem 2.25rem;
     text-align: center;
     font-family: var(--font-body);
     font-size: 0.9rem;
   }
 
+  .footer-inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* The logo's navy wordmark needs a light surface to stay readable on the
+     night-navy footer — a soft cream chip keeps the approved artwork intact. */
+  .footer-brand {
+    display: inline-flex;
+    background-color: var(--color-cream-light);
+    border-radius: 18px;
+    padding: 0.7rem 1.1rem;
+    box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.55);
+  }
+
+  .footer-brand img {
+    height: 76px;
+    width: auto;
+    display: block;
+  }
+
+  .footer-tagline {
+    font-family: var(--font-display);
+    color: #ffd9a8;
+    font-size: 1.02rem;
+    margin: 0.6rem 0 1.3rem;
+  }
+
   .site-footer nav {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
     display: flex;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.5rem 1.4rem;
     flex-wrap: wrap;
   }
 
   .site-footer a {
     color: white;
     text-decoration: none;
+    font-weight: 700;
+    border-radius: 6px;
   }
 
   .site-footer a:hover,
   .site-footer a:focus-visible {
     text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--color-coral);
+  }
+
+  .site-footer a:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+  }
+
+  .footer-copyright {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 400;
   }
 </style>
