@@ -2,23 +2,47 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BookCard from '../components/BookCard.astro';
 import { getCollection } from 'astro:content';
+import { visualAssets } from '../data/visualAssets';
 
 const books = (await getCollection('books')).sort((a, b) =>
   a.data.title.localeCompare(b.data.title),
 );
+
+// Same fact already established on the homepage — not re-derived or guessed.
+const bestSellerSlug = 'black-puerto-rican-and-baby';
 ---
 
 <BaseLayout
   title="Shop — Cool, Calm & Karter"
-  description="Browse the full Cool, Calm & Karter picture book catalog."
+  description="Browse the full Cool, Calm & Karter picture book catalog — stories celebrating culture, family, and imagination for ages 0–6."
 >
-  <section class="shop" aria-labelledby="shop-heading">
-    <h1 id="shop-heading">Shop</h1>
+  <section class="shop-hero" aria-labelledby="shop-heading">
+    <img
+      class="shop-hero-bg"
+      src={visualAssets.backgrounds.storySection}
+      alt=""
+      aria-hidden="true"
+      loading="eager"
+      width="1916"
+      height="821"
+    />
+    <div class="shop-hero-scrim" aria-hidden="true" />
+    <div class="shop-hero-inner">
+      <p class="shop-eyebrow">The Baby Karter Collection</p>
+      <h1 id="shop-heading">Stories for Every Little Reader</h1>
+      <p class="shop-sub">
+        Twelve picture books celebrating culture, family, and imagination — written for
+        little ones ages 0–6 to see themselves in every story.
+      </p>
+    </div>
+  </section>
+
+  <section class="shop" aria-label="All books">
     <ul class="book-grid">
       {
         books.map((book) => (
           <li>
-            <BookCard book={book} />
+            <BookCard book={book} isBestSeller={book.id === bestSellerSlug} />
           </li>
         ))
       }
@@ -27,18 +51,71 @@ const books = (await getCollection('books')).sort((a, b) =>
 </BaseLayout>
 
 <style>
-  .shop {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem 4rem;
+  .shop-hero {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-night);
+    padding: clamp(3.25rem, 9vw, 5rem) 1.5rem clamp(3.75rem, 10vw, 5.5rem);
+    text-align: center;
+    color: #fff;
   }
 
-  .shop h1 {
-    text-align: center;
+  .shop-hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+  }
+
+  /* Dark cinematic scrim so the sky reads as premium atmosphere rather
+     than a busy backdrop, and the headline stays highly legible. */
+  .shop-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      165deg,
+      rgba(9, 26, 43, 0.88) 0%,
+      rgba(15, 44, 64, 0.82) 55%,
+      rgba(25, 85, 105, 0.75) 100%
+    );
+  }
+
+  .shop-hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .shop-eyebrow {
     font-family: var(--font-display);
-    color: var(--color-navy);
-    font-size: 2.25rem;
-    margin-bottom: 2rem;
+    font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+    color: #ffdcae;
+    margin: 0 0 0.7rem;
+  }
+
+  .shop-hero h1 {
+    font-family: var(--font-headline);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-size: clamp(2rem, 4.2vw, 2.9rem);
+    line-height: 1.12;
+    margin: 0 0 0.9rem;
+  }
+
+  .shop-sub {
+    font-size: clamp(1rem, 1.3vw, 1.1rem);
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+  }
+
+  .shop {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 3.5rem) 1.5rem 4.5rem;
   }
 
   .book-grid {
@@ -46,8 +123,8 @@ const books = (await getCollection('books')).sort((a, b) =>
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1.75rem;
   }
 
   .book-grid > li {

@@ -5,56 +5,114 @@ import { resolveCoverImage } from '../lib/images';
 
 interface Props {
   book: CollectionEntry<'books'>;
+  /** Slug of the catalog's best seller — gets a badge + elevated treatment. */
+  isBestSeller?: boolean;
 }
 
-const { book } = Astro.props;
+const { book, isBestSeller = false } = Astro.props;
 const { data } = book;
 const cover = resolveCoverImage(data.coverImage);
 const priceDisplay = data.price != null ? `$${(data.price / 100).toFixed(2)}` : null;
 const isAvailable = data.availability === 'available';
+
+// The 7 newer titles already ship a real `hook` in their content data. The
+// original 5 live books predate that field, so for shop-grid consistency
+// only, each gets a one-line eyebrow distilled from its own existing
+// shortDescription/description copy below — no new facts or claims, just a
+// shorter restatement of what that book's own content already says.
+const fallbackEyebrows: Record<string, string> = {
+  'adventure-fun-and-baby': 'An energetic journey through imagination, play, and discovery.',
+  'black-beautiful-and-baby': 'A joyful celebration of identity, pride, and Black beauty.',
+  'black-puerto-rican-and-baby': 'A joyful celebration of Afro-Latino identity and pride.',
+  'florida-beach-and-baby': 'A sunny beach day full of wonder and family joy.',
+  'go-to-sleep-karter': 'A funny, relatable bedtime adventure.',
+};
+const eyebrow = data.hook ?? fallbackEyebrows[book.id];
 ---
 
-<a class="book-card" href={`/books/${book.id}`}>
+<a
+  class:list={['book-card', { 'is-highlight': isBestSeller }]}
+  href={`/books/${book.id}`}
+>
+  {isBestSeller && <span class="bestseller-badge">Best Seller</span>}
   <div class="cover-frame">
     <Image src={cover} alt={data.coverImageAlt} width={500} loading="lazy" />
   </div>
   <div class="book-card-body">
+    {eyebrow && <p class="book-hook">{eyebrow}</p>}
     <h2 class="book-title">{data.title}</h2>
     {data.shortDescription && <p class="book-blurb">{data.shortDescription}</p>}
     <div class="book-meta">
       {priceDisplay && <span class="book-price">{priceDisplay}</span>}
       {data.ageRange && <span class="book-age">Ages {data.ageRange}</span>}
-      <span class={`book-availability ${isAvailable ? 'is-available' : 'is-coming-soon'}`}>
-        {isAvailable ? 'Available' : 'Coming Soon'}
-      </span>
+      {!isAvailable && <span class="book-availability">Coming Soon</span>}
     </div>
+    <span class="book-link" aria-hidden="true">See the Book &rarr;</span>
   </div>
 </a>
 
 <style>
   .book-card {
+    position: relative;
     display: flex;
     flex-direction: column;
-    background: #fffaf0;
-    border: 1px solid rgba(25, 85, 105, 0.12);
-    border-radius: 14px;
-    padding: 1rem;
+    height: 100%;
+    background: #fff;
+    border: 1px solid rgba(25, 85, 105, 0.1);
+    border-radius: 18px;
+    padding: 1.4rem 1.4rem 1.5rem;
     text-decoration: none;
     color: inherit;
+    box-shadow:
+      0 2px 6px rgba(25, 85, 105, 0.06),
+      0 16px 32px -22px rgba(25, 85, 105, 0.35);
     transition:
-      transform 0.15s ease,
-      box-shadow 0.15s ease;
+      transform 0.22s ease,
+      box-shadow 0.22s ease;
   }
 
   .book-card:hover,
   .book-card:focus-visible {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
+    box-shadow:
+      0 4px 10px rgba(25, 85, 105, 0.08),
+      0 26px 42px -20px rgba(25, 85, 105, 0.45);
+  }
+
+  .book-card:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 3px;
+  }
+
+  .book-card.is-highlight {
+    box-shadow:
+      0 3px 8px rgba(25, 85, 105, 0.08),
+      0 24px 44px -20px rgba(244, 96, 69, 0.38);
+    outline: 2px solid rgba(244, 96, 69, 0.35);
+    outline-offset: -2px;
+  }
+
+  .bestseller-badge {
+    position: absolute;
+    top: -0.7rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, var(--color-coral), #f97f52);
+    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    padding: 0.25rem 0.9rem;
+    border-radius: 999px;
+    box-shadow: 0 6px 14px -6px rgba(244, 96, 69, 0.7);
+    white-space: nowrap;
+    z-index: 1;
   }
 
   .book-card .cover-frame {
     max-width: 280px;
-    margin: 0 auto 1rem;
+    margin: 0 auto 1.1rem;
     width: 100%;
   }
 
@@ -64,36 +122,52 @@ const isAvailable = data.availability === 'available';
     flex: 1;
   }
 
+  .book-hook {
+    font-family: var(--font-display);
+    color: var(--color-coral);
+    font-size: 0.92rem;
+    line-height: 1.4;
+    margin: 0 0 0.35rem;
+  }
+
   .book-title {
-    font-family: var(--font-heading);
-    font-size: 1.15rem;
+    font-family: var(--font-headline);
+    font-weight: 600;
+    font-size: 1.2rem;
+    line-height: 1.28;
     color: var(--color-navy);
     margin: 0 0 0.5rem;
   }
 
   .book-blurb {
     font-size: 0.9rem;
-    color: #444;
-    line-height: 1.5;
+    color: #4a4a4a;
+    line-height: 1.55;
     margin: 0 0 1rem;
     flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .book-meta {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 0.85rem;
+    align-items: baseline;
+    gap: 0.7rem;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
   }
 
   .book-price {
-    font-weight: 700;
+    font-weight: 800;
     color: var(--color-navy);
+    font-size: 1.02rem;
   }
 
   .book-age {
-    color: #555;
+    color: #5b7381;
   }
 
   .book-availability {
@@ -102,15 +176,19 @@ const isAvailable = data.availability === 'available';
     border-radius: 999px;
     font-weight: 700;
     font-size: 0.75rem;
-  }
-
-  .book-availability.is-available {
-    background: rgba(25, 85, 105, 0.1);
-    color: var(--color-navy);
-  }
-
-  .book-availability.is-coming-soon {
     background: rgba(244, 96, 69, 0.1);
     color: var(--color-coral);
+  }
+
+  .book-link {
+    color: var(--color-coral-deep);
+    font-weight: 700;
+    font-size: 0.92rem;
+  }
+
+  .book-card:hover .book-link,
+  .book-card:focus-visible .book-link {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 </style>
