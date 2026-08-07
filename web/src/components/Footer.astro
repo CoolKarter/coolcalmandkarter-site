@@ -11,6 +11,17 @@ const links = [
 ---
 
 <footer class="site-footer">
+  <img
+    class="footer-bg"
+    src={visualAssets.backgrounds.finalCta}
+    alt=""
+    aria-hidden="true"
+    loading="lazy"
+    decoding="async"
+    width="1916"
+    height="821"
+  />
+  <div class="footer-scrim" aria-hidden="true"></div>
   <div class="footer-inner">
     <a class="footer-brand" href="/">
       <img
@@ -32,6 +43,8 @@ const links = [
 
 <style>
   .site-footer {
+    position: relative;
+    overflow: hidden;
     background-color: var(--color-night);
     color: white;
     padding: 2.75rem 1.5rem 2.25rem;
@@ -40,7 +53,35 @@ const links = [
     font-size: 0.9rem;
   }
 
+  /* Same night-cloud artwork the homepage's Final CTA closes on
+     (visualAssets.backgrounds.finalCta) — reused here, not duplicated, so
+     every page settles into the same nighttime world at its footer. A
+     different object-position (vs. FinalCta's "center") crops a distinct
+     band of the same wide image, and the deeper scrim below reads as
+     "further into the night" rather than a repeated frame. */
+  .footer-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 75%;
+  }
+
+  .footer-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(6, 16, 28, 0.8) 0%,
+      rgba(5, 13, 23, 0.9) 55%,
+      rgba(4, 10, 18, 0.95) 100%
+    );
+  }
+
   .footer-inner {
+    position: relative;
+    z-index: 1;
     max-width: 720px;
     margin: 0 auto;
   }
