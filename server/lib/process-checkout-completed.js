@@ -3,6 +3,7 @@
 const { resolveOrderItems } = require('./resolve-order-items');
 const { generateOrderNumber: defaultGenerateOrderNumber } = require('./order-number');
 const { DEFAULT_ORDER_STATUS } = require('./order-status');
+const { normalizeEmail } = require('./normalize-email');
 
 // Astronomically unlikely to ever loop more than once — a same-day
 // orderNumber collision requires two orders to independently draw the same
@@ -62,6 +63,7 @@ async function processCheckoutCompleted({
   const customerName = session.customer_details?.name || 'Customer';
   const address = session.customer_details?.address || {};
   const amount = session.amount_total || 0;
+  const normalizedEmailResult = normalizeEmail(customerEmail);
 
   // Titles/quantities/prices come from Stripe's own line-items record for
   // this session (mapped back to our catalog for the title), never from
@@ -107,6 +109,13 @@ async function processCheckoutCompleted({
     // elsewhere (server/lib/order-views.js), but that's a read-time
     // concern, not something retroactively written here.
     orderStatus: DEFAULT_ORDER_STATUS,
+    // Phase 13C — the normalized form of the same email, for exact
+    // case-insensitive My Orders lookup without a customer-input regex
+    // (see customer-orders.js). Only set when the Stripe-supplied email
+    // is actually well-formed — this order must still save successfully
+    // even if it isn't (e.g. the 'no-email' fallback above), so a failed
+    // normalization simply omits the field rather than blocking the save.
+    ...(normalizedEmailResult.ok ? { emailNormalized: normalizedEmailResult.email } : {}),
   };
 
   for (let attempt = 0; attempt < MAX_ORDER_NUMBER_ATTEMPTS; attempt += 1) {

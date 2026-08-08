@@ -8,6 +8,7 @@ const {
   buildContactNotificationEmail,
   buildNewsletterWelcomeEmail,
   buildNewsletterAdminNotification,
+  buildMagicLinkEmail,
   buildPublicAssetUrl,
   LOGO_ASSET_PATH,
 } = require('../lib/email-templates');
@@ -173,4 +174,38 @@ for (const [name, build] of [
 test('order confirmation email omits the logo image entirely (rather than a broken/guessed src) when FRONTEND_BASE_URL is not configured', () => {
   const { html } = buildOrderConfirmationEmail(buildTestOrder());
   assert.ok(!html.includes('<img'));
+});
+
+// ---- Magic-link email (Phase 13C) ----
+
+test('magic-link email includes the provided link, an expiration notice, and branding', () => {
+  const { subject, html } = buildMagicLinkEmail(
+    { magicLinkUrl: 'https://staging.example.com/my-orders/verify#token=abc123', expiresInMinutes: 15 },
+    { frontendBaseUrl: 'https://staging.example.com' },
+  );
+
+  assert.match(subject, /Order History/i);
+  assert.match(html, /href="https:\/\/staging\.example\.com\/my-orders\/verify#token=abc123"/);
+  assert.match(html, /15 minutes/);
+  assert.match(html, /View My Orders/);
+  assert.match(html, /ignore this email/i);
+});
+
+test('magic-link email never includes order numbers, purchases, shipping address, or tracking information', () => {
+  const { html } = buildMagicLinkEmail(
+    { magicLinkUrl: 'https://staging.example.com/my-orders/verify#token=abc123', expiresInMinutes: 15 },
+    { frontendBaseUrl: 'https://staging.example.com' },
+  );
+  const lower = html.toLowerCase();
+
+  assert.ok(!lower.includes('cck-'));
+  assert.ok(!lower.includes('order total'));
+  assert.ok(!lower.includes('shipping address'));
+  assert.ok(!lower.includes('tracking'));
+  assert.ok(!lower.includes('$'));
+});
+
+test('magic-link email defaults expiresInMinutes to 15 when not supplied', () => {
+  const { html } = buildMagicLinkEmail({ magicLinkUrl: 'https://staging.example.com/x#token=abc' });
+  assert.match(html, /15 minutes/);
 });

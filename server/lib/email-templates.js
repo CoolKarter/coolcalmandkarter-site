@@ -237,12 +237,45 @@ function buildNewsletterAdminNotification({ email, ip }, { frontendBaseUrl } = {
   };
 }
 
+/**
+ * My Orders magic-link email. Provides secure authentication access only
+ * — deliberately contains no order data whatsoever (no order numbers,
+ * purchases, shipping address, tracking, or anything else that would turn
+ * a compromised/misdirected email into an information leak on its own).
+ * `magicLinkUrl` is expected to already be a complete URL with the raw
+ * token in a fragment (`#token=...`), built by the caller
+ * (process-orders-access-request.js) — this function only renders it.
+ */
+function buildMagicLinkEmail({ magicLinkUrl, expiresInMinutes = 15 } = {}, { frontendBaseUrl } = {}) {
+  const inner = `
+    <h2 style="color: ${BRAND_NAVY}; text-align: center; margin: 8px 0 16px;">Access Your Order History</h2>
+    <p style="font-size: 15px; line-height: 1.6; text-align: center;">
+      Someone requested access to view the Cool, Calm &amp; Karter order history for this email address. If that was you, click below to securely view your orders.
+    </p>
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${magicLinkUrl}" style="display: inline-block; background-color: ${BRAND_CORAL}; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 999px; font-weight: bold; font-size: 16px;">View My Orders</a>
+    </div>
+    <p style="font-size: 13px; color: #888888; text-align: center; margin: 0 0 8px;">
+      This link expires in ${expiresInMinutes} minutes and can only be used once.
+    </p>
+    <p style="font-size: 13px; color: #888888; text-align: center; margin: 0;">
+      If you didn't request this, no action is needed — you can safely ignore this email.
+    </p>
+  `;
+
+  return {
+    subject: 'Access Your Cool, Calm & Karter Order History',
+    html: wrapEmailBody(inner, { frontendBaseUrl }),
+  };
+}
+
 module.exports = {
   buildOrderConfirmationEmail,
   buildAdminOrderNotificationEmail,
   buildContactNotificationEmail,
   buildNewsletterWelcomeEmail,
   buildNewsletterAdminNotification,
+  buildMagicLinkEmail,
   buildPublicAssetUrl,
   formatCurrency,
   formatAddress,

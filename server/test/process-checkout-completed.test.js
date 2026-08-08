@@ -59,7 +59,21 @@ test('creates a new order with a generated order number and real item pricing on
   assert.equal(result.order.items[0].unitPrice, 999);
   assert.equal(result.order.items[0].lineTotal, 1998);
   assert.equal(result.order.orderStatus, 'received'); // Phase 13B: every new order starts here
+  assert.equal(result.order.emailNormalized, 'buyer@example.com'); // Phase 13C: trimmed/lowercased for My Orders lookup
   assert.equal(OrderModel.__store.length, 1);
+});
+
+test('emailNormalized is omitted (never blocks the order save) when the Stripe-supplied email is malformed', async () => {
+  const OrderModel = createFakeOrderModel();
+  const result = await processCheckoutCompleted({
+    session: buildSession({ customer_details: { email: 'no-email', name: 'Jamie Buyer', address: {} } }),
+    stripeClient: buildFakeStripeClient(),
+    catalog: buildTestCatalog(),
+    OrderModel,
+  });
+
+  assert.equal(result.created, true); // the order still saves successfully
+  assert.equal('emailNormalized' in result.order, false);
 });
 
 test('a second call for the same Stripe session (webhook retry) does not create a duplicate order or a second order number', async () => {
