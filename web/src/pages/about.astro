@@ -1,109 +1,343 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { visualAssets } from '../data/visualAssets';
 ---
 
 <BaseLayout
   title="About the Author — Cool, Calm & Karter"
   description="Meet Ki-Jana Thomas, father, author, and the heart behind the Cool, Calm & Karter 'And Baby' series."
 >
+  <section class="about-hero" aria-labelledby="about-heading">
+    <img
+      class="about-hero-bg"
+      src={visualAssets.backgrounds.storySection}
+      alt=""
+      aria-hidden="true"
+      loading="eager"
+      width="1916"
+      height="821"
+    />
+    <div class="about-hero-scrim" aria-hidden="true"></div>
+    <div class="about-hero-inner">
+      <p class="about-eyebrow">Our Story</p>
+      <h1 id="about-heading" class="section-title">About the Author</h1>
+    </div>
+  </section>
+
   <article class="about">
-    <h1>About the Author</h1>
-
-    <p>
-      <strong>
-        Meet Ki-Jana Thomas — Father, Author, and the Heart Behind the &ldquo;And
-        Baby&rdquo; Series
-      </strong>
+    <p class="about-lede">
+      Meet Ki-Jana Thomas — Father, Author, and the Heart Behind the &ldquo;And
+      Baby&rdquo; Series
     </p>
 
-    <p>
-      Ki-Jana Thomas discovered his passion for writing children’s books after
-      the birth of his son, Karter. Becoming a father opened his eyes to the
-      magic of everyday moments — the laughter, the challenges, the milestones
-      — and inspired him to capture those memories through storytelling.
-      That’s how the “And Baby” series was born.
-    </p>
+    <div class="about-editorial">
+      <div class="about-editorial-visual">
+        <div class="about-karter-frame">
+          <img
+            class="about-karter"
+            src={visualAssets.characters.reading}
+            alt="Baby Karter happily reading a picture book"
+            loading="lazy"
+            decoding="async"
+            width="1024"
+            height="1024"
+          />
+        </div>
+      </div>
 
-    <p>
-      Through books like <em>Black, Beautiful & Baby</em> and
-      <em>Black, Puerto Rican & Baby</em>, Ki-Jana creates heartwarming
-      stories that celebrate identity, culture, and confidence. His mission
-      is to fill the shelves with stories that reflect the beauty of every
-      child — especially those who have been underrepresented for too long.
-    </p>
+      <div class="about-editorial-text">
+        <p>
+          Ki-Jana Thomas discovered his passion for writing children&rsquo;s books after
+          the birth of his son, Karter. Becoming a father opened his eyes to the
+          magic of everyday moments — the laughter, the challenges, the milestones
+          — and inspired him to capture those memories through storytelling.
+          That&rsquo;s how the &ldquo;And Baby&rdquo; series was born.
+        </p>
 
-    <p>
-      But these books aren’t just for families of color — they’re for
-      everyone. Ki-Jana believes that through stories, we can all learn to
-      love ourselves and better understand each other. His writing is a
-      bridge — teaching children to embrace who they are while inspiring
-      families to celebrate the uniqueness in others.
-    </p>
+        <p>
+          Through books like <em>Black, Beautiful &amp; Baby</em> and
+          <em>Black, Puerto Rican &amp; Baby</em>, Ki-Jana creates heartwarming
+          stories that celebrate identity, culture, and confidence. His mission
+          is to fill the shelves with stories that reflect the beauty of every
+          child — especially those who have been underrepresented for too long.
+        </p>
 
-    <p>
-      Whether it’s a bedtime laugh in <em>Go To Sleep, Karter</em> or a lesson
-      in self-love and joy, every Cool, Calm & Karter book is crafted with
-      care, connection, and a big dose of heart.
-    </p>
+        <blockquote class="about-pullquote">
+          But these books aren&rsquo;t just for families of color — they&rsquo;re for
+          everyone. Ki-Jana believes that through stories, we can all learn to
+          love ourselves and better understand each other.
+        </blockquote>
 
-    <p>
-      And the impact doesn’t stop on the page. For every book sold, we donate
-      a copy to a child in foster care, a child in need, or an underserved
-      community — because we believe every child deserves to feel seen,
-      celebrated, and loved.
-    </p>
+        <p>
+          His writing is a bridge — teaching children to embrace who they are
+          while inspiring families to celebrate the uniqueness in others.
+          Whether it&rsquo;s a bedtime laugh in <em>Go To Sleep, Karter</em> or a
+          lesson in self-love and joy, every Cool, Calm &amp; Karter book is
+          crafted with care, connection, and a big dose of heart.
+        </p>
+      </div>
+    </div>
 
-    <p>
-      <strong>
-        Thank you for supporting Ki-Jana and the team at Cool, Calm & Karter.
-        With your help, we’re building a brighter, more inclusive future —
+    <div class="about-closing">
+      <p class="about-closing-eyebrow">A Growing Story</p>
+      <p>
+        And the impact doesn&rsquo;t stop on the page. For every book sold, we donate
+        a copy to a child in foster care, a child in need, or an underserved
+        community — because we believe every child deserves to feel seen,
+        celebrated, and loved.
+      </p>
+      <p class="about-closing-thanks">
+        Thank you for supporting Ki-Jana and the team at Cool, Calm &amp; Karter.
+        With your help, we&rsquo;re building a brighter, more inclusive future —
         one book at a time.
-      </strong>
-    </p>
-
-    <a class="browse-button" href="/shop">Browse Books</a>
+      </p>
+      <a class="browse-button" href="/shop">Browse Books</a>
+    </div>
   </article>
 </BaseLayout>
 
 <style>
-  .about {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem 4rem;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  /* ---- Masthead: same cloud asset + scrim strategy as Shop/Cart, kept
+     compact — atmosphere without becoming another homepage hero. ---- */
+
+  .about-hero {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-night);
+    padding: clamp(2.25rem, 6vw, 3rem) 1.5rem clamp(2.5rem, 6vw, 3.25rem);
+    text-align: center;
+    color: #fff;
   }
 
-  .about h1 {
-    text-align: center;
+  .about-hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+  }
+
+  .about-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      165deg,
+      rgba(9, 26, 43, 0.88) 0%,
+      rgba(15, 44, 64, 0.82) 55%,
+      rgba(25, 85, 105, 0.75) 100%
+    );
+  }
+
+  .about-hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .about-eyebrow {
     font-family: var(--font-display);
+    font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+    color: #ffdcae;
+    margin: 0 0 0.5rem;
+  }
+
+  .about-hero-inner .section-title {
+    color: #fff;
+    font-size: clamp(1.9rem, 4vw, 2.4rem);
+    margin: 0;
+  }
+
+  /* ---- Editorial body: wide magazine-style composition rather than a
+     narrow document column. ---- */
+
+  .about {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: clamp(2.75rem, 6vw, 4rem) 1.5rem 4.5rem;
+  }
+
+  .about-lede {
+    font-family: var(--font-headline);
+    font-weight: 600;
+    font-size: clamp(1.4rem, 2.8vw, 1.75rem);
+    line-height: 1.4;
     color: var(--color-navy);
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
+    text-align: center;
+    max-width: 40rem;
+    margin: 0 auto clamp(2.5rem, 6vw, 3.5rem);
   }
 
   .about p {
-    font-size: 1.05rem;
-    line-height: 1.7;
-    margin: 0 0 1.25rem;
+    font-size: 1.08rem;
+    line-height: 1.8;
+    color: #3a3a3a;
+    margin: 0 0 1.4rem;
+  }
+
+  /* 60/40 editorial split — text is the dominant column, Karter's portrait
+     is a real presence beside it rather than a small aside. */
+  .about-editorial {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    gap: clamp(1.75rem, 5vw, 2rem);
+    margin-bottom: clamp(2.5rem, 6vw, 3.5rem);
+  }
+
+  .about-editorial-visual {
+    display: flex;
+    justify-content: center;
+    order: -1;
+  }
+
+  /* Soft radial glow + cream mount, so the portrait reads as an intentional
+     illustration moment integrated into the page rather than a floating
+     cutout — the same halo language used behind product covers. */
+  .about-karter-frame {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(280px, 70vw);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: radial-gradient(
+      closest-side,
+      var(--color-cream-light) 62%,
+      rgba(244, 220, 174, 0.4) 85%,
+      transparent 100%
+    );
+  }
+
+  .about-karter {
+    width: 78%;
+    height: auto;
+  }
+
+  @media (min-width: 860px) {
+    .about-editorial {
+      /* Visual column is first in DOM order (order:0 ties with text's
+         default order:0, resolved by document order), so the fixed track
+         must come first too — otherwise it gets assigned to the 1fr track
+         and Karter is squeezed into the remainder instead of the reverse. */
+      grid-template-columns: 560px minmax(0, 1fr);
+      /* stretch (the grid default) makes the visual column's own box match
+         the full height of the taller text column, giving it real height
+         to position Karter within — rather than shrinking to his size. */
+      align-items: stretch;
+      gap: clamp(2.5rem, 5vw, 3.5rem);
+    }
+
+    .about-editorial-visual {
+      order: 0;
+      position: relative;
+    }
+
+    /* Positioned at 45% down the full column height (not exact center) so
+       Karter visually balances the complete story beside him instead of
+       sitting at the top above a large empty area. Frame is sized to be a
+       major visual anchor — not a small decorative figure — while staying
+       inside the visual column's own width so the halo never nears the gap. */
+    .about-karter-frame {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      max-width: 530px;
+    }
+  }
+
+  /* Large desktop: give the visual column meaningfully more width so Karter
+     can land in the 600–630px target range without crowding the text
+     column below a comfortable reading measure. */
+  @media (min-width: 1200px) {
+    .about-editorial {
+      grid-template-columns: 640px minmax(0, 1fr);
+      gap: clamp(3rem, 5vw, 4rem);
+    }
+
+    .about-karter-frame {
+      max-width: 620px;
+    }
+  }
+
+  /* Pull-quote: the page's one emphasized idea, set apart in larger
+     editorial type with the same coral swash motif used site-wide. */
+  .about-pullquote {
+    margin: clamp(1.75rem, 4vw, 2.25rem) 0;
+    padding: 0 0 0 clamp(1.25rem, 3vw, 1.75rem);
+    border-left: 3px solid var(--color-coral);
+    font-family: var(--font-headline);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(1.2rem, 2.4vw, 1.45rem);
+    line-height: 1.55;
+    color: var(--color-navy);
+  }
+
+  /* ---- Closing chapter: wide, substantial, intentional — not a small box
+     tacked beneath the story. ---- */
+
+  .about-closing {
+    background: var(--color-cream-light);
+    border-radius: 24px;
+    padding: clamp(2.25rem, 6vw, 3.25rem) clamp(1.75rem, 6vw, 4rem);
+    text-align: center;
+  }
+
+  .about-closing-eyebrow {
+    font-family: var(--font-display);
+    color: var(--color-coral);
+    font-size: 1.1rem;
+    margin: 0 0 0.75rem;
+  }
+
+  .about-closing p {
+    max-width: 42rem;
+    margin-inline: auto;
+  }
+
+  .about-closing-thanks {
+    font-weight: 700;
+    color: var(--color-navy);
+    margin-bottom: 1.75rem;
+  }
+
+  .about-closing .browse-button {
+    margin: 0;
   }
 
   .browse-button {
-    display: inline-block;
-    margin-top: 1rem;
-    background-color: var(--color-coral);
-    color: white;
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
     font-weight: 700;
-    border-radius: 10px;
+    font-size: 1.1rem;
+    color: #fff;
+    background-color: var(--color-coral);
+    padding: 0.75rem 2.1rem;
+    border-radius: 999px;
     text-decoration: none;
-    transition: background-color 0.15s ease;
+    box-shadow:
+      0 14px 28px -14px rgba(244, 96, 69, 0.65),
+      0 3px 8px rgba(25, 85, 105, 0.2);
+    transition:
+      background-color 0.15s ease,
+      transform 0.15s ease;
   }
 
   .browse-button:hover,
   .browse-button:focus-visible {
-    background-color: #d94c36;
+    background-color: var(--color-coral-deep);
+    transform: translateY(-1px);
+  }
+
+  .browse-button:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 3px;
   }
 </style>
