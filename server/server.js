@@ -14,6 +14,8 @@ const { verifyCheckoutSession } = require('./lib/verify-checkout-session');
 const { processCheckoutCompleted } = require('./lib/process-checkout-completed');
 const { processNewsletterSignup } = require('./lib/process-newsletter-signup');
 const { sendEmail } = require('./lib/send-email');
+const { sendSms } = require('./lib/send-sms');
+const { buildOrderNotificationSms } = require('./lib/sms-templates');
 const {
   buildOrderConfirmationEmail,
   buildAdminOrderNotificationEmail,
@@ -154,6 +156,15 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
       sendEmail(
         { to: process.env.ADMIN_EMAIL, ...buildAdminOrderNotificationEmail(order, { stripeSessionId: session.id, frontendBaseUrl: process.env.FRONTEND_BASE_URL }) },
       ).catch((err) => console.error('❌ Unexpected error sending admin notification email:', err.message));
+    }
+
+    console.log('📱 Sending admin notification SMS...');
+    if (process.env.ADMIN_PHONE_NUMBER) {
+      sendSms(
+        { to: process.env.ADMIN_PHONE_NUMBER, body: buildOrderNotificationSms(order) },
+      ).catch((err) => console.error('❌ Unexpected error sending admin notification SMS:', err.message));
+    } else {
+      console.log('ℹ️ Skipping admin SMS: ADMIN_PHONE_NUMBER is not configured.');
     }
   }
 
