@@ -4,15 +4,23 @@ const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
-const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
 const { Parser } = require('json2csv');
 const { getCatalog } = require('./lib/checkout-catalog');
 const { validateCheckoutRequest } = require('./lib/validate-checkout-request');
-const { resolveOrderItems } = require('./lib/resolve-order-items');
 const { buildCheckoutRedirectUrls } = require('./lib/frontend-url');
 const { getAllowedOrigins } = require('./lib/cors-origins');
 const { verifyCheckoutSession } = require('./lib/verify-checkout-session');
+const { processCheckoutCompleted } = require('./lib/process-checkout-completed');
+const { processNewsletterSignup } = require('./lib/process-newsletter-signup');
+const { sendEmail } = require('./lib/send-email');
+const {
+  buildOrderConfirmationEmail,
+  buildAdminOrderNotificationEmail,
+  buildContactNotificationEmail,
+  buildNewsletterWelcomeEmail,
+  buildNewsletterAdminNotification,
+} = require('./lib/email-templates');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,8 +33,15 @@ const orderSchema = new mongoose.Schema({
   shippingMethod: String,
   items: [
   {
+    slug: String,
     title: String,
-    quantity: Number
+    quantity: Number,
+    // Real Stripe-reported amounts, in cents — null on orders resolved via
+    // the metadata fallback path (see resolve-order-items.js), never
+    // guessed. Additive fields: historical orders saved before this field
+    // existed simply don't have it, and remain perfectly valid documents.
+    unitPrice: Number,
+    lineTotal: Number
   }
 ],
   amount: Number,
@@ -38,7 +53,23 @@ const orderSchema = new mongoose.Schema({
     postal_code: String,
     country: String
   },
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
+  // Both additive/optional so every existing historical order (saved
+  // before either field existed) remains a perfectly valid document —
+  // nothing reads/requires these fields for old orders.
+  //
+  // stripeSessionId: the Stripe Checkout Session ID that produced this
+  // order. `sparse: true` means the unique index only applies to documents
+  // where the field is actually present, so it enforces "no two orders for
+  // the same Stripe session" going forward without conflicting with old
+  // orders that never had one. This is what makes webhook retries safe —
+  // see server/lib/process-checkout-completed.js.
+  stripeSessionId: { type: String, unique: true, sparse: true },
+  // orderNumber: the customer-facing "CCK-YYYYMMDD-XXXX" identifier (see
+  // server/lib/order-number.js) — generated only for newly-created orders,
+  // never for a duplicate/already-processed webhook delivery. Same sparse
+  // pattern as stripeSessionId.
+  orderNumber: { type: String, unique: true, sparse: true }
 });
 const Order = mongoose.model('Order', orderSchema);
 
@@ -78,66 +109,52 @@ webhookApp.post('/webhook', express.raw({ type: 'application/json' }), async (re
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
-    const customerEmail = session.customer_details?.email || 'no-email';
-    const customerName = session.customer_details?.name || 'Customer';
-    const shipping = session.customer_details?.address || {};
-    const amount = session.amount_total || 0;
-    // Titles/quantities come from Stripe's own line-items record for this
-    // session (mapped back to our catalog for the title), never from
-    // anything the browser submitted — falls back to the compact,
-    // catalog-resolved metadata only if that lookup fails.
-    const items = await resolveOrderItems({ session, stripeClient: stripe, catalog: getCatalog() });
-    const bookTitleSummary = items.map(i => `${i.title} x${i.quantity}`).join(', ');
-    let shippingMethod = 'No shipping selected';
-    if (session.shipping_cost?.shipping_rate) {
-      try {
-        const shippingRateObj = await stripe.shippingRates.retrieve(session.shipping_cost.shipping_rate);
-        shippingMethod = shippingRateObj.display_name || 'No shipping selected';
-      } catch (err) {
-        console.error('❌ Failed to retrieve shipping rate from Stripe:', err.message);
-      }
-    }
-    const shippingName = session.shipping?.name || 'No name';
-    const shippingAddress = session.shipping?.address || {};
-    const shippingSummary = `
-      Name: ${shippingName}
-      Address: ${shippingAddress.line1 || ''}, ${shippingAddress.city || ''}, ${shippingAddress.state || ''} ${shippingAddress.postal_code || ''}, ${shippingAddress.country || ''}
-      Shipping Rate ID: ${shippingMethod}
-    `;    
-
-
-    const newOrder = new Order({
-      name: customerName,
-      email: customerEmail,
-      bookTitle: bookTitleSummary,
-      items: items.map(i => ({
-        title: i.title,
-        quantity: i.quantity
-      })),
-      amount: amount,
-      address: {
-        line1: shipping.line1,
-        line2: shipping.line2 || '',
-        city: shipping.city,
-        state: shipping.state,
-        postal_code: shipping.postal_code,
-        country: shipping.country
-      },
-      shippingMethod: shippingMethod
-    });
-
+    // Idempotent: safe to call more than once for the same Stripe session
+    // (a webhook retry, or a redelivery after a slow/failed response).
+    // `created: false` means this session was already processed — no new
+    // order, no new order number, no duplicate emails — see
+    // server/lib/process-checkout-completed.js for exactly how that's
+    // guaranteed even under a concurrent race.
+    let result;
     try {
-      await newOrder.save();
-      console.log('✅ Order saved to database');
+      result = await processCheckoutCompleted({
+        session,
+        stripeClient: stripe,
+        catalog: getCatalog(),
+        OrderModel: Order,
+      });
     } catch (err) {
-      console.error('❌ Error saving order:', err);
+      // A genuine (non-duplicate) failure to save the order — e.g. MongoDB
+      // unreachable. Respond non-200 so Stripe retries the delivery later;
+      // the idempotency check above makes that retry safe. Never send a
+      // "your order is confirmed" email when we don't actually have a
+      // saved order to reference.
+      console.error('❌ Error processing checkout session:', err.message);
+      return res.status(500).end();
     }
-    
+
+    if (!result.created) {
+      console.log(`ℹ️ Checkout session ${session.id} already processed (order ${result.order?.orderNumber || result.order?._id}) — skipping duplicate order/emails.`);
+      return res.status(200).end();
+    }
+
+    const order = result.order;
+    console.log(`✅ Order saved to database: ${order.orderNumber}`);
+
+    // Fire-and-forget: email delivery must never determine whether a paid,
+    // already-saved order is treated as successful, and must never delay
+    // or affect this webhook's response back to Stripe.
     console.log('📧 Sending customer confirmation email...');
-    sendConfirmationEmail(customerEmail, customerName, bookTitleSummary, amount, shipping, shippingMethod);
+    sendEmail(
+      { to: order.email, ...buildOrderConfirmationEmail(order, { frontendBaseUrl: process.env.FRONTEND_BASE_URL }) },
+    ).catch((err) => console.error('❌ Unexpected error sending confirmation email:', err.message));
 
     console.log('📧 Sending admin notification email...');
-    sendAdminNotificationEmail(customerEmail, bookTitleSummary, session.id, shipping, customerName, shippingMethod, amount);
+    if (process.env.ADMIN_EMAIL) {
+      sendEmail(
+        { to: process.env.ADMIN_EMAIL, ...buildAdminOrderNotificationEmail(order, { stripeSessionId: session.id, frontendBaseUrl: process.env.FRONTEND_BASE_URL }) },
+      ).catch((err) => console.error('❌ Unexpected error sending admin notification email:', err.message));
+    }
   }
 
   res.status(200).end();
@@ -177,6 +194,17 @@ mongoose.connect(process.env.MONGO_URI)
 NewsletterEmail.collection.createIndex({ email: 1 }, { unique: true })
   .then(() => console.log('✅ Unique index created on email field'))
   .catch(err => console.error('❌ Failed to create unique index:', err.message));
+
+// 👇 Sparse unique indexes backing webhook idempotency and order numbers —
+// sparse so historical orders saved before either field existed are never
+// evaluated against the uniqueness constraint (see orderSchema above).
+Order.collection.createIndex({ stripeSessionId: 1 }, { unique: true, sparse: true })
+  .then(() => console.log('✅ Unique sparse index created on stripeSessionId field'))
+  .catch(err => console.error('❌ Failed to create stripeSessionId index:', err.message));
+
+Order.collection.createIndex({ orderNumber: 1 }, { unique: true, sparse: true })
+  .then(() => console.log('✅ Unique sparse index created on orderNumber field'))
+  .catch(err => console.error('❌ Failed to create orderNumber index:', err.message));
 
 // ✅ Admin auth
 const basicAuth = require('express-basic-auth');
@@ -480,108 +508,37 @@ app.post('/api/newsletter', async (req, res) => {
     return res.status(400).json({ error: 'Invalid email address' });
   }
 
+  // Persistence and email notification are treated as separate outcomes:
+  // once the signup is genuinely saved, a subsequent email-provider failure
+  // must never cause the response to falsely tell the visitor their signup
+  // failed (this was a real bug — see server/lib/process-newsletter-signup.js
+  // and the Phase 11B audit for context).
+  let signupResult;
   try {
-    const newSignup = new NewsletterEmail({ email, ip });
-    await newSignup.save();
-
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD
-      }
-    });
-
-    await transporter.sendMail({
-      from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
-      to: email,
-      subject: "🎉 Thanks for joining Cool, Calm & Karter!",
-      html: `<h2>You're officially part of the family!</h2><p>Thanks for signing up for our newsletter.</p>`
-    });
-
-    await transporter.sendMail({
-      from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
-      to: process.env.ADMIN_EMAIL,
-      subject: "📬 New Newsletter Signup",
-      html: `<p>New signup: <strong>${email}</strong><br>IP: ${ip}</p>`
-    });
-
-    res.status(200).json({ message: 'Signup successful!' });
-
+    signupResult = await processNewsletterSignup({ email, ip, NewsletterEmailModel: NewsletterEmail });
   } catch (err) {
-    if (err.code === 11000) {
-      // Duplicate key error
-      return res.status(409).json({ error: 'You’ve already signed up.' });
-    }
-
     console.error('❌ Newsletter signup error:', err);
-    res.status(500).json({ error: 'Server error during signup' });
+    return res.status(500).json({ error: 'Server error during signup' });
+  }
+
+  if (signupResult.duplicate) {
+    return res.status(409).json({ error: 'You’ve already signed up.' });
+  }
+
+  res.status(200).json({ message: 'Signup successful!' });
+
+  // Fire-and-forget, after the response is already sent — a Resend failure
+  // here can no longer change what the visitor was told.
+  sendEmail({ to: email, ...buildNewsletterWelcomeEmail({ frontendBaseUrl: process.env.FRONTEND_BASE_URL }) })
+    .catch((err) => console.error('❌ Unexpected error sending newsletter welcome email:', err.message));
+
+  if (process.env.ADMIN_EMAIL) {
+    sendEmail({ to: process.env.ADMIN_EMAIL, ...buildNewsletterAdminNotification({ email, ip }, { frontendBaseUrl: process.env.FRONTEND_BASE_URL }) })
+      .catch((err) => console.error('❌ Unexpected error sending newsletter admin notification:', err.message));
   }
 });
 
 
-// ✅ Confirmation email
-function sendConfirmationEmail(toEmail, name, summary, amount, address = {}, shippingMethod = '') {
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD
-    }
-  });
-
-    const fullAddress = `
-      ${address.line1 || ''}<br>
-      ${address.line2 ? address.line2 + '<br>' : ''}
-      ${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}<br>
-      ${address.country || ''}
-    `.trim();
-
-  const mailOptions = {
-    from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
-    to: toEmail,
-    subject: '📚 Your Cool, Calm & Karter Order Confirmation',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; color: #333;">
-        <div style="text-align: center;">
-          <img src="https://coolcalmandkarter.netlify.app/images/coolcalm-logo%20TRANSPARENT.png" alt="Cool, Calm & Karter" style="max-width: 180px; margin-bottom: 20px;" />
-          <h2 style="color: #f46045;">Thank You for Your Order, ${name || 'Friend'}!</h2>
-        </div>
-
-        <p style="font-size: 16px;">We’ve received your order and we’re getting it ready to ship. Here’s what you purchased:</p>
-
-        <div style="background-color: #fefefe; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 20px;">
-          <p style="margin: 0 0 10px;"><strong>Order Summary:</strong></p>
-          <p style="margin: 0 0 10px;">${summary}</p>
-          <p><strong>Total Paid:</strong> $${(amount / 100).toFixed(2)}</p>
-        </div>
-
-        <div style="margin-top: 20px;">
-          <p style="margin: 0 0 10px;"><strong>Shipping Address:</strong></p>
-          <p style="margin: 0; line-height: 1.6;">${fullAddress}</p>
-          <p style="margin: 10px 0 0;"><strong>Shipping Method:</strong> ${shippingMethod}</p>
-        </div>
-
-        <div style="text-align: center; margin-top: 30px;">
-          <a href="https://coolcalmandkarter.netlify.app/shop.html" style="display: inline-block; background-color: #f46045; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Browse More Books</a>
-        </div>
-
-        <p style="margin-top: 40px; font-size: 14px; color: #777;">We’ll notify you when your order ships. Thank you for supporting Cool, Calm & Karter!</p>
-      </div>
-    `
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log('❌ Email Error:', error);
-    } else {
-      console.log('✅ Email sent:', info.response);
-    }
-  });
-}
-
-// ✅ ADD THIS TO YOUR EXISTING server.js
 app.post('/api/contact', async (req, res) => {
   const { name, email, reason, subject, message } = req.body;
 
@@ -589,85 +546,19 @@ app.post('/api/contact', async (req, res) => {
     return res.status(400).json({ error: 'Please fill out all required fields.' });
   }
 
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD
-    }
+  const result = await sendEmail({
+    to: process.env.ADMIN_EMAIL,
+    replyTo: email,
+    ...buildContactNotificationEmail({ name, email, reason, subject, message }, { frontendBaseUrl: process.env.FRONTEND_BASE_URL }),
   });
 
-  const mailOptions = {
-    from: `\"${name}\" <${email}>`,
-    to: process.env.ADMIN_EMAIL,
-    subject: `Contact Form: ${subject}`,
-    html: `
-      <h3>You’ve received a new message from Cool, Calm & Karter</h3>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Reason for Contact:</strong> ${reason}</p>
-      <p><strong>Message:</strong><br>${message}</p>
-    `
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: 'Message sent successfully!' });
-  } catch (err) {
-    console.error('❌ Error sending contact form email:', err);
-    res.status(500).json({ error: 'Failed to send message. Please try again later.' });
+  if (!result.ok) {
+    console.error('❌ Error sending contact form email:', result.error);
+    return res.status(500).json({ error: 'Failed to send message. Please try again later.' });
   }
+
+  res.status(200).json({ message: 'Message sent successfully!' });
 });
-
-
-
-// ✅ Admin notification
-function sendAdminNotificationEmail(customerEmail, bookSummary, sessionId, address = {}, name = '', shippingMethod = '', amount = 0) {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD
-    }
-  });
-
-  const formattedAddress = `
-    ${name}<br>
-    ${address.line1 || ''}<br>
-    ${address.line2 ? address.line2 + '<br>' : ''}
-    ${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}<br>
-    ${address.country || ''}
-  `.trim();
-
-  const mailOptions = {
-    from: `"Cool, Calm & Karter" <${process.env.EMAIL_USERNAME}>`,
-    to: process.env.ADMIN_EMAIL,
-    subject: '🛒 New Order Placed',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; color: #333;">
-        <div style="text-align: center; padding: 20px;">
-          <img src="https://coolcalmandkarter.netlify.app/images/coolcalm-logo%20TRANSPARENT.png" alt="Cool, Calm & Karter" style="max-width: 200px;" />
-          <h2 style="color: #f46045;">New Order Alert</h2>
-        </div>
-        <p><strong>Customer Email:</strong> ${customerEmail}</p>
-        <p><strong>Books Ordered:</strong><br>${bookSummary}</p>
-        <p><strong>Shipping Address:</strong><br>${formattedAddress}</p>
-        <p><strong>Shipping Method:</strong><br>${shippingMethod}</p>
-        <p><strong>Stripe Session ID:</strong> ${sessionId}</p>
-        <p><strong>Total Paid:</strong> $${(amount / 100).toFixed(2)}</p>
-        <p style="margin-top: 2rem;">Log into your dashboard for more details.</p>
-      </div>
-    `
-  };
-
-  transporter.sendMail(mailOptions, (err, info) => {
-    if (err) {
-      console.error('❌ Admin Email Error:', err);
-    } else {
-      console.log('✅ Admin email sent:', info.response);
-    }
-  });
-}
 
 // ✅ Orders API
 app.get('/api/orders', async (req, res) => {

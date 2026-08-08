@@ -19,7 +19,7 @@
     "json2csv": "^6.0.0-alpha.2",
     "mongodb": "^6.16.0",
     "mongoose": "^8.14.3",
-    "nodemailer": "^7.0.3",
+    "resend": "^6.18.1",
     "stripe": "^18.1.0",
     "swiper": "^11.2.6"
   }

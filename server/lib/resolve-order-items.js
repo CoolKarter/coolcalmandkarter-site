@@ -26,6 +26,10 @@ function parseLegacyMetadataItems(parsed) {
         slug: null,
         title,
         quantity: Number.isFinite(quantity) && quantity > 0 ? Math.trunc(quantity) : 1,
+        // Metadata-only fallback paths never carried price data — null
+        // (never fabricated) rather than guessed from anywhere else.
+        unitPrice: null,
+        lineTotal: null,
       };
     });
 }
@@ -49,6 +53,10 @@ function parseCompactMetadataItems(raw, catalog) {
         slug: product ? slug : null,
         title: product ? product.title : 'Unknown item',
         quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+        // Metadata-only fallback paths never carried price data — null
+        // (never fabricated) rather than guessed from anywhere else.
+        unitPrice: null,
+        lineTotal: null,
       };
     });
 }
@@ -86,9 +94,18 @@ function parseMetadataItems(raw, catalog) {
  * mapped back to our own catalog to get the authoritative title — the
  * title never comes from Stripe's product name or client input.
  *
+ * unitPrice/lineTotal come straight from Stripe's own line-item record
+ * (never computed from our own catalog's `price` field, and never from
+ * anything client-submitted) — lineTotal is Stripe's authoritative
+ * amount_total for that line; unitPrice prefers price.unit_amount and
+ * falls back to deriving it from lineTotal/quantity only if unit_amount
+ * isn't present on the expanded price for some reason. Both are null
+ * (never guessed) if neither source is available.
+ *
  * Falls back to parsing the compact server-generated metadata (still
  * catalog-resolved, never client-supplied) if the Stripe API call fails,
- * so order-saving/emails degrade gracefully instead of breaking outright.
+ * so order-saving/emails degrade gracefully instead of breaking outright —
+ * that fallback path never has price data, so unitPrice/lineTotal are null.
  *
  * `stripeClient` is injected (rather than imported directly) so this stays
  * unit-testable without a real network call.
@@ -100,10 +117,21 @@ async function resolveOrderItems({ session, stripeClient, catalog }) {
     return lineItems.data.map((lineItem) => {
       const priceId = typeof lineItem.price === 'string' ? lineItem.price : lineItem.price?.id;
       const product = findByPriceId(catalog, priceId);
+      const quantity = lineItem.quantity || 1;
+
+      const lineTotal = typeof lineItem.amount_total === 'number' ? lineItem.amount_total : null;
+      const unitAmount =
+        typeof lineItem.price === 'object' && lineItem.price && typeof lineItem.price.unit_amount === 'number'
+          ? lineItem.price.unit_amount
+          : null;
+      const unitPrice = unitAmount !== null ? unitAmount : lineTotal !== null ? Math.round(lineTotal / quantity) : null;
+
       return {
         slug: product ? product.slug : null,
         title: product ? product.title : 'Unknown item',
-        quantity: lineItem.quantity || 1,
+        quantity,
+        unitPrice,
+        lineTotal,
       };
     });
   } catch (err) {
