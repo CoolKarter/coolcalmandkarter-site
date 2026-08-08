@@ -58,6 +58,7 @@ test('creates a new order with a generated order number and real item pricing on
   assert.equal(result.order.email, 'buyer@example.com');
   assert.equal(result.order.items[0].unitPrice, 999);
   assert.equal(result.order.items[0].lineTotal, 1998);
+  assert.equal(result.order.orderStatus, 'received'); // Phase 13B: every new order starts here
   assert.equal(OrderModel.__store.length, 1);
 });
 

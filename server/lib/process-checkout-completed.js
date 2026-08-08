@@ -2,6 +2,7 @@
 
 const { resolveOrderItems } = require('./resolve-order-items');
 const { generateOrderNumber: defaultGenerateOrderNumber } = require('./order-number');
+const { DEFAULT_ORDER_STATUS } = require('./order-status');
 
 // Astronomically unlikely to ever loop more than once — a same-day
 // orderNumber collision requires two orders to independently draw the same
@@ -100,6 +101,12 @@ async function processCheckoutCompleted({
     },
     shippingMethod,
     stripeSessionId: session.id,
+    // Every genuinely new order starts life as "received" — see
+    // server/lib/order-status.js. Legacy orders saved before this field
+    // existed are normalized to the same value for display purposes
+    // elsewhere (server/lib/order-views.js), but that's a read-time
+    // concern, not something retroactively written here.
+    orderStatus: DEFAULT_ORDER_STATUS,
   };
 
   for (let attempt = 0; attempt < MAX_ORDER_NUMBER_ATTEMPTS; attempt += 1) {

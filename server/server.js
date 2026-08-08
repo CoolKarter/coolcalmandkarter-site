@@ -16,6 +16,8 @@ const { processNewsletterSignup } = require('./lib/process-newsletter-signup');
 const { sendEmail } = require('./lib/send-email');
 const { sendSms } = require('./lib/send-sms');
 const { buildOrderNotificationSms } = require('./lib/sms-templates');
+const { ORDER_STATUSES } = require('./lib/order-status');
+const { MAX_CARRIER_LENGTH, MAX_TRACKING_NUMBER_LENGTH } = require('./lib/order-tracking');
 const {
   buildOrderConfirmationEmail,
   buildAdminOrderNotificationEmail,
@@ -71,7 +73,31 @@ const orderSchema = new mongoose.Schema({
   // server/lib/order-number.js) — generated only for newly-created orders,
   // never for a duplicate/already-processed webhook delivery. Same sparse
   // pattern as stripeSessionId.
-  orderNumber: { type: String, unique: true, sparse: true }
+  orderNumber: { type: String, unique: true, sparse: true },
+  // Order status/tracking foundation (Phase 13B) — all optional/additive,
+  // so every historical order saved before these fields existed remains a
+  // perfectly valid document. No default here deliberately: a genuinely
+  // new order gets orderStatus: 'received' explicitly from
+  // process-checkout-completed.js, and a legacy order missing this field
+  // is normalized to 'received' for display purposes by
+  // server/lib/order-status.js's normalizeOrderStatus() — two distinct,
+  // explicit mechanisms for two distinct concerns, not one implicit
+  // schema default trying to cover both. `enum` is a defense-in-depth
+  // guard against a future bug ever writing an unrecognized status value;
+  // it has no effect on documents that simply lack the field.
+  orderStatus: { type: String, enum: ORDER_STATUSES },
+  // carrier/trackingNumber: real, administrator-supplied shipment
+  // information only — never fabricated. See order-tracking.js for the
+  // validation these pass through before ever being written (this
+  // `maxlength` is a DB-level backstop, not the primary validation).
+  carrier: { type: String, maxlength: MAX_CARRIER_LENGTH },
+  trackingNumber: { type: String, maxlength: MAX_TRACKING_NUMBER_LENGTH },
+  // Server-controlled timestamps — never client-supplied, never defaulted,
+  // only ever set by applyOrderStatusTransition() (order-status.js) the
+  // first time an order genuinely transitions into that state.
+  shippedAt: Date,
+  deliveredAt: Date,
+  cancelledAt: Date
 });
 const Order = mongoose.model('Order', orderSchema);
 
