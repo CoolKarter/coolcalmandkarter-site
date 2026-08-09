@@ -43,16 +43,6 @@ function loadBook(filename) {
 const bookFiles = readdirSync(booksDir).filter((f) => f.endsWith('.md'));
 const books = bookFiles.map(loadBook);
 
-const EXPECTED_DISABLED_SLUGS = [
-  'abuelita-and-baby',
-  'black-white-and-baby',
-  'christmas-and-baby',
-  'halloween-and-baby',
-  'mexican-and-baby',
-  'puertorican-boricua-and-baby',
-  'thanksgiving-and-baby',
-].sort();
-
 test('there are exactly 12 book content files', () => {
   assert.equal(books.length, 12);
 });
@@ -94,22 +84,14 @@ test('no book content file declares a stripePriceId — Phase 14B removed it fro
   }
 });
 
-test('checkoutEnabled behavior matches the current, intentional 5-enabled/7-disabled split — no accidental drift', () => {
-  const disabledSlugs = books
-    .filter((b) => b.checkoutEnabled === 'false')
-    .map((b) => b.slug)
-    .sort();
-  assert.deepEqual(disabledSlugs, EXPECTED_DISABLED_SLUGS);
-
-  const explicitlyEnabledOrDefaulted = books.filter((b) => b.checkoutEnabled !== 'false');
-  assert.equal(explicitlyEnabledOrDefaulted.length, 5);
+test('all 12 books are checkout-enabled — Phase 14B2 enabled the remaining 7 once their real Stripe Price IDs were confirmed configured in Render staging', () => {
+  const disabledSlugs = books.filter((b) => b.checkoutEnabled === 'false').map((b) => b.slug);
+  assert.deepEqual(disabledSlugs, []);
+  assert.equal(books.length, 12);
 });
 
-test('a disabled book never has a stray checkoutEnabled: true and vice versa (each book states its intent exactly once, or not at all)', () => {
+test('no book explicitly declares checkoutEnabled: true — the established convention is to omit the field entirely and rely on the schema default, matching the 5 originally-live books', () => {
   for (const book of books) {
-    // A field either isn't present (undefined -> schema default true) or is
-    // the literal string "false" — this project never writes
-    // "checkoutEnabled: true" explicitly for the originally-live books.
-    assert.ok(book.checkoutEnabled === undefined || book.checkoutEnabled === 'false', `unexpected checkoutEnabled value on ${book.slug}: ${book.checkoutEnabled}`);
+    assert.notEqual(book.checkoutEnabled, 'true', `expected ${book.slug} to omit checkoutEnabled rather than explicitly set it true`);
   }
 });

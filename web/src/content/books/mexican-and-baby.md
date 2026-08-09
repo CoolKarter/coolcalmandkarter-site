@@ -24,7 +24,6 @@ coverImage: "src/assets/books/mexican-and-baby-cover.webp"
 coverImageAlt: "Mexican & Baby Cover"
 ageRange: "0–6"
 availability: "available"
-checkoutEnabled: false
 seoTitle: "Mexican & Baby: A Celebration of Culture and Family"
 seoDescription: >-
   A vibrant picture book celebrating Mexican heritage, family, and

@@ -24,7 +24,6 @@ coverImage: "src/assets/books/thanksgiving-and-baby-cover.webp"
 coverImageAlt: "Thanksgiving & Baby Cover"
 ageRange: "0–6"
 availability: "available"
-checkoutEnabled: false
 seoTitle: "Thanksgiving & Baby: A Family Gratitude Story"
 seoDescription: >-
   Baby Karter celebrates Thanksgiving surrounded by family, laughter, and

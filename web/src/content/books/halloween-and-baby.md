@@ -24,7 +24,6 @@ coverImage: "src/assets/books/halloween-and-baby-cover.webp"
 coverImageAlt: "Halloween & Baby Cover"
 ageRange: "0–6"
 availability: "available"
-checkoutEnabled: false
 seoTitle: "Halloween & Baby: A Playful, Not-Spooky Picture Book"
 seoDescription: >-
   A magical, family-friendly Halloween picture book full of costumes,

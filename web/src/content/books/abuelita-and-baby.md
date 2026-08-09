@@ -25,7 +25,6 @@ coverImage: "src/assets/books/abuelita-and-baby-cover.webp"
 coverImageAlt: "Abuelita & Baby Cover"
 ageRange: "0–6"
 availability: "available"
-checkoutEnabled: false
 seoTitle: "Abuelita & Baby: A Grandmother-Grandchild Story"
 seoDescription: >-
   A warm picture book celebrating the tender love between a grandmother and

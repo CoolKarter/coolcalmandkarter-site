@@ -25,7 +25,6 @@ coverImage: "src/assets/books/puertorican-boricua-and-baby-cover.webp"
 coverImageAlt: "Puertorican, Boricua & Baby Cover"
 ageRange: "0–6"
 availability: "available"
-checkoutEnabled: false
 seoTitle: "Puertorican, Boricua & Baby: A Culture Celebration"
 seoDescription: >-
   A joyful picture book celebrating Puerto Rican culture, music, dancing,

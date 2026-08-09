@@ -26,7 +26,6 @@ coverImage: "src/assets/books/christmas-and-baby-cover.webp"
 coverImageAlt: "Christmas & Baby Cover"
 ageRange: "0–6"
 availability: "available"
-checkoutEnabled: false
 seoTitle: "Christmas & Baby: A Cozy Holiday Picture Book"
 seoDescription: >-
   Baby Karter celebrates Christmas wonder, twinkling lights, and cherished

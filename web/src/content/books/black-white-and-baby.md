@@ -24,7 +24,6 @@ coverImage: "src/assets/books/black-white-and-baby-cover.webp"
 coverImageAlt: "Black, White & Baby Cover"
 ageRange: "0–6"
 availability: "available"
-checkoutEnabled: false
 seoTitle: "Black, White & Baby: A Multicultural Family Story"
 seoDescription: >-
   A heartfelt picture book celebrating a multicultural family and the baby
