@@ -18,6 +18,41 @@ export function classifyMyOrdersSessionStatus(status) {
 }
 
 /**
+ * The real GET /api/my-orders request/response handling — moved here
+ * (rather than staying inline in web/src/lib/api.ts) specifically so it's
+ * unit-testable against a real `fetch`-shaped Response object with Node's
+ * built-in test runner. api.ts is TypeScript and reads `import.meta.env`
+ * at module scope (a Vite-only global), so it can't be imported directly
+ * by plain Node — meaning this exact logic previously had no test
+ * coverage at all beyond the pure classifier above, tested only with
+ * hand-typed status numbers. `fetchMyOrders()` in api.ts is now a thin
+ * wrapper that calls this with the real global `fetch`; this function
+ * itself never touches `import.meta.env` or any Astro/Vite-only global,
+ * so it's plain, portable, and directly testable — see
+ * web/test/orders-access-response.test.js.
+ *
+ * `fetchImpl` is injected (rather than using a bare global `fetch`
+ * reference) purely so a test can supply a stub without needing to
+ * monkey-patch `globalThis.fetch`.
+ */
+export async function loadMyOrdersList(fetchImpl) {
+  try {
+    const res = await fetchImpl('/api/my-orders', { credentials: 'include' });
+    const state = classifyMyOrdersSessionStatus(res.status);
+
+    if (state !== 'authenticated') {
+      return { state, orders: [] };
+    }
+
+    const data = await res.json().catch(() => null);
+    const orders = data && typeof data === 'object' && Array.isArray(data.orders) ? data.orders : [];
+    return { state: 'authenticated', orders };
+  } catch {
+    return { state: 'error', orders: [] };
+  }
+}
+
+/**
  * Extracts the raw magic-link token from a URL fragment string (e.g.
  * "#token=abc123"). Pure string parsing — no DOM/window access — so the
  * fragment-removal step in verify.astro can be tested independently of

@@ -2,7 +2,7 @@
 // should go through here instead of hardcoding the Render URL in page code.
 import { extractCheckoutUrl } from './checkout-response.js';
 import { parseSessionStatusResponse, VERIFICATION_FAILURE } from './session-status-response.js';
-import { classifyMyOrdersSessionStatus } from './orders-access-response.js';
+import { loadMyOrdersList } from './orders-access-response.js';
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL;
 
@@ -254,23 +254,7 @@ export interface MyOrdersListResult {
  * logged out, and can never look like a successful login either.
  */
 export async function fetchMyOrders(): Promise<MyOrdersListResult> {
-  try {
-    const res = await fetch('/api/my-orders', { credentials: 'include' });
-    const state = classifyMyOrdersSessionStatus(res.status);
-
-    if (state !== 'authenticated') {
-      return { state, orders: [] };
-    }
-
-    const data: unknown = await res.json().catch(() => null);
-    const orders =
-      data && typeof data === 'object' && Array.isArray((data as { orders?: unknown }).orders)
-        ? ((data as { orders: CustomerOrderView[] }).orders)
-        : [];
-    return { state: 'authenticated', orders };
-  } catch {
-    return { state: 'error', orders: [] };
-  }
+  return loadMyOrdersList(fetch) as Promise<MyOrdersListResult>;
 }
 
 /**
