@@ -9,6 +9,7 @@ const {
   buildNewsletterWelcomeEmail,
   buildNewsletterAdminNotification,
   buildMagicLinkEmail,
+  buildShippingConfirmationEmail,
   buildPublicAssetUrl,
   LOGO_ASSET_PATH,
 } = require('../lib/email-templates');
@@ -219,4 +220,42 @@ test('magic-link email never includes order numbers, purchases, shipping address
 test('magic-link email defaults expiresInMinutes to 15 when not supplied', () => {
   const { html } = buildMagicLinkEmail({ magicLinkUrl: 'https://staging.example.com/x#token=abc' });
   assert.match(html, /15 minutes/);
+});
+
+// ---- buildShippingConfirmationEmail (Phase 13E) ----
+
+test('shipping confirmation email includes order number, name, items, and a My Orders link', () => {
+  const { subject, html } = buildShippingConfirmationEmail(buildTestOrder(), { frontendBaseUrl: 'https://staging.example.com' });
+
+  assert.match(subject, /Shipped/);
+  assert.match(subject, /CCK-20260808-4F2A/);
+  assert.match(html, /Jamie Buyer/);
+  assert.match(html, /Florida, Beach &amp; Baby/);
+  assert.match(html, /href="https:\/\/staging\.example\.com\/my-orders"/);
+  assert.match(html, /href="https:\/\/staging\.example\.com\/contact"/);
+});
+
+test('shipping confirmation email includes real carrier/tracking when genuinely present', () => {
+  const order = buildTestOrder({ carrier: 'USPS', trackingNumber: '9400111899223197428490' });
+  const { html } = buildShippingConfirmationEmail(order, { frontendBaseUrl: 'https://staging.example.com' });
+
+  assert.match(html, /USPS/);
+  assert.match(html, /9400111899223197428490/);
+  assert.match(html, /Shipment Details/);
+});
+
+test('shipping confirmation email never fabricates carrier/tracking/a delivery estimate when none exists', () => {
+  const order = buildTestOrder({ carrier: undefined, trackingNumber: undefined });
+  const { html } = buildShippingConfirmationEmail(order, { frontendBaseUrl: 'https://staging.example.com' });
+  const lower = html.toLowerCase();
+
+  assert.ok(!lower.includes('shipment details'));
+  assert.ok(!lower.includes('estimated delivery'));
+  assert.ok(!lower.includes('arrives by'));
+});
+
+test('shipping confirmation email omits the logo/My Orders link gracefully with no frontendBaseUrl, without throwing', () => {
+  assert.doesNotThrow(() => buildShippingConfirmationEmail(buildTestOrder(), {}));
+  const { html } = buildShippingConfirmationEmail(buildTestOrder(), {});
+  assert.ok(!html.includes('href="undefined/my-orders"'));
 });

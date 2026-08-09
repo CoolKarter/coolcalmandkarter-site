@@ -1,5 +1,6 @@
 ---
 import { visualAssets } from '../data/visualAssets';
+import { PRIMARY_NAV_LINKS } from '../lib/nav-links.js';
 
 interface Props {
   /**
@@ -12,12 +13,7 @@ interface Props {
 
 const { overlay = false } = Astro.props;
 
-const links = [
-  { href: '/', label: 'Home' },
-  { href: '/shop', label: 'Shop' },
-  { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
-];
+const links = PRIMARY_NAV_LINKS;
 ---
 
 <header class:list={['site-nav', { 'site-nav--overlay': overlay }]}>

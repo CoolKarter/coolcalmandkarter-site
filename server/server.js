@@ -20,7 +20,8 @@ const { sendSms } = require('./lib/send-sms');
 const { buildOrderNotificationSms } = require('./lib/sms-templates');
 const { ORDER_STATUSES } = require('./lib/order-status');
 const { MAX_CARRIER_LENGTH, MAX_TRACKING_NUMBER_LENGTH } = require('./lib/order-tracking');
-const { toCustomerOrderView } = require('./lib/order-views');
+const { toCustomerOrderView, toAdminOrderView } = require('./lib/order-views');
+const { buildAdminOrderPatch, buildOrderStatusMatchCondition } = require('./lib/admin-order-update');
 const { processOrdersAccessRequest } = require('./lib/process-orders-access-request');
 const { verifyOrdersAccessToken } = require('./lib/verify-orders-access-token');
 const { createCustomerSession, authenticateCustomerSession, deleteCustomerSession } = require('./lib/customer-session');
@@ -34,6 +35,7 @@ const {
   buildContactNotificationEmail,
   buildNewsletterWelcomeEmail,
   buildNewsletterAdminNotification,
+  buildShippingConfirmationEmail,
 } = require('./lib/email-templates');
 
 const app = express();
@@ -889,6 +891,140 @@ app.get('/api/orders/export', adminAuth, async (req, res) => {
   } catch (err) {
     console.error('❌ Failed to export orders:', err);
     res.status(500).json({ error: 'Could not export orders' });
+  }
+});
+
+// ==========================================================================
+// Admin order-management API (Phase 13E) — powers the future private
+// order-management dashboard (Phase 13F). All routes below require the
+// same legacy adminAuth (ADMIN_PASSWORD) middleware as GET /api/orders and
+// GET /api/orders/export above — no new login/session system is
+// introduced here; Phase 13F is responsible for how the dashboard itself
+// obtains/uses that credential without repeating the legacy frontend's
+// unsafe localStorage-credential pattern. New endpoints only — the legacy
+// GET /api/orders and GET /api/orders/export routes above are unchanged
+// and keep working exactly as before.
+// ==========================================================================
+
+// ✅ Admin order list — newest first, using the same allow-list exposure
+// boundary (toAdminOrderView) as everywhere else. No pagination: at this
+// store's current order volume a single unpaginated list is simpler and
+// the legacy GET /api/orders has always worked the same way; adding
+// page/limit query params later is a additive, non-breaking change if
+// volume ever warrants it.
+app.get('/api/admin/orders', adminAuth, async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ date: -1 });
+    res.status(200).json({ orders: orders.map(toAdminOrderView) });
+  } catch (err) {
+    console.error('❌ Error fetching admin orders list:', err.message);
+    res.status(500).json({ error: 'Unable to fetch orders right now.' });
+  }
+});
+
+// ✅ Admin order detail, looked up by the customer-facing order number
+// (never Mongo _id). A historical order saved before orderNumber existed
+// has no way to be opened through this route — it remains visible
+// read-only in the list above; see order-number.js / this phase's report
+// for how Phase 13F should handle that.
+app.get('/api/admin/orders/:orderNumber', adminAuth, async (req, res) => {
+  try {
+    const order = await Order.findOne({ orderNumber: req.params.orderNumber });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found.' });
+    }
+    res.status(200).json({ order: toAdminOrderView(order) });
+  } catch (err) {
+    console.error('❌ Error fetching admin order detail:', err.message);
+    res.status(500).json({ error: 'Unable to fetch this order right now.' });
+  }
+});
+
+// ✅ Admin order status/tracking update.
+//
+// Accepts ONLY { orderStatus, carrier, trackingNumber } — see
+// buildAdminOrderPatch (admin-order-update.js), which whitelists the input
+// and delegates all transition-table/timestamp/tracking rules to the
+// already-tested applyOrderStatusTransition() (order-status.js). The write
+// itself is made conditional on the order's status being unchanged since
+// it was read (buildOrderStatusMatchCondition) — a lightweight optimistic-
+// concurrency guard: if another request already changed this order's
+// status in between, findOneAndUpdate matches nothing and this returns
+// 409 rather than silently overwriting a newer change.
+app.patch('/api/admin/orders/:orderNumber', adminAuth, async (req, res) => {
+  try {
+    const order = await Order.findOne({ orderNumber: req.params.orderNumber });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found.' });
+    }
+
+    const result = buildAdminOrderPatch(order, req.body);
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error });
+    }
+
+    const updated = await Order.findOneAndUpdate(
+      { orderNumber: req.params.orderNumber, ...buildOrderStatusMatchCondition(order.orderStatus) },
+      { $set: result.patch },
+      { new: true },
+    );
+
+    if (!updated) {
+      return res.status(409).json({ error: 'This order was modified by another request. Please refresh and try again.' });
+    }
+
+    // Fire-and-forget, exactly like the checkout webhook's own emails
+    // above: the status update is already saved by this point, so a
+    // shipping-email failure can never roll it back, erase tracking info,
+    // or change this response. Only fires on a genuine first transition
+    // into "shipped" (enteredShipped === patch.shippedAt having been set)
+    // — a same-status resubmitted PATCH (e.g. correcting a tracking-number
+    // typo on an already-shipped order) never sends a second email.
+    if (result.enteredShipped) {
+      console.log(`📧 Sending shipping confirmation email for order ${updated.orderNumber}...`);
+      sendEmail({
+        to: updated.email,
+        ...buildShippingConfirmationEmail(updated, { frontendBaseUrl: process.env.FRONTEND_BASE_URL }),
+      }).catch((err) => console.error('❌ Unexpected error sending shipping confirmation email:', err.message));
+    }
+
+    res.status(200).json({ order: toAdminOrderView(updated) });
+  } catch (err) {
+    console.error('❌ Error updating admin order:', err.message);
+    res.status(500).json({ error: 'Unable to update this order right now.' });
+  }
+});
+
+// ✅ Manually resend the ORIGINAL order-confirmation email. Reuses the
+// exact same template/sender as the automatic post-checkout email — never
+// a duplicate/new template. Always sends to the order's own stored email;
+// the caller can never supply a destination, so this can't be turned into
+// an arbitrary-email-relay endpoint. Never touches order status, Stripe,
+// or order identity — purely a delivery retry for an admin.
+app.post('/api/admin/orders/:orderNumber/resend-confirmation', adminAuth, async (req, res) => {
+  try {
+    const order = await Order.findOne({ orderNumber: req.params.orderNumber });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found.' });
+    }
+    if (!order.email) {
+      return res.status(400).json({ error: 'This order has no email on file.' });
+    }
+
+    const result = await sendEmail({
+      to: order.email,
+      ...buildOrderConfirmationEmail(order, { frontendBaseUrl: process.env.FRONTEND_BASE_URL }),
+    });
+
+    if (!result.ok) {
+      console.error(`❌ Failed to resend confirmation email for order ${order.orderNumber}:`, result.error);
+      return res.status(500).json({ error: 'Unable to resend the confirmation email right now. Please try again later.' });
+    }
+
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('❌ Error resending order confirmation:', err.message);
+    res.status(500).json({ error: 'Unable to resend the confirmation email right now.' });
   }
 });
 

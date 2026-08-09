@@ -272,6 +272,58 @@ function buildMagicLinkEmail({ magicLinkUrl, expiresInMinutes = 15 } = {}, { fro
   };
 }
 
+/**
+ * Shipping-confirmation email (Phase 13E) — sent once, only on the genuine
+ * first transition of an order into "shipped" (see the admin PATCH
+ * /api/admin/orders/:orderNumber route in server.js, which fires this only
+ * when applyOrderStatusTransition() actually set shippedAt). Renders
+ * carrier/trackingNumber only when genuinely present on the order —
+ * order-tracking.js never fabricates either, so this never invents one
+ * either, and never invents a delivery estimate at all since none exists
+ * anywhere in this system.
+ *
+ * A future "resend shipping confirmation" admin action does not need a
+ * separate template: it can call this same builder against the order's
+ * current (already-validated, already-stored) carrier/trackingNumber and
+ * sendEmail() directly, exactly like resend-confirmation reuses
+ * buildOrderConfirmationEmail() below.
+ */
+function buildShippingConfirmationEmail(order, { frontendBaseUrl } = {}) {
+  const myOrdersUrl = frontendBaseUrl ? `${frontendBaseUrl.replace(/\/+$/, '')}/my-orders` : null;
+  const supportUrl = frontendBaseUrl ? `${frontendBaseUrl.replace(/\/+$/, '')}/contact` : null;
+  const hasShipmentDetails = Boolean(order.carrier || order.trackingNumber);
+
+  const inner = `
+    <h2 style="color: ${BRAND_CORAL}; text-align: center; margin: 8px 0 4px;">Your order is on its way${order.name ? `, ${escapeHtml(order.name)}` : ''}!</h2>
+    ${order.orderNumber ? `<p style="text-align: center; color: #666666; margin: 0 0 20px;">Order #${escapeHtml(order.orderNumber)}</p>` : ''}
+
+    <p style="font-size: 16px; line-height: 1.6;">Good news — your Cool, Calm &amp; Karter order has shipped.</p>
+
+    ${renderItemsTable(order.items)}
+
+    ${hasShipmentDetails ? `
+      <div style="margin-top: 20px; padding: 16px; background-color: ${BRAND_CREAM}22; border-radius: 8px;">
+        <p style="margin: 0 0 8px; font-weight: bold; color: ${BRAND_NAVY};">Shipment Details</p>
+        ${order.carrier ? `<p style="margin: 0 0 4px;"><strong>Carrier:</strong> ${escapeHtml(order.carrier)}</p>` : ''}
+        ${order.trackingNumber ? `<p style="margin: 0;"><strong>Tracking Number:</strong> ${escapeHtml(order.trackingNumber)}</p>` : ''}
+      </div>
+    ` : ''}
+
+    ${myOrdersUrl ? `<p style="margin-top: 24px; font-size: 14px; line-height: 1.6;"><a href="${myOrdersUrl}" style="color: ${BRAND_CORAL};">View My Orders</a> any time to check on this order.</p>` : ''}
+
+    <p style="margin-top: 24px; font-size: 14px; color: #777777; line-height: 1.6;">
+      Questions about your shipment? ${supportUrl ? `<a href="${supportUrl}" style="color: ${BRAND_CORAL};">Contact us</a>` : 'Reach out and we\'ll be glad to help.'} — thank you for supporting Cool, Calm &amp; Karter!
+    </p>
+  `;
+
+  return {
+    subject: order.orderNumber
+      ? `Your Cool, Calm & Karter Order Has Shipped (#${order.orderNumber})`
+      : 'Your Cool, Calm & Karter Order Has Shipped',
+    html: wrapEmailBody(inner, { frontendBaseUrl }),
+  };
+}
+
 module.exports = {
   buildOrderConfirmationEmail,
   buildAdminOrderNotificationEmail,
@@ -279,6 +331,7 @@ module.exports = {
   buildNewsletterWelcomeEmail,
   buildNewsletterAdminNotification,
   buildMagicLinkEmail,
+  buildShippingConfirmationEmail,
   buildPublicAssetUrl,
   formatCurrency,
   formatAddress,
