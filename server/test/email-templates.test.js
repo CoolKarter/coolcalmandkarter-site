@@ -44,6 +44,17 @@ test('order confirmation email includes every field the checklist requires when 
   assert.match(html, /https:\/\/staging\.example\.com\/contact/);
 });
 
+test('order confirmation email includes a My Orders link built from frontendBaseUrl (Phase 13D discoverability)', () => {
+  const { html } = buildOrderConfirmationEmail(buildTestOrder(), { frontendBaseUrl: 'https://staging.example.com/' });
+  assert.match(html, /href="https:\/\/staging\.example\.com\/my-orders"/);
+  assert.match(html, /View My Orders/);
+});
+
+test('order confirmation email omits the My Orders link (rather than a broken/guessed URL) when FRONTEND_BASE_URL is not configured', () => {
+  const { html } = buildOrderConfirmationEmail(buildTestOrder());
+  assert.ok(!html.includes('View My Orders'));
+});
+
 test('order confirmation email never invents tracking number, carrier, delivery date, or shipping status', () => {
   const { html } = buildOrderConfirmationEmail(buildTestOrder());
   const lower = html.toLowerCase();

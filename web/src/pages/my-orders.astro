@@ -1,0 +1,1166 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { visualAssets } from '../data/visualAssets';
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import { resolveCoverImage } from '../lib/images';
+
+// Build-time slug -> cover lookup for every book in the catalog, so the
+// client-side order renderer below can show a real cover for any known
+// item by slug without the backend ever needing to know about frontend
+// asset paths (see docs discussion in server/lib/order-views.js). A
+// legacy item with no slug, or a slug not in this map, simply gets no
+// cover image — never a guess at which book it might have been.
+const books = await getCollection('books');
+const coverEntries = await Promise.all(
+  books.map(async (book) => {
+    const cover = resolveCoverImage(book.data.coverImage);
+    const optimized = await getImage({ src: cover, width: 200 });
+    return [book.id, { src: optimized.src, alt: book.data.coverImageAlt }];
+  }),
+);
+const coverMapJson = JSON.stringify(Object.fromEntries(coverEntries)).replace(/</g, '\\u003c');
+---
+
+<BaseLayout
+  title="My Orders — Cool, Calm & Karter"
+  description="Securely view the orders you've placed with Cool, Calm & Karter."
+>
+  <section class="my-orders-hero" aria-labelledby="my-orders-heading">
+    <img
+      class="my-orders-hero-bg"
+      src={visualAssets.backgrounds.storySection}
+      alt=""
+      aria-hidden="true"
+      loading="eager"
+      width="1916"
+      height="821"
+    />
+    <div class="my-orders-hero-scrim" aria-hidden="true"></div>
+    <div class="my-orders-hero-inner">
+      <p class="my-orders-eyebrow">Your Collection, Anytime</p>
+      <h1 id="my-orders-heading" class="section-title">My Orders</h1>
+    </div>
+  </section>
+
+  <p id="my-orders-live-region" class="visually-hidden" role="status" aria-live="polite"></p>
+
+  <div class="my-orders-page">
+    <!-- Initial session check -->
+    <div id="my-orders-loading" class="access-card">
+      <p class="loading-copy">Checking your session&hellip;</p>
+    </div>
+
+    <!-- Signed-out: request access -->
+    <div id="my-orders-access" class="access-card" hidden>
+      <p class="my-orders-eyebrow">My Orders</p>
+      <h2 class="section-title">Access Your Orders</h2>
+      <p class="access-copy">
+        Customers can securely view purchases made with their checkout email. No password
+        needed — we'll send a secure link to your inbox.
+      </p>
+      <form id="access-form" novalidate>
+        <div class="field">
+          <label for="access-email">Email</label>
+          <input type="email" id="access-email" name="email" autocomplete="email" required />
+        </div>
+        <button type="submit" id="access-submit" class="submit-button">Send My Secure Link</button>
+      </form>
+      <p id="access-status" class="form-status" role="status" aria-live="polite"></p>
+      <p class="access-privacy-note">
+        For your privacy, we'll only send a link if orders are associated with that email.
+      </p>
+    </div>
+
+    <!-- After submitting the access form: generic confirmation only -->
+    <div id="my-orders-sent" class="access-card" hidden>
+      <p class="my-orders-eyebrow">Check Your Inbox</p>
+      <h2 class="section-title">Link Sent</h2>
+      <p id="sent-message" class="access-copy"></p>
+      <button type="button" id="sent-try-again" class="ghost-button">Try a Different Email</button>
+    </div>
+
+    <!-- Temporary API/network failure on the initial session check -->
+    <div id="my-orders-error" class="access-card" hidden>
+      <p class="my-orders-eyebrow">One Moment</p>
+      <h2 class="section-title">Something Went Wrong</h2>
+      <p class="access-copy">
+        We couldn't load your account right now. Please try again in a moment.
+      </p>
+      <button type="button" id="error-retry" class="ghost-button">Try Again</button>
+    </div>
+
+    <!-- Authenticated -->
+    <div id="my-orders-authenticated" hidden>
+      <div class="my-orders-header-row">
+        <h2 class="section-title section-title--left">Your Orders</h2>
+        <button type="button" id="logout-button" class="logout-button">Log Out</button>
+      </div>
+
+      <div id="orders-loading" class="access-card">
+        <p class="loading-copy">Loading your orders&hellip;</p>
+      </div>
+
+      <ul id="orders-list" class="orders-list" hidden></ul>
+
+      <div id="orders-empty" class="access-card" hidden>
+        <p class="my-orders-eyebrow">Nothing Here Yet</p>
+        <h2 class="section-title">No Orders Found Yet</h2>
+        <p class="access-copy">Once you place an order, it will appear here.</p>
+        <a class="cta-button" href="/shop">Browse Books</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order detail modal -->
+  <div id="order-detail-overlay" class="order-detail-overlay" hidden>
+    <div
+      id="order-detail-panel"
+      class="order-detail-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="order-detail-heading"
+    >
+      <button type="button" id="order-detail-close" class="detail-close" aria-label="Close order details">
+        &times;
+      </button>
+      <div id="order-detail-content"></div>
+    </div>
+  </div>
+
+  <script type="application/json" id="book-cover-map" set:html={coverMapJson} />
+</BaseLayout>
+
+<style>
+  /* ---- Masthead: same cloud asset + scrim strategy as Cart/Contact. ---- */
+  .my-orders-hero {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-night);
+    padding: clamp(2.25rem, 6vw, 3rem) 1.5rem clamp(2.5rem, 6vw, 3.25rem);
+    text-align: center;
+    color: #fff;
+  }
+
+  .my-orders-hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+  }
+
+  .my-orders-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      165deg,
+      rgba(9, 26, 43, 0.88) 0%,
+      rgba(15, 44, 64, 0.82) 55%,
+      rgba(25, 85, 105, 0.75) 100%
+    );
+  }
+
+  .my-orders-hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .my-orders-hero-inner .my-orders-eyebrow {
+    color: #ffdcae;
+  }
+
+  .my-orders-hero-inner .section-title {
+    color: #fff;
+    font-size: clamp(1.9rem, 4vw, 2.4rem);
+    margin: 0;
+  }
+
+  .my-orders-eyebrow {
+    font-family: var(--font-display);
+    color: var(--color-coral);
+    font-size: 1.05rem;
+    margin: 0 0 0.35rem;
+  }
+
+  /* ---- Cream working area ---- */
+  .my-orders-page {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 780px;
+    width: 100%;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 2.75rem) 1.5rem 4rem;
+  }
+
+  /* Shared white card for every signed-out/loading/error/empty state —
+     centers within the flexible cream region via `margin: auto`, same
+     mechanism already established on Cart/Success. */
+  .access-card {
+    position: relative;
+    text-align: center;
+    background: #fff;
+    max-width: 30rem;
+    width: 100%;
+    margin: auto auto;
+    padding: clamp(2.25rem, 6vw, 3rem) 1.75rem clamp(2rem, 5vw, 2.5rem);
+    border-radius: 20px;
+    box-shadow:
+      0 10px 30px rgba(4, 10, 18, 0.35),
+      0 26px 48px -20px rgba(4, 10, 18, 0.45);
+  }
+
+  .access-card .section-title {
+    color: var(--color-navy);
+    font-size: clamp(1.5rem, 3.2vw, 1.85rem);
+    margin: 0 0 0.9rem;
+  }
+
+  .access-copy {
+    max-width: 26rem;
+    margin: 0 auto 1.5rem;
+    font-size: 1.02rem;
+    line-height: 1.65;
+    color: #4a4a4a;
+  }
+
+  .loading-copy {
+    font-size: 1.02rem;
+    color: #4a4a4a;
+    margin: 0;
+  }
+
+  .access-privacy-note {
+    margin: 1.25rem 0 0;
+    font-size: 0.85rem;
+    color: #5b7381;
+    line-height: 1.5;
+  }
+
+  /* ---- Access form (mirrors Contact's field/input pattern) ---- */
+  #access-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    text-align: left;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .field label {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--color-navy);
+  }
+
+  .field input {
+    padding: 0.8rem 0.9rem;
+    border: 1px solid rgba(25, 85, 105, 0.2);
+    background: var(--color-cream-light);
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--color-navy);
+    min-height: 46px;
+  }
+
+  .field input:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 1px;
+    background: #fff;
+  }
+
+  .submit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-coral);
+    color: white;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 999px;
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow:
+      0 14px 28px -14px rgba(244, 96, 69, 0.65),
+      0 3px 8px rgba(25, 85, 105, 0.2);
+    transition:
+      background-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .submit-button:hover:not(:disabled),
+  .submit-button:focus-visible:not(:disabled) {
+    background-color: var(--color-coral-deep);
+    transform: translateY(-1px);
+  }
+
+  .submit-button:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 3px;
+  }
+
+  .submit-button:disabled {
+    background-color: #ccc;
+    color: #555;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .form-status {
+    margin: 0.85rem 0 0;
+    font-weight: 700;
+    text-align: center;
+    min-height: 1.2em;
+    color: var(--color-navy);
+  }
+
+  .form-status.error {
+    color: #b3261e;
+  }
+
+  .ghost-button,
+  .cta-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.02rem;
+    text-decoration: none;
+    padding: 0.7rem 1.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .cta-button {
+    color: #fff;
+    background-color: var(--color-coral);
+    border: none;
+    box-shadow:
+      0 14px 28px -14px rgba(244, 96, 69, 0.65),
+      0 3px 8px rgba(25, 85, 105, 0.2);
+  }
+
+  .cta-button:hover,
+  .cta-button:focus-visible {
+    background-color: var(--color-coral-deep);
+    transform: translateY(-1px);
+  }
+
+  .ghost-button {
+    color: var(--color-navy);
+    background: transparent;
+    border: 2px solid rgba(25, 85, 105, 0.3);
+  }
+
+  .ghost-button:hover,
+  .ghost-button:focus-visible {
+    background-color: rgba(25, 85, 105, 0.06);
+  }
+
+  .ghost-button:focus-visible,
+  .cta-button:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 3px;
+  }
+
+  /* ---- Authenticated header row ---- */
+  .my-orders-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .my-orders-header-row .section-title {
+    color: var(--color-navy);
+    font-size: clamp(1.5rem, 3.2vw, 1.9rem);
+    margin: 0;
+  }
+
+  .logout-button {
+    background: none;
+    border: 2px solid rgba(25, 85, 105, 0.25);
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.92rem;
+    padding: 0.55rem 1.3rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .logout-button:hover,
+  .logout-button:focus-visible {
+    background-color: rgba(25, 85, 105, 0.06);
+  }
+
+  .logout-button:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 2px;
+  }
+
+  /* ---- Order cards ----
+     No `display` here either, for the same reason as .order-detail-overlay
+     above — this list toggles via the `hidden` attribute. */
+  .orders-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 1.1rem;
+  }
+
+  .orders-list:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.order-card) {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'cover details actions';
+    gap: 1.1rem;
+    align-items: center;
+    background: #fff;
+    padding: 1.1rem;
+    border-radius: 16px;
+    box-shadow:
+      0 2px 6px rgba(25, 85, 105, 0.06),
+      0 16px 30px -24px rgba(25, 85, 105, 0.4);
+  }
+
+  @media (max-width: 560px) {
+    :global(.order-card) {
+      grid-template-columns: auto 1fr;
+      grid-template-areas:
+        'cover details'
+        'actions actions';
+      row-gap: 0.85rem;
+    }
+  }
+
+  :global(.order-card-cover) {
+    grid-area: cover;
+    width: clamp(72px, 14vw, 96px);
+    margin: 0;
+  }
+
+  :global(.order-card-cover-placeholder) {
+    grid-area: cover;
+    width: clamp(72px, 14vw, 96px);
+    aspect-ratio: 4 / 5;
+    background: var(--color-cream-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  :global(.order-card-details) {
+    grid-area: details;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+    text-align: left;
+  }
+
+  :global(.order-card-number) {
+    font-family: var(--font-headline);
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--color-navy);
+    margin: 0;
+  }
+
+  :global(.order-card-date) {
+    font-size: 0.85rem;
+    color: #5b7381;
+    margin: 0;
+  }
+
+  :global(.order-card-titles) {
+    font-size: 0.92rem;
+    color: #4a4a4a;
+    margin: 0.2rem 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.order-card-total) {
+    font-weight: 700;
+    color: var(--color-navy);
+    font-size: 0.95rem;
+    margin: 0.2rem 0 0;
+  }
+
+  :global(.order-card-actions) {
+    grid-area: actions;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.6rem;
+  }
+
+  @media (max-width: 560px) {
+    :global(.order-card-actions) {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+  }
+
+  :global(.view-order-button) {
+    background: none;
+    border: 2px solid rgba(25, 85, 105, 0.25);
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0.45rem 1.1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+  }
+
+  :global(.view-order-button:hover),
+  :global(.view-order-button:focus-visible) {
+    background-color: rgba(25, 85, 105, 0.06);
+  }
+
+  :global(.view-order-button:focus-visible) {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 2px;
+  }
+
+  /* ---- Status badges — restrained, never relying on color alone (text
+     label always present). Cancelled gets a visually distinct treatment
+     (muted red) rather than looking like a step in normal progression. ---- */
+  :global(.status-badge) {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    margin-top: 0.15rem;
+  }
+
+  :global(.status-received) {
+    background: rgba(25, 85, 105, 0.1);
+    color: var(--color-navy);
+  }
+
+  :global(.status-processing) {
+    background: rgba(244, 96, 69, 0.12);
+    color: var(--color-coral-deep);
+  }
+
+  :global(.status-shipped),
+  :global(.status-delivered) {
+    background: rgba(25, 130, 90, 0.12);
+    color: #1a7a3c;
+  }
+
+  :global(.status-cancelled) {
+    background: rgba(179, 38, 30, 0.1);
+    color: #b3261e;
+  }
+
+  /* ---- Order detail modal ----
+     No `display` on the base rule: this element is toggled via the
+     `hidden` attribute, and any author `display` value here would win
+     over the browser's default `[hidden] { display: none }` rule and
+     defeat it — `display: flex` only applies once `hidden` is removed. */
+  .order-detail-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(6, 16, 28, 0.6);
+  }
+
+  .order-detail-overlay:not([hidden]) {
+    display: flex;
+  }
+
+  .order-detail-panel {
+    position: relative;
+    background: #fff;
+    max-width: 34rem;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 20px;
+    padding: clamp(2rem, 5vw, 2.5rem) 1.75rem 2rem;
+    text-align: left;
+    box-shadow:
+      0 20px 50px rgba(4, 10, 18, 0.45),
+      0 40px 80px -30px rgba(4, 10, 18, 0.5);
+  }
+
+  .detail-close {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    background: var(--color-cream-light);
+    color: var(--color-navy);
+    border-radius: 50%;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .detail-close:hover,
+  .detail-close:focus-visible {
+    background: var(--color-cream);
+  }
+
+  .detail-close:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 2px;
+  }
+
+  :global(.detail-heading) {
+    font-family: var(--font-headline);
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: var(--color-navy);
+    margin: 0 0 0.35rem;
+    padding-right: 2rem;
+  }
+
+  :global(.detail-date) {
+    font-size: 0.85rem;
+    color: #5b7381;
+    margin: 0 0 1.1rem;
+  }
+
+  :global(.detail-section-label) {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #5b7381;
+    margin: 1.25rem 0 0.6rem;
+  }
+
+  :global(.detail-item-row) {
+    display: flex;
+    gap: 0.85rem;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(25, 85, 105, 0.08);
+  }
+
+  :global(.detail-item-cover) {
+    width: 52px;
+    flex-shrink: 0;
+  }
+
+  :global(.detail-item-cover-placeholder) {
+    width: 52px;
+    aspect-ratio: 4 / 5;
+    flex-shrink: 0;
+    background: var(--color-cream-light);
+    border-radius: 8px;
+  }
+
+  :global(.detail-item-info) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  :global(.detail-item-title) {
+    font-weight: 700;
+    color: var(--color-navy);
+    font-size: 0.94rem;
+    margin: 0 0 0.15rem;
+    overflow-wrap: break-word;
+  }
+
+  :global(.detail-item-meta) {
+    font-size: 0.85rem;
+    color: #5b7381;
+    margin: 0;
+  }
+
+  :global(.detail-total-row) {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    color: var(--color-navy);
+    font-size: 1.05rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 2px solid rgba(25, 85, 105, 0.1);
+  }
+
+  :global(.detail-address) {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #4a4a4a;
+    margin: 0;
+    overflow-wrap: break-word;
+  }
+
+  :global(.detail-tracking-copy) {
+    font-size: 0.9rem;
+    color: #5b7381;
+    line-height: 1.6;
+    margin: 0;
+    font-style: italic;
+  }
+
+  :global(.detail-tracking-value) {
+    font-size: 0.92rem;
+    color: var(--color-navy);
+    margin: 0 0 0.3rem;
+    overflow-wrap: break-word;
+  }
+</style>
+
+<script>
+  import {
+    requestOrdersAccess,
+    fetchMyOrders,
+    fetchMyOrder,
+    logoutOrdersAccess,
+    type CustomerOrderView,
+  } from '../lib/api';
+  import {
+    getOrderDisplayNumber,
+    getOrderStatusLabel,
+    hasRealTrackingInfo,
+    resolveCoverForItem,
+    formatOrderAmount,
+  } from '../lib/order-list-view';
+
+  interface CoverEntry {
+    src: string;
+    alt: string;
+  }
+
+  const coverMapScript = document.getElementById('book-cover-map');
+  const coverMap: Record<string, CoverEntry> = coverMapScript
+    ? JSON.parse(coverMapScript.textContent ?? '{}')
+    : {};
+
+  const liveRegion = document.getElementById('my-orders-live-region');
+  function announce(message: string): void {
+    if (liveRegion) liveRegion.textContent = message;
+  }
+
+  // ---- State panels ----
+  const panels = {
+    loading: document.getElementById('my-orders-loading'),
+    access: document.getElementById('my-orders-access'),
+    sent: document.getElementById('my-orders-sent'),
+    error: document.getElementById('my-orders-error'),
+    authenticated: document.getElementById('my-orders-authenticated'),
+  };
+
+  function showOnly(name: keyof typeof panels): void {
+    for (const [key, el] of Object.entries(panels)) {
+      if (el) el.hidden = key !== name;
+    }
+  }
+
+  // ---- Access form ----
+  const accessForm = document.getElementById('access-form') as HTMLFormElement | null;
+  const accessEmailInput = document.getElementById('access-email') as HTMLInputElement | null;
+  const accessSubmit = document.getElementById('access-submit') as HTMLButtonElement | null;
+  const accessStatus = document.getElementById('access-status');
+  const sentMessage = document.getElementById('sent-message');
+  const sentTryAgain = document.getElementById('sent-try-again');
+  const errorRetry = document.getElementById('error-retry');
+
+  accessForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!accessEmailInput || !accessSubmit) return;
+
+    accessSubmit.disabled = true;
+    if (accessStatus) {
+      accessStatus.textContent = '';
+      accessStatus.classList.remove('error');
+    }
+    announce('Sending your secure link request…');
+
+    const result = await requestOrdersAccess(accessEmailInput.value);
+    accessSubmit.disabled = false;
+
+    if (result.ok) {
+      if (sentMessage) sentMessage.textContent = result.message;
+      announce(result.message);
+      showOnly('sent');
+    } else if (accessStatus) {
+      accessStatus.textContent = result.message;
+      accessStatus.classList.add('error');
+      announce(result.message);
+    }
+  });
+
+  sentTryAgain?.addEventListener('click', () => {
+    if (accessForm) accessForm.reset();
+    showOnly('access');
+    accessEmailInput?.focus();
+  });
+
+  errorRetry?.addEventListener('click', () => {
+    void checkSession();
+  });
+
+  // ---- Logout ----
+  const logoutButton = document.getElementById('logout-button');
+  logoutButton?.addEventListener('click', async () => {
+    if (logoutButton instanceof HTMLButtonElement) logoutButton.disabled = true;
+    await logoutOrdersAccess();
+    announce('You have been logged out.');
+    showOnly('access');
+    if (logoutButton instanceof HTMLButtonElement) logoutButton.disabled = false;
+  });
+
+  // ---- Order list rendering ----
+  const ordersLoading = document.getElementById('orders-loading');
+  const ordersList = document.getElementById('orders-list');
+  const ordersEmpty = document.getElementById('orders-empty');
+
+  function formatDate(dateValue: string | null): string {
+    if (!dateValue) return '';
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function buildCoverElement(item: CustomerOrderView['items'][number]): HTMLElement {
+    const cover = resolveCoverForItem(item, coverMap);
+    if (cover) {
+      const img = document.createElement('img');
+      img.className = 'order-card-cover cover-frame';
+      img.src = cover.src;
+      img.alt = cover.alt;
+      img.width = 96;
+      img.height = 120;
+      return img;
+    }
+    const placeholder = document.createElement('div');
+    placeholder.className = 'order-card-cover-placeholder';
+    placeholder.setAttribute('aria-hidden', 'true');
+    placeholder.textContent = '📖';
+    return placeholder;
+  }
+
+  function renderOrderCard(order: CustomerOrderView): HTMLLIElement {
+    const li = document.createElement('li');
+    li.className = 'order-card';
+
+    const firstItem = order.items[0];
+    li.appendChild(firstItem ? buildCoverElement(firstItem) : buildPlaceholderCover());
+
+    const details = document.createElement('div');
+    details.className = 'order-card-details';
+
+    const numberEl = document.createElement('p');
+    numberEl.className = 'order-card-number';
+    numberEl.textContent = getOrderDisplayNumber(order);
+    details.appendChild(numberEl);
+
+    const dateText = formatDate(order.date);
+    if (dateText) {
+      const dateEl = document.createElement('p');
+      dateEl.className = 'order-card-date';
+      dateEl.textContent = dateText;
+      details.appendChild(dateEl);
+    }
+
+    const titlesText = order.items
+      .map((item) => item.title)
+      .filter((title): title is string => Boolean(title))
+      .join(', ');
+    if (titlesText) {
+      const titlesEl = document.createElement('p');
+      titlesEl.className = 'order-card-titles';
+      titlesEl.textContent = titlesText;
+      details.appendChild(titlesEl);
+    }
+
+    const totalEl = document.createElement('p');
+    totalEl.className = 'order-card-total';
+    totalEl.textContent = formatOrderAmount(order.amount);
+    details.appendChild(totalEl);
+
+    const badge = document.createElement('span');
+    badge.className = `status-badge status-${order.orderStatus}`;
+    badge.textContent = getOrderStatusLabel(order.orderStatus);
+    details.appendChild(badge);
+
+    li.appendChild(details);
+
+    const actions = document.createElement('div');
+    actions.className = 'order-card-actions';
+    const viewButton = document.createElement('button');
+    viewButton.type = 'button';
+    viewButton.className = 'view-order-button';
+    viewButton.textContent = 'View Order';
+    viewButton.setAttribute('aria-label', `View details for ${getOrderDisplayNumber(order)}`);
+    viewButton.addEventListener('click', () => openOrderDetail(order, viewButton));
+    actions.appendChild(viewButton);
+    li.appendChild(actions);
+
+    return li;
+  }
+
+  function buildPlaceholderCover(): HTMLElement {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'order-card-cover-placeholder';
+    placeholder.setAttribute('aria-hidden', 'true');
+    placeholder.textContent = '📖';
+    return placeholder;
+  }
+
+  function renderOrders(orders: CustomerOrderView[]): void {
+    if (!ordersList || !ordersEmpty || !ordersLoading) return;
+    ordersLoading.hidden = true;
+
+    if (orders.length === 0) {
+      ordersList.hidden = true;
+      ordersEmpty.hidden = false;
+      return;
+    }
+
+    ordersEmpty.hidden = true;
+    ordersList.hidden = false;
+    ordersList.innerHTML = '';
+    for (const order of orders) {
+      ordersList.appendChild(renderOrderCard(order));
+    }
+  }
+
+  // ---- Order detail modal ----
+  const detailOverlay = document.getElementById('order-detail-overlay');
+  const detailPanel = document.getElementById('order-detail-panel');
+  const detailContent = document.getElementById('order-detail-content');
+  const detailClose = document.getElementById('order-detail-close');
+  let lastFocusedTrigger: HTMLElement | null = null;
+
+  function closeOrderDetail(): void {
+    if (detailOverlay) detailOverlay.hidden = true;
+    lastFocusedTrigger?.focus();
+  }
+
+  detailClose?.addEventListener('click', closeOrderDetail);
+  detailOverlay?.addEventListener('click', (event) => {
+    if (event.target === detailOverlay) closeOrderDetail();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && detailOverlay && !detailOverlay.hidden) {
+      closeOrderDetail();
+    }
+  });
+
+  function buildDetailItemRow(item: CustomerOrderView['items'][number]): HTMLElement {
+    const row = document.createElement('div');
+    row.className = 'detail-item-row';
+
+    const cover = resolveCoverForItem(item, coverMap);
+    if (cover) {
+      const img = document.createElement('img');
+      img.className = 'detail-item-cover cover-frame';
+      img.src = cover.src;
+      img.alt = cover.alt;
+      row.appendChild(img);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'detail-item-cover-placeholder';
+      placeholder.setAttribute('aria-hidden', 'true');
+      row.appendChild(placeholder);
+    }
+
+    const info = document.createElement('div');
+    info.className = 'detail-item-info';
+
+    const title = document.createElement('p');
+    title.className = 'detail-item-title';
+    title.textContent = item.title ?? 'Item';
+    info.appendChild(title);
+
+    const metaParts: string[] = [];
+    if (typeof item.quantity === 'number') metaParts.push(`Qty ${item.quantity}`);
+    if (typeof item.unitPrice === 'number') metaParts.push(`${formatOrderAmount(item.unitPrice)} each`);
+    if (typeof item.lineTotal === 'number') metaParts.push(formatOrderAmount(item.lineTotal));
+    if (metaParts.length > 0) {
+      const meta = document.createElement('p');
+      meta.className = 'detail-item-meta';
+      meta.textContent = metaParts.join(' · ');
+      info.appendChild(meta);
+    }
+
+    row.appendChild(info);
+    return row;
+  }
+
+  function buildSectionLabel(text: string): HTMLElement {
+    const label = document.createElement('p');
+    label.className = 'detail-section-label';
+    label.textContent = text;
+    return label;
+  }
+
+  function renderOrderDetail(order: CustomerOrderView): void {
+    if (!detailContent) return;
+    detailContent.innerHTML = '';
+
+    const heading = document.createElement('h2');
+    heading.id = 'order-detail-heading';
+    heading.className = 'detail-heading';
+    heading.textContent = getOrderDisplayNumber(order);
+    detailContent.appendChild(heading);
+
+    const dateText = formatDate(order.date);
+    if (dateText) {
+      const dateEl = document.createElement('p');
+      dateEl.className = 'detail-date';
+      dateEl.textContent = dateText;
+      detailContent.appendChild(dateEl);
+    }
+
+    const statusBadge = document.createElement('span');
+    statusBadge.className = `status-badge status-${order.orderStatus}`;
+    statusBadge.textContent = getOrderStatusLabel(order.orderStatus);
+    detailContent.appendChild(statusBadge);
+
+    detailContent.appendChild(buildSectionLabel('Books'));
+    for (const item of order.items) {
+      detailContent.appendChild(buildDetailItemRow(item));
+    }
+
+    const totalRow = document.createElement('div');
+    totalRow.className = 'detail-total-row';
+    const totalLabel = document.createElement('span');
+    totalLabel.textContent = 'Order Total';
+    const totalValue = document.createElement('span');
+    totalValue.textContent = formatOrderAmount(order.amount);
+    totalRow.append(totalLabel, totalValue);
+    detailContent.appendChild(totalRow);
+
+    if (order.address || order.shippingMethod) {
+      detailContent.appendChild(buildSectionLabel('Shipping'));
+      if (order.address) {
+        const addr = document.createElement('p');
+        addr.className = 'detail-address';
+        const parts = [
+          order.address.line1,
+          order.address.line2,
+          [order.address.city, order.address.state, order.address.postal_code].filter(Boolean).join(', '),
+          order.address.country,
+        ].filter((part) => Boolean(part && part.trim()));
+        addr.textContent = parts.join(' · ');
+        detailContent.appendChild(addr);
+      }
+      if (order.shippingMethod) {
+        const method = document.createElement('p');
+        method.className = 'detail-tracking-value';
+        method.textContent = order.shippingMethod;
+        detailContent.appendChild(method);
+      }
+    }
+
+    detailContent.appendChild(buildSectionLabel('Tracking'));
+    if (hasRealTrackingInfo(order)) {
+      if (order.carrier) {
+        const carrierEl = document.createElement('p');
+        carrierEl.className = 'detail-tracking-value';
+        carrierEl.textContent = `Carrier: ${order.carrier}`;
+        detailContent.appendChild(carrierEl);
+      }
+      if (order.trackingNumber) {
+        const trackingEl = document.createElement('p');
+        trackingEl.className = 'detail-tracking-value';
+        trackingEl.textContent = `Tracking #: ${order.trackingNumber}`;
+        detailContent.appendChild(trackingEl);
+      }
+      if (order.shippedAt) {
+        const shippedText = formatDate(order.shippedAt);
+        if (shippedText) {
+          const shippedEl = document.createElement('p');
+          shippedEl.className = 'detail-tracking-value';
+          shippedEl.textContent = `Shipped: ${shippedText}`;
+          detailContent.appendChild(shippedEl);
+        }
+      }
+    } else {
+      const noTracking = document.createElement('p');
+      noTracking.className = 'detail-tracking-copy';
+      noTracking.textContent = 'Tracking information will appear here if available after shipment.';
+      detailContent.appendChild(noTracking);
+    }
+  }
+
+  async function openOrderDetail(order: CustomerOrderView, trigger: HTMLElement): Promise<void> {
+    if (!detailOverlay) return;
+    lastFocusedTrigger = trigger;
+
+    // Re-fetch by order number so the detail view always reflects the
+    // authoritative server record (never assumes the list-view payload is
+    // sufficient) — the backend is the only source of truth for
+    // ownership, regardless of what the list already rendered.
+    const orderNumber = order.orderNumber;
+    const detail = orderNumber ? await fetchMyOrder(orderNumber) : order;
+
+    renderOrderDetail(detail ?? order);
+    detailOverlay.hidden = false;
+    detailClose?.focus();
+  }
+
+  // ---- Initial session check ----
+  async function checkSession(): Promise<void> {
+    showOnly('loading');
+    const result = await fetchMyOrders();
+
+    if (result.state === 'signed-out') {
+      showOnly('access');
+      return;
+    }
+
+    if (result.state === 'error') {
+      showOnly('error');
+      return;
+    }
+
+    showOnly('authenticated');
+    renderOrders(result.orders);
+  }
+
+  void checkSession();
+</script>

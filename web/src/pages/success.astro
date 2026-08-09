@@ -42,6 +42,10 @@ import { visualAssets } from '../data/visualAssets';
         <a class="cta-button" href="/">Home</a>
         <a class="cta-button cta-button--ghost" href="/shop">Shop</a>
       </nav>
+
+      <p class="my-orders-note">
+        Need to check this order later? <a href="/my-orders">View My Orders</a>
+      </p>
     </div>
   </section>
 </BaseLayout>
@@ -198,6 +202,26 @@ import { visualAssets } from '../data/visualAssets';
   .cta-button:focus-visible {
     outline: 3px solid var(--color-navy);
     outline-offset: 3px;
+  }
+
+  /* Secondary, deliberately quiet — sits below the primary CTAs so it
+     never competes with the main "thank you" messaging. */
+  .my-orders-note {
+    margin: 1.5rem 0 0;
+    font-size: 0.9rem;
+    color: #5b7381;
+  }
+
+  .my-orders-note a {
+    color: var(--color-navy);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .my-orders-note a:hover,
+  .my-orders-note a:focus-visible {
+    color: var(--color-coral-deep);
   }
 </style>
 

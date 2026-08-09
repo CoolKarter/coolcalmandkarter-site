@@ -130,6 +130,7 @@ function renderItemsTable(items = []) {
 function buildOrderConfirmationEmail(order, { frontendBaseUrl } = {}) {
   const total = formatCurrency(order.amount);
   const supportUrl = frontendBaseUrl ? `${frontendBaseUrl.replace(/\/+$/, '')}/contact` : null;
+  const myOrdersUrl = frontendBaseUrl ? `${frontendBaseUrl.replace(/\/+$/, '')}/my-orders` : null;
 
   const inner = `
     <h2 style="color: ${BRAND_CORAL}; text-align: center; margin: 8px 0 4px;">Thank you for your order${order.name ? `, ${escapeHtml(order.name)}` : ''}!</h2>
@@ -153,6 +154,8 @@ function buildOrderConfirmationEmail(order, { frontendBaseUrl } = {}) {
     <p style="margin-top: 24px; font-size: 15px; line-height: 1.6;">
       Your order has been received and is confirmed. We'll send you another email as soon as it ships.
     </p>
+
+    ${myOrdersUrl ? `<p style="margin-top: 16px; font-size: 14px; line-height: 1.6;">Want to check on this order later? <a href="${myOrdersUrl}" style="color: ${BRAND_CORAL};">View My Orders</a> any time — just enter this email to get a secure link.</p>` : ''}
 
     <p style="margin-top: 24px; font-size: 14px; color: #777777; line-height: 1.6;">
       Questions about your order? ${supportUrl ? `<a href="${supportUrl}" style="color: ${BRAND_CORAL};">Contact us</a>` : 'Reach out and we\'ll be glad to help.'} — thank you for supporting Cool, Calm &amp; Karter!

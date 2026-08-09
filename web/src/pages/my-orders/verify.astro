@@ -1,0 +1,183 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { visualAssets } from '../../data/visualAssets';
+---
+
+<BaseLayout
+  title="Verifying Access — Cool, Calm & Karter"
+  description="Verifying your secure My Orders access link."
+>
+  <section class="verify-hero" aria-hidden="true">
+    <img
+      class="verify-bg"
+      src={visualAssets.backgrounds.storySection}
+      alt=""
+      loading="eager"
+      width="1916"
+      height="821"
+    />
+    <div class="verify-scrim"></div>
+  </section>
+
+  <div class="verify-page">
+    <div id="verify-loading" class="verify-card">
+      <p class="verify-copy" role="status" aria-live="polite">Verifying your secure link&hellip;</p>
+    </div>
+
+    <div id="verify-error" class="verify-card" hidden>
+      <p class="verify-eyebrow">Link Expired</p>
+      <h1 class="section-title">This Secure Link Is No Longer Valid</h1>
+      <p class="verify-copy">
+        It may have already been used or expired. Request a new one from My Orders — it only
+        takes a moment.
+      </p>
+      <a class="cta-button" href="/my-orders">Return to My Orders</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .verify-hero {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-night);
+    min-height: clamp(90px, 12vw, 125px);
+  }
+
+  .verify-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 55%;
+  }
+
+  .verify-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      165deg,
+      rgba(9, 26, 43, 0.82) 0%,
+      rgba(15, 44, 64, 0.72) 55%,
+      rgba(25, 85, 105, 0.62) 100%
+    );
+  }
+
+  .verify-page {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(2rem, 5vw, 2.75rem) 1.5rem 4rem;
+    text-align: center;
+  }
+
+  .verify-card {
+    position: relative;
+    background: #fff;
+    max-width: 30rem;
+    width: 100%;
+    margin: auto auto;
+    border-radius: 20px;
+    padding: clamp(2.25rem, 6vw, 3rem) 1.75rem clamp(2rem, 5vw, 2.5rem);
+    box-shadow:
+      0 10px 30px rgba(4, 10, 18, 0.35),
+      0 26px 48px -20px rgba(4, 10, 18, 0.45);
+  }
+
+  .verify-eyebrow {
+    font-family: var(--font-display);
+    color: var(--color-coral);
+    font-size: 1.05rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .verify-card .section-title {
+    color: var(--color-navy);
+    font-size: clamp(1.5rem, 3.2vw, 1.85rem);
+    margin: 0 0 0.9rem;
+  }
+
+  .verify-copy {
+    font-size: 1.02rem;
+    line-height: 1.65;
+    color: #4a4a4a;
+    max-width: 26rem;
+    margin: 0 auto 1.5rem;
+  }
+
+  .cta-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+    background-color: var(--color-coral);
+    padding: 0.7rem 1.9rem;
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow:
+      0 14px 28px -14px rgba(244, 96, 69, 0.65),
+      0 3px 8px rgba(25, 85, 105, 0.2);
+    transition:
+      background-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .cta-button:hover,
+  .cta-button:focus-visible {
+    background-color: var(--color-coral-deep);
+    transform: translateY(-1px);
+  }
+
+  .cta-button:focus-visible {
+    outline: 3px solid var(--color-navy);
+    outline-offset: 3px;
+  }
+</style>
+
+<script>
+  import { verifyOrdersAccessToken } from '../../lib/api';
+  import { extractMagicLinkToken } from '../../lib/orders-access-response';
+
+  async function run(): Promise<void> {
+    // Read the token from the fragment ONLY — it must never be sent to
+    // the server as part of the page's own URL/query string, and must
+    // never appear in a Netlify/backend access log.
+    const token = extractMagicLinkToken(window.location.hash);
+
+    // Scrub the fragment from the visible URL and browser history
+    // immediately, before any network request — regardless of whether a
+    // token was found, so it never lingers in the address bar or gets
+    // bookmarked. Never written to the DOM, console, or storage anywhere
+    // in this flow.
+    history.replaceState(null, '', window.location.pathname);
+
+    if (!token) {
+      showError();
+      return;
+    }
+
+    const success = await verifyOrdersAccessToken(token);
+
+    if (success) {
+      window.location.href = '/my-orders';
+      return;
+    }
+
+    // Expired, already-used, malformed, and nonexistent tokens are all
+    // indistinguishable here on purpose — the backend never reveals which.
+    showError();
+  }
+
+  function showError(): void {
+    const loading = document.getElementById('verify-loading');
+    const error = document.getElementById('verify-error');
+    if (loading) loading.hidden = true;
+    if (error) error.hidden = false;
+  }
+
+  void run();
+</script>

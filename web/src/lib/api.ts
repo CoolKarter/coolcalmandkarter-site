@@ -2,6 +2,7 @@
 // should go through here instead of hardcoding the Render URL in page code.
 import { extractCheckoutUrl } from './checkout-response.js';
 import { parseSessionStatusResponse, VERIFICATION_FAILURE } from './session-status-response.js';
+import { classifyMyOrdersSessionStatus } from './orders-access-response.js';
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL;
 
@@ -125,4 +126,184 @@ export async function verifyCheckoutSession(sessionId: string): Promise<Checkout
   }
 
   return parseSessionStatusResponse(status, data);
+}
+
+// ==========================================================================
+// My Orders — secure passwordless customer access (Phase 13D).
+//
+// Every function below deliberately uses a RELATIVE same-origin `/api/...`
+// path, never `API_BASE_URL` — these requests depend on the browser
+// treating them as same-origin so the HttpOnly session cookie set by the
+// backend is actually stored/sent (see Phase 13C's report and
+// web/scripts/generate-redirects.mjs for the Netlify proxy that makes
+// `/api/*` on this site's own origin transparently reach the backend).
+// Existing checkout/contact/newsletter calls above are untouched — they
+// have no session to carry and keep using API_BASE_URL as before.
+// ==========================================================================
+
+export interface OrdersAccessRequestResult {
+  ok: boolean;
+  message: string;
+}
+
+/**
+ * Requests a My Orders magic link for the given email. Always resolves —
+ * never throws — with whatever generic message the backend returns,
+ * unchanged: the frontend never decides or displays anything about
+ * whether that email actually has orders, only relays the backend's
+ * response verbatim (see server/lib/process-orders-access-request.js).
+ */
+export async function requestOrdersAccess(email: string): Promise<OrdersAccessRequestResult> {
+  const fallbackMessage = "If orders exist for that email, we've sent a secure access link.";
+
+  try {
+    const res = await fetch('/api/orders/access/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data: unknown = await res.json().catch(() => null);
+    const message =
+      data && typeof data === 'object' && typeof (data as { message?: unknown }).message === 'string'
+        ? (data as { message: string }).message
+        : null;
+    const error =
+      data && typeof data === 'object' && typeof (data as { error?: unknown }).error === 'string'
+        ? (data as { error: string }).error
+        : null;
+
+    if (res.ok) {
+      return { ok: true, message: message ?? fallbackMessage };
+    }
+    // Only a genuinely malformed email produces a non-generic response
+    // (ordinary input validation, not an enumeration signal) — see the
+    // backend's exact contract.
+    return { ok: false, message: error ?? 'Please enter a valid email address.' };
+  } catch {
+    return { ok: false, message: 'There was a problem sending your request. Please try again.' };
+  }
+}
+
+/**
+ * Exchanges a raw magic-link token (read from the URL fragment by the
+ * calling page) for a session — the backend responds by setting the
+ * HttpOnly session cookie; this function only reports whether that
+ * succeeded, it never sees or handles the cookie itself (JS can't, by
+ * design). Never throws — a network failure and an invalid/expired token
+ * both resolve to `false`, and the caller shows the identical generic
+ * "no longer valid" state either way (see verify.astro).
+ */
+export async function verifyOrdersAccessToken(token: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/orders/access/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ token }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export interface CustomerOrderItemView {
+  slug: string | null;
+  title: string | null;
+  quantity: number | null;
+  unitPrice: number | null;
+  lineTotal: number | null;
+}
+
+export interface CustomerOrderAddressView {
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+}
+
+export interface CustomerOrderView {
+  orderNumber: string | null;
+  date: string | null;
+  items: CustomerOrderItemView[];
+  amount: number | null;
+  shippingMethod: string | null;
+  address: CustomerOrderAddressView | null;
+  orderStatus: string;
+  carrier: string | null;
+  trackingNumber: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+}
+
+export type MyOrdersSessionState = 'authenticated' | 'signed-out' | 'error';
+
+export interface MyOrdersListResult {
+  state: MyOrdersSessionState;
+  orders: CustomerOrderView[];
+}
+
+/**
+ * The authoritative session check the whole My Orders page's initial
+ * render depends on: 200 means authenticated (render the returned
+ * orders), 401 means genuinely signed out (show the access form), and
+ * anything else is a temporary failure — never silently treated as either
+ * of the other two states, so a network blip can never look like being
+ * logged out, and can never look like a successful login either.
+ */
+export async function fetchMyOrders(): Promise<MyOrdersListResult> {
+  try {
+    const res = await fetch('/api/my-orders', { credentials: 'include' });
+    const state = classifyMyOrdersSessionStatus(res.status);
+
+    if (state !== 'authenticated') {
+      return { state, orders: [] };
+    }
+
+    const data: unknown = await res.json().catch(() => null);
+    const orders =
+      data && typeof data === 'object' && Array.isArray((data as { orders?: unknown }).orders)
+        ? ((data as { orders: CustomerOrderView[] }).orders)
+        : [];
+    return { state: 'authenticated', orders };
+  } catch {
+    return { state: 'error', orders: [] };
+  }
+}
+
+/**
+ * Fetches one order's full detail. Ownership is enforced entirely
+ * server-side (orderNumber alone is never sufficient — see
+ * server/lib/customer-orders.js); this function never assumes possession
+ * of an order number grants access and simply reports null on any
+ * non-2xx response (a real-but-not-yours order and a nonexistent one are
+ * indistinguishable here, matching the backend's identical 404 for both).
+ */
+export async function fetchMyOrder(orderNumber: string): Promise<CustomerOrderView | null> {
+  try {
+    const res = await fetch(`/api/my-orders/${encodeURIComponent(orderNumber)}`, { credentials: 'include' });
+    if (!res.ok) return null;
+    const data: unknown = await res.json().catch(() => null);
+    return data && typeof data === 'object' && (data as { order?: unknown }).order
+      ? ((data as { order: CustomerOrderView }).order)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Logs out of My Orders. Always calls the server (real, server-side
+ * session revocation — see server/lib/customer-session.js) rather than
+ * only clearing client-side UI state; best-effort on network failure,
+ * since the caller transitions the UI back to signed-out regardless.
+ */
+export async function logoutOrdersAccess(): Promise<void> {
+  try {
+    await fetch('/api/orders/access/logout', { method: 'POST', credentials: 'include' });
+  } catch {
+    // Best-effort — UI still returns to signed-out state either way.
+  }
 }
