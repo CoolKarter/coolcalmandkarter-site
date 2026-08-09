@@ -82,15 +82,19 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
     </div>
 
     <div id="cart-summary" class="cart-summary" hidden>
-      <ul id="cart-items" class="cart-items"></ul>
+      <div class="cart-items-column">
+        <ul id="cart-items" class="cart-items"></ul>
+      </div>
 
-      <div id="order-summary" class="order-summary">
-        <div class="order-summary-row">
-          <span class="order-summary-label">Total</span>
-          <span id="cart-total" class="order-summary-total">$0.00</span>
+      <div class="cart-summary-column">
+        <div id="order-summary" class="order-summary">
+          <div class="order-summary-row">
+            <span class="order-summary-label">Total</span>
+            <span id="cart-total" class="order-summary-total">$0.00</span>
+          </div>
+          <button type="button" id="checkout-button" class="checkout-button">Checkout</button>
+          <p id="checkout-status" class="checkout-status" role="status" aria-live="polite"></p>
         </div>
-        <button type="button" id="checkout-button" class="checkout-button">Checkout</button>
-        <p id="checkout-status" class="checkout-status" role="status" aria-live="polite"></p>
       </div>
     </div>
   </div>
@@ -123,6 +127,17 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
     max-width: 760px;
     margin: 0 auto;
     padding: clamp(2rem, 5vw, 2.75rem) 1.5rem 4rem;
+    width: 100%;
+  }
+
+  /* At tablet-large/desktop widths, the page itself widens to make room
+     for a two-column layout (items left, order summary right) — below
+     this, .cart-page stays at its original narrow single-column width, so
+     mobile/tablet are completely unaffected by anything in this block. */
+  @media (min-width: 900px) {
+    .cart-page {
+      max-width: 1180px;
+    }
   }
 
   /* ---- Cinematic hero header — same cloud asset + scrim strategy as the
@@ -269,18 +284,61 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
     outline-offset: 3px;
   }
 
-  /* ---- Cart items ---- */
+  /* ---- Cart layout: items + order summary ----
+     Below 900px this is a plain single column (.cart-items-column and
+     .cart-summary-column are unstyled divs, stacking normally — the
+     original, unchanged mobile/tablet behavior). At 900px+, it becomes a
+     two-column layout with a sticky summary — see the `min-width: 900px`
+     block below — so the Checkout button/total stay visible while
+     scrolling a long item list instead of sitting below all 12 books. */
 
   /* No `display` set here on purpose — this element toggles via the
      `hidden` attribute, and any author `display` value here would win over
      the browser's default `[hidden] { display: none }` rule and defeat it. */
+  .cart-summary:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 900px) {
+    .cart-summary:not([hidden]) {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 2rem;
+    }
+
+    .cart-items-column {
+      flex: 1 1 auto;
+      min-width: 0; /* lets long titles wrap instead of forcing the column wider */
+    }
+
+    .cart-summary-column {
+      flex: 0 0 320px;
+      /* Sticky, not fixed: stays pinned within the height of its own
+         parent (.cart-summary) — once the items column finishes scrolling
+         past, it scrolls away normally with the rest of the page instead
+         of floating over the footer. Nav.astro is not itself
+         fixed/sticky, so `top` here is simply breathing room from the
+         viewport edge, not compensating for a persistent header. */
+      position: sticky;
+      top: 1.5rem;
+    }
+  }
+
   .cart-items {
     list-style: none;
-    margin: 0 0 1.5rem;
+    margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
+  }
+
+  @media (min-width: 900px) {
+    .cart-items {
+      gap: 0.65rem;
+    }
   }
 
   :global(.cart-item) {
@@ -440,6 +498,64 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
       width: 2.75rem;
       height: 2.75rem;
       font-size: 1.25rem;
+    }
+  }
+
+  /* Compact desktop row: cover + title + quantity + subtotal + remove all
+     inline in one shorter row, instead of the taller cover-details-actions
+     layout used everywhere below 900px (tablet/mobile are untouched — see
+     the `min-width: 900px` gate). This is what lets meaningfully more
+     books fit in the viewport at once alongside the sticky summary panel;
+     a 2-column item grid was evaluated and deliberately not used — at the
+     item-column's actual available width once the summary panel takes its
+     320px, splitting into two columns left too little room for the
+     quantity stepper and Remove action to stay comfortably clickable, so
+     a single compact column was the cleaner result in visual QA. */
+  @media (min-width: 900px) {
+    :global(.cart-item) {
+      grid-template-columns: 64px 1fr auto auto auto;
+      grid-template-areas: 'cover details quantity subtotal remove';
+      column-gap: 1.1rem;
+      padding: 0.6rem 1rem;
+    }
+
+    :global(.cart-item-cover) {
+      width: 64px;
+    }
+
+    :global(.cart-item-cover.cover-frame) {
+      padding: 0.35rem;
+    }
+
+    :global(.cart-item-title) {
+      font-size: 1rem;
+    }
+
+    :global(.cart-item-price) {
+      font-size: 0.88rem;
+    }
+
+    /* Unwraps .cart-item-actions so its three children become direct grid
+       items of .cart-item itself, each placed into its own named area —
+       no JS/markup change needed, since quantity-stepper/cart-item-subtotal/
+       remove-button already carry their own distinct classes. */
+    :global(.cart-item-actions) {
+      display: contents;
+    }
+
+    :global(.quantity-stepper) {
+      grid-area: quantity;
+    }
+
+    :global(.cart-item-subtotal) {
+      grid-area: subtotal;
+      min-width: 4.25rem;
+      text-align: right;
+    }
+
+    :global(.remove-button) {
+      grid-area: remove;
+      margin-top: 0;
     }
   }
 

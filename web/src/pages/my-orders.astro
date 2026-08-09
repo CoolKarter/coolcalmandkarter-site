@@ -46,9 +46,14 @@ const coverMapJson = JSON.stringify(Object.fromEntries(coverEntries)).replace(/<
   <p id="my-orders-live-region" class="visually-hidden" role="status" aria-live="polite"></p>
 
   <div class="my-orders-page">
-    <!-- Initial session check -->
-    <div id="my-orders-loading" class="access-card">
-      <p class="loading-copy">Checking your session&hellip;</p>
+    <!-- Initial load. Starts hidden — see LOADING_REVEAL_DELAY_MS in the
+         script below: a fast response never shows this at all, so a
+         customer on a quick connection goes straight from nothing to the
+         real state instead of glimpsing a loading card for a fraction of
+         a second. Copy is deliberately non-technical — a customer doesn't
+         need to know a session cookie is being checked. -->
+    <div id="my-orders-loading" class="access-card" hidden>
+      <p class="loading-copy">Loading your orders&hellip;</p>
     </div>
 
     <!-- Signed-out: request access -->
@@ -1143,10 +1148,26 @@ const coverMapJson = JSON.stringify(Object.fromEntries(coverEntries)).replace(/<
     detailClose?.focus();
   }
 
-  // ---- Initial session check ----
+  // ---- Initial load ----
+  // fetchMyOrders() is already the single request that determines both
+  // auth state and (when authenticated) the order data itself — there is
+  // no separate preliminary "check session" call to remove here. What
+  // this delay improves is perceived speed: a response that comes back
+  // inside LOADING_REVEAL_DELAY_MS never shows the loading card at all
+  // (the timer is cancelled before it ever fires), so a fast connection
+  // goes straight from a blank panel to the real content. Only a
+  // genuinely slow response — the case this is actually for — shows
+  // "Loading your orders…" at all.
+  const LOADING_REVEAL_DELAY_MS = 200;
+
   async function checkSession(): Promise<void> {
-    showOnly('loading');
+    const revealTimer = window.setTimeout(() => {
+      showOnly('loading');
+      announce('Loading your orders…');
+    }, LOADING_REVEAL_DELAY_MS);
+
     const result = await fetchMyOrders();
+    window.clearTimeout(revealTimer);
 
     if (result.state === 'signed-out') {
       showOnly('access');
