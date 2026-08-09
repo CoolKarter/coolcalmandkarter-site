@@ -331,12 +331,16 @@ CustomerSession.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0
   .then(() => console.log('✅ TTL index created on CustomerSession.expiresAt'))
   .catch(err => console.error('❌ Failed to create CustomerSession TTL index:', err.message));
 
-// ✅ Admin auth
+// ✅ Admin auth — applied directly to each admin-only route below (never a
+// broad app.use('/api/orders', ...) prefix mount), so it can never shadow
+// the public customer routes that share the /api/orders path segment
+// (POST /api/orders/access/request|verify|logout) or the CustomerSession-
+// authenticated /api/my-orders routes.
 const basicAuth = require('express-basic-auth');
-app.use('/api/orders', basicAuth({
+const adminAuth = basicAuth({
   users: { 'admin': process.env.ADMIN_PASSWORD },
   challenge: true,
-}));
+});
 app.use('/api/newsletter/emails', basicAuth({
   users: { 'admin': process.env.ADMIN_PASSWORD },
   challenge: true,
@@ -856,7 +860,7 @@ app.post('/api/contact', async (req, res) => {
 });
 
 // ✅ Orders API
-app.get('/api/orders', async (req, res) => {
+app.get('/api/orders', adminAuth, async (req, res) => {
   try {
     const { email, bookTitle } = req.query;
     const filter = {};
@@ -872,7 +876,7 @@ app.get('/api/orders', async (req, res) => {
 });
 
 // ✅ Export orders
-app.get('/api/orders/export', async (req, res) => {
+app.get('/api/orders/export', adminAuth, async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
     const fields = ['name', 'email', 'bookTitle', 'amount', 'date'];
