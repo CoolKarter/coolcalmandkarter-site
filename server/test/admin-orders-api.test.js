@@ -6,36 +6,44 @@
 //   PATCH /api/admin/orders/:orderNumber
 //   POST  /api/admin/orders/:orderNumber/resend-confirmation
 //
-// Builds a small real Express app wired with the REAL decision-making
-// functions server.js itself uses — buildAdminOrderPatch,
+// As of Phase 13F these routes are gated by the new AdminSession cookie
+// (requireAdminSession in server.js), not the legacy Basic Auth they
+// launched with in Phase 13E — this file's test app has been updated to
+// match, using the REAL admin-session lib functions
+// (createAdminSession/authenticateAdminSession, the admin cookie helpers)
+// so the auth boundary itself isn't a reimplementation either. The legacy
+// GET /api/orders/GET /api/orders/export Basic-Auth boundary is covered
+// separately in admin-route-auth.test.js and remains untouched; the new
+// admin-session login/logout/status routes themselves are covered in
+// admin-session-routes.test.js. This file focuses on the order-management
+// business logic — list/detail/PATCH/resend — reusing the REAL
+// decision-making functions server.js itself uses: buildAdminOrderPatch,
 // buildOrderStatusMatchCondition, toAdminOrderView,
 // buildOrderConfirmationEmail, buildShippingConfirmationEmail — against a
-// fake in-memory Order model and an injectable fake sendEmail. Only the
-// thin route-wiring (which lib call happens in which order, with which
-// HTTP status) is hand-written here to mirror server.js, exactly the same
-// trade-off already accepted in admin-route-auth.test.js — real Express +
-// real express-basic-auth are used for the auth boundary itself, not a
-// reimplementation of it.
+// fake in-memory Order model and an injectable fake sendEmail.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const express = require('express');
-const basicAuth = require('express-basic-auth');
+const cookieParser = require('cookie-parser');
 const { buildAdminOrderPatch, buildOrderStatusMatchCondition } = require('../lib/admin-order-update');
 const { toAdminOrderView } = require('../lib/order-views');
 const { buildOrderConfirmationEmail, buildShippingConfirmationEmail } = require('../lib/email-templates');
+const { createAdminSession, authenticateAdminSession } = require('../lib/admin-session');
+const { setAdminSessionCookie, readAdminSessionCookie, INSECURE_COOKIE_NAME } = require('../lib/admin-session-cookie');
 const { createFakeAdminOrderModel } = require('./helpers/fake-admin-order-model');
+const { createFakeCustomerSessionModel } = require('./helpers/fake-token-model');
 
-const ADMIN_USER = 'admin';
-const ADMIN_PASSWORD = 'test-admin-password';
 const FRONTEND_BASE_URL = 'https://staging.example.com';
 
 function buildTestApp({ orders = [], sendEmailImpl } = {}) {
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
 
   const Order = createFakeAdminOrderModel({ orders });
+  const AdminSession = createFakeCustomerSessionModel();
   const sentEmails = [];
   const sendEmail =
     sendEmailImpl ||
@@ -44,20 +52,34 @@ function buildTestApp({ orders = [], sendEmailImpl } = {}) {
       return { ok: true, id: 'email_test_1' };
     });
 
-  const adminAuth = basicAuth({ users: { [ADMIN_USER]: ADMIN_PASSWORD }, challenge: true });
+  async function requireAdminSession(req, res, next) {
+    const rawToken = readAdminSessionCookie(req);
+    const result = await authenticateAdminSession({ rawToken, AdminSessionModel: AdminSession });
+    if (!result.ok) return res.status(401).json({ error: 'Not authenticated.' });
+    next();
+  }
 
-  app.get('/api/admin/orders', adminAuth, async (req, res) => {
+  app.post('/api/admin/session/login', async (req, res) => {
+    // Minimal stand-in — real credential validation is covered in
+    // admin-session-routes.test.js. Any request here just establishes a
+    // session, so tests can log in without repeating that logic.
+    const { rawToken } = await createAdminSession({ AdminSessionModel: AdminSession });
+    setAdminSessionCookie(req, res, rawToken);
+    res.status(200).json({ ok: true });
+  });
+
+  app.get('/api/admin/orders', requireAdminSession, async (req, res) => {
     const list = await Order.find().sort({ date: -1 });
     res.status(200).json({ orders: list.map(toAdminOrderView) });
   });
 
-  app.get('/api/admin/orders/:orderNumber', adminAuth, async (req, res) => {
+  app.get('/api/admin/orders/:orderNumber', requireAdminSession, async (req, res) => {
     const order = await Order.findOne({ orderNumber: req.params.orderNumber });
     if (!order) return res.status(404).json({ error: 'Order not found.' });
     res.status(200).json({ order: toAdminOrderView(order) });
   });
 
-  app.patch('/api/admin/orders/:orderNumber', adminAuth, async (req, res) => {
+  app.patch('/api/admin/orders/:orderNumber', requireAdminSession, async (req, res) => {
     const order = await Order.findOne({ orderNumber: req.params.orderNumber });
     if (!order) return res.status(404).json({ error: 'Order not found.' });
 
@@ -83,7 +105,7 @@ function buildTestApp({ orders = [], sendEmailImpl } = {}) {
     res.status(200).json({ order: toAdminOrderView(updated) });
   });
 
-  app.post('/api/admin/orders/:orderNumber/resend-confirmation', adminAuth, async (req, res) => {
+  app.post('/api/admin/orders/:orderNumber/resend-confirmation', requireAdminSession, async (req, res) => {
     const order = await Order.findOne({ orderNumber: req.params.orderNumber });
     if (!order) return res.status(404).json({ error: 'Order not found.' });
     if (!order.email) return res.status(400).json({ error: 'This order has no email on file.' });
@@ -99,8 +121,8 @@ function buildTestApp({ orders = [], sendEmailImpl } = {}) {
   });
 
   // A stand-in for the real Phase 13C customer route, just enough to prove
-  // item 16: a customer-session cookie must never grant admin access, and
-  // (the converse) that it legitimately grants access to its OWN route —
+  // a customer-session cookie must never grant admin access, and (the
+  // converse) that it legitimately grants access to its OWN route —
   // proving the two auth systems are genuinely independent, not that
   // customer auth "happens to fail" for an unrelated reason.
   app.get('/api/my-orders', (req, res) => {
@@ -110,7 +132,7 @@ function buildTestApp({ orders = [], sendEmailImpl } = {}) {
     res.status(401).json({ error: 'Not authenticated.' });
   });
 
-  return { app, Order, sentEmails };
+  return { app, Order, AdminSession, sentEmails };
 }
 
 function startTestServer(app) {
@@ -127,8 +149,10 @@ function stopTestServer(server) {
   return new Promise((resolve) => server.close(resolve));
 }
 
-function adminAuthHeader() {
-  return `Basic ${Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64')}`;
+/** Issues a valid admin session directly against the fake AdminSession store and returns a ready-to-use Cookie header value — bypasses the login HTTP round-trip since login itself is covered in admin-session-routes.test.js. */
+async function issueAdminCookie(AdminSession) {
+  const { rawToken } = await createAdminSession({ AdminSessionModel: AdminSession });
+  return `${INSECURE_COOKIE_NAME}=${rawToken}`;
 }
 
 function buildOrder(overrides = {}) {
@@ -147,31 +171,26 @@ function buildOrder(overrides = {}) {
   };
 }
 
-// ---- Admin auth boundary (item 16) ----
+// ---- Admin session auth boundary ----
 
 test('admin order API auth boundary', async (t) => {
-  const { app } = buildTestApp({ orders: [buildOrder()] });
+  const { app, AdminSession } = buildTestApp({ orders: [buildOrder()] });
   const { server, baseUrl } = await startTestServer(app);
   t.after(() => stopTestServer(server));
 
-  await t.test('GET /api/admin/orders rejects a request with no credentials', async () => {
+  await t.test('GET /api/admin/orders rejects a request with no session — plain JSON 401, no WWW-Authenticate', async () => {
     const res = await fetch(`${baseUrl}/api/admin/orders`);
     assert.equal(res.status, 401);
-    assert.match(res.headers.get('www-authenticate') || '', /^Basic/);
+    assert.equal(res.headers.get('www-authenticate'), null);
   });
 
-  await t.test('GET /api/admin/orders rejects wrong credentials', async () => {
-    const bad = `Basic ${Buffer.from('admin:wrong-password').toString('base64')}`;
-    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Authorization: bad } });
-    assert.equal(res.status, 401);
-  });
-
-  await t.test('GET /api/admin/orders accepts correct credentials', async () => {
-    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Authorization: adminAuthHeader() } });
+  await t.test('GET /api/admin/orders accepts a valid admin session cookie', async () => {
+    const cookie = await issueAdminCookie(AdminSession);
+    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Cookie: cookie } });
     assert.equal(res.status, 200);
   });
 
-  await t.test('every admin order route requires admin auth', async () => {
+  await t.test('every admin order route requires a valid admin session, none send WWW-Authenticate', async () => {
     const responses = await Promise.all([
       fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`),
       fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
@@ -183,14 +202,13 @@ test('admin order API auth boundary', async (t) => {
     ]);
     for (const res of responses) {
       assert.equal(res.status, 401);
-      assert.match(res.headers.get('www-authenticate') || '', /^Basic/);
+      assert.equal(res.headers.get('www-authenticate'), null);
     }
   });
 
   await t.test('a customer-session cookie does not grant admin access', async () => {
     const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Cookie: 'cck_session=customer-session-token' } });
     assert.equal(res.status, 401);
-    assert.match(res.headers.get('www-authenticate') || '', /^Basic/);
   });
 
   await t.test('the same cookie legitimately authenticates the real customer route — proving the two auth systems are genuinely independent, not both broken', async () => {
@@ -198,32 +216,43 @@ test('admin order API auth boundary', async (t) => {
     assert.equal(res.status, 200);
   });
 
-  await t.test('a magic-link/customer-style bearer token does not grant admin access', async () => {
-    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Authorization: 'Bearer some-magic-link-derived-token' } });
+  await t.test('a legacy-style Basic Auth header does not grant admin access', async () => {
+    const basic = `Basic ${Buffer.from('admin:whatever').toString('base64')}`;
+    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Authorization: basic } });
+    assert.equal(res.status, 401);
+  });
+
+  await t.test('an expired admin session cannot access', async () => {
+    const cookie = await issueAdminCookie(AdminSession);
+    const doc = AdminSession.__store[AdminSession.__store.length - 1];
+    doc.expiresAt = new Date(Date.now() - 1000);
+
+    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Cookie: cookie } });
     assert.equal(res.status, 401);
   });
 });
 
-// ---- List / detail (item 17) ----
+// ---- List / detail ----
 
 test('admin order list and detail', async (t) => {
   const older = buildOrder({ orderNumber: 'CCK-20260101-AAAA', date: new Date('2026-01-01T00:00:00Z') });
   const newer = buildOrder({ orderNumber: 'CCK-20260808-4F2A', date: new Date('2026-08-08T12:00:00Z') });
   const legacy = { name: 'Legacy Customer', email: 'legacy@example.com', amount: 500, address: {}, date: new Date('2020-01-01T00:00:00Z') };
 
-  const { app } = buildTestApp({ orders: [older, newer, legacy] });
+  const { app, AdminSession } = buildTestApp({ orders: [older, newer, legacy] });
   const { server, baseUrl } = await startTestServer(app);
   t.after(() => stopTestServer(server));
+  const cookie = await issueAdminCookie(AdminSession);
 
   await t.test('list returns newest orders first', async () => {
-    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Authorization: adminAuthHeader() } });
+    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Cookie: cookie } });
     const body = await res.json();
     assert.equal(body.orders[0].orderNumber, 'CCK-20260808-4F2A');
     assert.equal(body.orders[1].orderNumber, 'CCK-20260101-AAAA');
   });
 
   await t.test('list does not crash on a legacy order with no orderNumber/status/tracking', async () => {
-    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Authorization: adminAuthHeader() } });
+    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Cookie: cookie } });
     assert.equal(res.status, 200);
     const body = await res.json();
     const legacyView = body.orders.find((o) => o.email === 'legacy@example.com');
@@ -233,7 +262,7 @@ test('admin order list and detail', async (t) => {
   });
 
   await t.test('list uses the admin view — includes Stripe Session ID and customer identity', async () => {
-    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Authorization: adminAuthHeader() } });
+    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Cookie: cookie } });
     const body = await res.json();
     const view = body.orders.find((o) => o.orderNumber === 'CCK-20260808-4F2A');
     assert.equal(view.stripeSessionId, 'cs_test_abc123');
@@ -242,7 +271,7 @@ test('admin order list and detail', async (t) => {
   });
 
   await t.test('list never leaks server secrets', async () => {
-    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Authorization: adminAuthHeader() } });
+    const res = await fetch(`${baseUrl}/api/admin/orders`, { headers: { Cookie: cookie } });
     const lower = (await res.text()).toLowerCase();
     assert.ok(!lower.includes('stripe_secret_key'));
     assert.ok(!lower.includes('mongo_uri'));
@@ -250,29 +279,30 @@ test('admin order list and detail', async (t) => {
   });
 
   await t.test('detail returns 404 for an order number that does not exist', async () => {
-    const res = await fetch(`${baseUrl}/api/admin/orders/CCK-NOPE-0000`, { headers: { Authorization: adminAuthHeader() } });
+    const res = await fetch(`${baseUrl}/api/admin/orders/CCK-NOPE-0000`, { headers: { Cookie: cookie } });
     assert.equal(res.status, 404);
   });
 
   await t.test('detail returns the full admin view for a real order', async () => {
-    const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, { headers: { Authorization: adminAuthHeader() } });
+    const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, { headers: { Cookie: cookie } });
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.order.stripeSessionId, 'cs_test_abc123');
   });
 });
 
-// ---- PATCH status update (items 18/19) ----
+// ---- PATCH status update ----
 
 test('admin order PATCH status update', async (t) => {
   await t.test('a valid transition updates status and returns the admin view', async () => {
-    const { app } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
+    const { app, AdminSession } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'processing' }),
     });
     assert.equal(res.status, 200);
@@ -281,40 +311,43 @@ test('admin order PATCH status update', async (t) => {
   });
 
   await t.test('an invalid backwards transition is rejected with 400', async () => {
-    const { app } = buildTestApp({ orders: [buildOrder({ orderStatus: 'delivered' })] });
+    const { app, AdminSession } = buildTestApp({ orders: [buildOrder({ orderStatus: 'delivered' })] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'processing' }),
     });
     assert.equal(res.status, 400);
   });
 
   await t.test('PATCH on a nonexistent order returns 404', async () => {
-    const { app } = buildTestApp({ orders: [] });
+    const { app, AdminSession } = buildTestApp({ orders: [] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-NOPE-0000`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'processing' }),
     });
     assert.equal(res.status, 404);
   });
 
   await t.test('transitioning into shipped sets a server-controlled shippedAt — a client-supplied one is ignored', async () => {
-    const { app } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
+    const { app, AdminSession } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     const clientSuppliedDate = '2000-01-01T00:00:00.000Z';
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'shipped', shippedAt: clientSuppliedDate }),
     });
     const body = await res.json();
@@ -324,15 +357,16 @@ test('admin order PATCH status update', async (t) => {
 
   await t.test('re-PATCHing an already-shipped order with corrected tracking preserves the original shippedAt', async () => {
     const originalShippedAt = new Date('2026-08-01T00:00:00Z');
-    const { app } = buildTestApp({
+    const { app, AdminSession } = buildTestApp({
       orders: [buildOrder({ orderStatus: 'shipped', shippedAt: originalShippedAt, carrier: 'USPS', trackingNumber: 'OLD123' })],
     });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'shipped', carrier: 'UPS', trackingNumber: 'NEW456' }),
     });
     const body = await res.json();
@@ -342,9 +376,10 @@ test('admin order PATCH status update', async (t) => {
   });
 
   await t.test('a concurrent status change landing between read and write causes 409, never a silent overwrite', async () => {
-    const { app, Order } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
+    const { app, Order, AdminSession } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     // Fires right before the write commits — simulating another admin's
     // request winning the race in the exact gap between this request's own
@@ -356,7 +391,7 @@ test('admin order PATCH status update', async (t) => {
 
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'processing' }),
     });
     assert.equal(res.status, 409);
@@ -366,17 +401,18 @@ test('admin order PATCH status update', async (t) => {
   });
 });
 
-// ---- Shipping-email side effect (item 20) ----
+// ---- Shipping-email side effect ----
 
 test('admin PATCH shipping-email side effect', async (t) => {
   await t.test('a genuine first transition into shipped sends exactly one shipping email', async () => {
-    const { app, sentEmails } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
+    const { app, AdminSession, sentEmails } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'shipped', carrier: 'USPS', trackingNumber: '9400111899223197428490' }),
     });
     await new Promise((r) => setTimeout(r, 20)); // let the fire-and-forget send settle
@@ -389,15 +425,16 @@ test('admin PATCH shipping-email side effect', async (t) => {
   });
 
   await t.test('re-PATCHing an already-shipped order sends no additional shipping email', async () => {
-    const { app, sentEmails } = buildTestApp({
+    const { app, AdminSession, sentEmails } = buildTestApp({
       orders: [buildOrder({ orderStatus: 'shipped', shippedAt: new Date('2026-08-01T00:00:00Z') })],
     });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'shipped', carrier: 'USPS', trackingNumber: 'X' }),
     });
     await new Promise((r) => setTimeout(r, 20));
@@ -406,13 +443,14 @@ test('admin PATCH shipping-email side effect', async (t) => {
   });
 
   await t.test('a transition that never enters shipped sends no shipping email', async () => {
-    const { app, sentEmails } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
+    const { app, AdminSession, sentEmails } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'processing' }),
     });
     await new Promise((r) => setTimeout(r, 20));
@@ -422,13 +460,14 @@ test('admin PATCH shipping-email side effect', async (t) => {
 
   await t.test('a shipping-email failure does not roll back the already-saved shipped status', async () => {
     const failingSendEmail = async () => ({ ok: false, error: 'Resend is down' });
-    const { app } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })], sendEmailImpl: failingSendEmail });
+    const { app, AdminSession } = buildTestApp({ orders: [buildOrder({ orderStatus: 'received' })], sendEmailImpl: failingSendEmail });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ orderStatus: 'shipped' }),
     });
     assert.equal(res.status, 200);
@@ -437,24 +476,25 @@ test('admin PATCH shipping-email side effect', async (t) => {
   });
 });
 
-// ---- Resend confirmation (item 21) ----
+// ---- Resend confirmation ----
 
 test('admin resend order confirmation', async (t) => {
   await t.test("admin can resend the confirmation to the order's own stored email", async () => {
-    const { app, sentEmails } = buildTestApp({ orders: [buildOrder()] });
+    const { app, AdminSession, sentEmails } = buildTestApp({ orders: [buildOrder()] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A/resend-confirmation`, {
       method: 'POST',
-      headers: { Authorization: adminAuthHeader() },
+      headers: { Cookie: cookie },
     });
     assert.equal(res.status, 200);
     assert.equal(sentEmails.length, 1);
     assert.equal(sentEmails[0].to, 'buyer@example.com');
   });
 
-  await t.test('unauthorized (no credentials) cannot resend', async () => {
+  await t.test('unauthorized (no session) cannot resend', async () => {
     const { app, sentEmails } = buildTestApp({ orders: [buildOrder()] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
@@ -465,26 +505,28 @@ test('admin resend order confirmation', async (t) => {
   });
 
   await t.test('the caller cannot supply an arbitrary destination email — only the stored order email is ever used', async () => {
-    const { app, sentEmails } = buildTestApp({ orders: [buildOrder()] });
+    const { app, AdminSession, sentEmails } = buildTestApp({ orders: [buildOrder()] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A/resend-confirmation`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: adminAuthHeader() },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify({ email: 'attacker@example.com' }),
     });
     assert.equal(sentEmails[0].to, 'buyer@example.com');
   });
 
   await t.test('resending for a missing order returns 404 and sends nothing', async () => {
-    const { app, sentEmails } = buildTestApp({ orders: [] });
+    const { app, AdminSession, sentEmails } = buildTestApp({ orders: [] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-NOPE-0000/resend-confirmation`, {
       method: 'POST',
-      headers: { Authorization: adminAuthHeader() },
+      headers: { Cookie: cookie },
     });
     assert.equal(res.status, 404);
     assert.equal(sentEmails.length, 0);
@@ -492,13 +534,14 @@ test('admin resend order confirmation', async (t) => {
 
   await t.test('an email-send failure is reported as a failure and does not alter the order', async () => {
     const failingSendEmail = async () => ({ ok: false, error: 'Resend is down' });
-    const { app, Order } = buildTestApp({ orders: [buildOrder()], sendEmailImpl: failingSendEmail });
+    const { app, Order, AdminSession } = buildTestApp({ orders: [buildOrder()], sendEmailImpl: failingSendEmail });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     const res = await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A/resend-confirmation`, {
       method: 'POST',
-      headers: { Authorization: adminAuthHeader() },
+      headers: { Cookie: cookie },
     });
     assert.equal(res.status, 500);
     const doc = Order.__store.find((o) => o.orderNumber === 'CCK-20260808-4F2A');
@@ -506,13 +549,14 @@ test('admin resend order confirmation', async (t) => {
   });
 
   await t.test('reuses the real order-confirmation template — not a duplicate/reimplemented one', async () => {
-    const { app, sentEmails } = buildTestApp({ orders: [buildOrder()] });
+    const { app, AdminSession, sentEmails } = buildTestApp({ orders: [buildOrder()] });
     const { server, baseUrl } = await startTestServer(app);
     t.after(() => stopTestServer(server));
+    const cookie = await issueAdminCookie(AdminSession);
 
     await fetch(`${baseUrl}/api/admin/orders/CCK-20260808-4F2A/resend-confirmation`, {
       method: 'POST',
-      headers: { Authorization: adminAuthHeader() },
+      headers: { Cookie: cookie },
     });
     const expected = buildOrderConfirmationEmail(buildOrder(), { frontendBaseUrl: FRONTEND_BASE_URL });
     assert.equal(sentEmails[0].subject, expected.subject);

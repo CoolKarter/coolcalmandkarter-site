@@ -1,0 +1,1389 @@
+---
+// Private admin order-management dashboard (Phase 13F). Deliberately does
+// NOT use BaseLayout — this page must never render the public customer
+// Nav/Footer, and is never linked from either (see the noindex meta tag
+// below and Nav.astro, which was not touched for this page). All order
+// data is fetched client-side, after authentication, via web/src/lib/
+// admin-api.js — nothing here is public or pre-rendered.
+import '../../styles/tokens.css';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Order Administration — Cool, Calm & Karter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&family=Nunito:wght@400;700&display=swap"
+    />
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <p id="admin-live-region" class="visually-hidden" role="status" aria-live="polite"></p>
+
+    <!-- ==================== Signed-out: login panel ==================== -->
+    <!-- A <div>, not <main> — tokens.css's global `main { display: flex }`
+         rule (author-origin CSS, which always outranks the UA stylesheet's
+         `[hidden] { display: none }` regardless of selector specificity)
+         would otherwise defeat this element's `hidden` toggle entirely
+         once the dashboard view is shown. -->
+    <div id="admin-login-view" class="admin-login-view">
+      <div class="admin-login-card">
+        <p class="admin-login-eyebrow">Cool, Calm &amp; Karter</p>
+        <h1 class="admin-login-heading">Order Administration</h1>
+        <form id="admin-login-form" novalidate>
+          <label for="admin-username">Username</label>
+          <input id="admin-username" name="username" type="text" autocomplete="username" required />
+
+          <label for="admin-password">Password</label>
+          <input id="admin-password" name="password" type="password" autocomplete="current-password" required />
+
+          <p id="admin-login-error" class="admin-login-error" role="alert" hidden></p>
+
+          <button id="admin-login-submit" type="submit">Sign In</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== Signed-in: dashboard ==================== -->
+    <div id="admin-dashboard-view" class="admin-dashboard-view" hidden>
+      <header class="admin-header">
+        <div>
+          <p class="admin-header-eyebrow">Cool, Calm &amp; Karter</p>
+          <h1 class="admin-header-heading">Order Administration</h1>
+        </div>
+        <button id="admin-logout-button" type="button" class="admin-button admin-button--ghost">Log Out</button>
+      </header>
+
+      <section class="admin-summary" aria-label="Order overview">
+        <div class="admin-summary-card">
+          <p class="admin-summary-value" id="admin-summary-total">0</p>
+          <p class="admin-summary-label">Total Orders</p>
+        </div>
+        <div class="admin-summary-card">
+          <p class="admin-summary-value" id="admin-summary-received">0</p>
+          <p class="admin-summary-label">Received</p>
+        </div>
+        <div class="admin-summary-card">
+          <p class="admin-summary-value" id="admin-summary-processing">0</p>
+          <p class="admin-summary-label">Processing</p>
+        </div>
+        <div class="admin-summary-card">
+          <p class="admin-summary-value" id="admin-summary-shipped">0</p>
+          <p class="admin-summary-label">Shipped</p>
+        </div>
+        <div class="admin-summary-card">
+          <p class="admin-summary-value" id="admin-summary-delivered">0</p>
+          <p class="admin-summary-label">Delivered</p>
+        </div>
+        <div class="admin-summary-card">
+          <p class="admin-summary-value" id="admin-summary-revenue">$0.00</p>
+          <p class="admin-summary-label">Order Revenue</p>
+        </div>
+      </section>
+
+      <section class="admin-controls" aria-label="Search and filter orders">
+        <label class="visually-hidden" for="admin-search-input">Search orders</label>
+        <input
+          id="admin-search-input"
+          type="search"
+          placeholder="Search by order #, name, email, or book title"
+        />
+        <label class="visually-hidden" for="admin-status-filter">Filter by status</label>
+        <select id="admin-status-filter">
+          <option value="all">All Statuses</option>
+          <option value="received">Received</option>
+          <option value="processing">Processing</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </section>
+
+      <section class="admin-orders-section" aria-label="Orders">
+        <div id="admin-orders-loading" class="admin-orders-status">Loading orders&hellip;</div>
+        <div id="admin-orders-error" class="admin-orders-status admin-orders-status--error" hidden>
+          <p>Unable to load orders right now.</p>
+          <button id="admin-orders-retry" type="button" class="admin-button admin-button--ghost">Try Again</button>
+        </div>
+        <div id="admin-orders-empty" class="admin-orders-status" hidden>No orders match your search.</div>
+
+        <div class="orders-header" aria-hidden="true">
+          <span>Order</span>
+          <span>Date</span>
+          <span>Customer</span>
+          <span>Items</span>
+          <span>Total</span>
+          <span>Shipping</span>
+          <span>Status</span>
+          <span>Actions</span>
+        </div>
+        <ul id="admin-orders-list" class="admin-orders-list" hidden></ul>
+      </section>
+    </div>
+
+    <!-- ==================== Order detail drawer ==================== -->
+    <div id="admin-detail-overlay" class="admin-overlay" hidden>
+      <div
+        id="admin-detail-panel"
+        class="admin-detail-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-detail-heading"
+      >
+        <button id="admin-detail-close" type="button" class="admin-panel-close" aria-label="Close order details">&times;</button>
+        <div id="admin-detail-content"></div>
+      </div>
+    </div>
+
+    <!-- ==================== Shipped confirmation modal ==================== -->
+    <div id="admin-shipped-overlay" class="admin-overlay" hidden>
+      <div
+        class="admin-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-shipped-heading"
+      >
+        <h2 id="admin-shipped-heading" class="admin-modal-heading">Mark Order Shipped</h2>
+        <p class="admin-modal-copy">Only enter real shipping information if available. Both fields are optional.</p>
+        <form id="admin-shipped-form">
+          <label for="admin-shipped-carrier">Carrier</label>
+          <input id="admin-shipped-carrier" name="carrier" type="text" autocomplete="off" />
+
+          <label for="admin-shipped-tracking">Tracking Number</label>
+          <input id="admin-shipped-tracking" name="trackingNumber" type="text" autocomplete="off" />
+
+          <p class="admin-modal-notice">Marking this order shipped will notify the customer by email.</p>
+          <p id="admin-shipped-error" class="admin-login-error" role="alert" hidden></p>
+
+          <div class="admin-modal-actions">
+            <button id="admin-shipped-cancel" type="button" class="admin-button admin-button--ghost">Cancel</button>
+            <button id="admin-shipped-submit" type="submit" class="admin-button admin-button--primary">
+              Mark Shipped &amp; Notify Customer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== Generic confirmation modal (Delivered / Cancel / Resend) ==================== -->
+    <div id="admin-confirm-overlay" class="admin-overlay" hidden>
+      <div
+        class="admin-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-confirm-heading"
+      >
+        <h2 id="admin-confirm-heading" class="admin-modal-heading"></h2>
+        <p id="admin-confirm-body" class="admin-modal-copy"></p>
+        <p id="admin-confirm-error" class="admin-login-error" role="alert" hidden></p>
+        <div class="admin-modal-actions">
+          <button id="admin-confirm-cancel" type="button" class="admin-button admin-button--ghost">Cancel</button>
+          <button id="admin-confirm-action" type="button" class="admin-button admin-button--primary"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- is:global: nearly every element these rules target (order rows,
+         status badges, detail-drawer content, modal contents) is created
+         client-side via document.createElement in the <script> below, not
+         written in this template — Astro's default scoped-CSS attribute
+         only lands on elements present in the static template, so a
+         scoped style block would silently fail to style anything created
+         at runtime. All class names here are admin-page-specific
+         (admin-*/order-*/detail-*/status-*), so global scope carries
+         negligible collision risk. -->
+    <style is:global>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100svh;
+        background-color: var(--color-cream);
+        color: var(--color-navy);
+        font-family: var(--font-body);
+      }
+
+      button,
+      input,
+      select {
+        font-family: inherit;
+      }
+
+      /* ---- Login ---- */
+      .admin-login-view {
+        min-height: 100svh;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: linear-gradient(160deg, var(--color-navy), var(--color-night));
+      }
+
+      /* [hidden] carries equal specificity to a class selector — an
+         unconditional `display` here would win the cascade over the
+         browser's default `[hidden] { display: none }` and defeat
+         `.hidden = true`, exactly the bug this codebase has hit before
+         (cart-summary in Phase 9B, .order-detail-overlay in Phase 13D).
+         Scoping `display` to :not([hidden]) avoids it structurally. */
+      .admin-login-view:not([hidden]) {
+        display: flex;
+      }
+
+      .admin-login-card {
+        width: 100%;
+        max-width: 380px;
+        background: #fff;
+        border-radius: 14px;
+        padding: 2rem 1.75rem;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+      }
+
+      .admin-login-eyebrow {
+        margin: 0 0 0.15rem;
+        font-family: var(--font-heading);
+        font-weight: 700;
+        color: var(--color-coral);
+        font-size: 0.9rem;
+      }
+
+      .admin-login-heading {
+        margin: 0 0 1.5rem;
+        font-family: var(--font-heading);
+        font-size: 1.5rem;
+        color: var(--color-navy);
+      }
+
+      #admin-login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      #admin-login-form label {
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+      }
+
+      #admin-login-form input {
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #d8cdb8;
+        border-radius: 8px;
+        font-size: 1rem;
+      }
+
+      #admin-login-form input:focus-visible,
+      button:focus-visible,
+      select:focus-visible,
+      a:focus-visible {
+        outline: 3px solid var(--color-coral);
+        outline-offset: 2px;
+      }
+
+      .admin-login-error {
+        margin: 0.5rem 0 0;
+        color: #b3261e;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+
+      #admin-login-submit {
+        margin-top: 1.25rem;
+        padding: 0.7rem 1rem;
+        border: none;
+        border-radius: 999px;
+        background-color: var(--color-coral);
+        color: #fff;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
+      #admin-login-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      /* ---- Dashboard shell ---- */
+      .admin-dashboard-view {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem;
+      }
+
+      .admin-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+      }
+
+      .admin-header-eyebrow {
+        margin: 0;
+        font-family: var(--font-heading);
+        font-weight: 700;
+        color: var(--color-coral);
+        font-size: 0.85rem;
+      }
+
+      .admin-header-heading {
+        margin: 0.1rem 0 0;
+        font-family: var(--font-heading);
+        font-size: 1.6rem;
+        color: var(--color-navy);
+      }
+
+      .admin-button {
+        border-radius: 999px;
+        padding: 0.55rem 1.1rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .admin-button--ghost {
+        background: transparent;
+        border-color: var(--color-navy);
+        color: var(--color-navy);
+      }
+
+      .admin-button--primary {
+        background-color: var(--color-coral);
+        color: #fff;
+      }
+
+      .admin-button--danger {
+        background-color: #b3261e;
+        color: #fff;
+      }
+
+      .admin-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      /* ---- Summary ---- */
+      .admin-summary {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+
+      @media (min-width: 700px) {
+        .admin-summary {
+          grid-template-columns: repeat(6, 1fr);
+        }
+      }
+
+      .admin-summary-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 0.9rem 0.75rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(9, 26, 43, 0.08);
+      }
+
+      .admin-summary-value {
+        margin: 0;
+        font-family: var(--font-heading);
+        font-size: 1.4rem;
+        color: var(--color-navy);
+      }
+
+      .admin-summary-label {
+        margin: 0.2rem 0 0;
+        font-size: 0.78rem;
+        color: #6b7280;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      /* ---- Controls ---- */
+      .admin-controls {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+      }
+
+      .admin-controls input[type='search'] {
+        flex: 1 1 260px;
+        padding: 0.6rem 0.85rem;
+        border: 1px solid #d8cdb8;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: #fff;
+      }
+
+      .admin-controls select {
+        padding: 0.6rem 0.85rem;
+        border: 1px solid #d8cdb8;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: #fff;
+      }
+
+      /* ---- Order list ---- */
+      .admin-orders-status {
+        background: #fff;
+        border-radius: 10px;
+        padding: 2rem 1rem;
+        text-align: center;
+        color: #6b7280;
+      }
+
+      .admin-orders-status--error p {
+        margin: 0 0 0.75rem;
+        color: #b3261e;
+        font-weight: 700;
+      }
+
+      .orders-header {
+        display: none;
+      }
+
+      @media (min-width: 900px) {
+        .orders-header {
+          display: grid;
+          grid-template-columns: 1.2fr 0.9fr 1.3fr 1.6fr 0.8fr 1fr 0.9fr 1.2fr;
+          gap: 0.75rem;
+          padding: 0 1rem 0.4rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+          color: #6b7280;
+        }
+      }
+
+      .admin-orders-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+
+      .admin-orders-list:not([hidden]) {
+        display: flex;
+      }
+
+      .admin-order-row {
+        background: #fff;
+        border-radius: 10px;
+        padding: 0.9rem 1rem;
+        box-shadow: 0 1px 3px rgba(9, 26, 43, 0.08);
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.3rem;
+      }
+
+      @media (min-width: 900px) {
+        .admin-order-row {
+          grid-template-columns: 1.2fr 0.9fr 1.3fr 1.6fr 0.8fr 1fr 0.9fr 1.2fr;
+          gap: 0.75rem;
+          align-items: center;
+        }
+      }
+
+      .order-field-label {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #9ca3af;
+      }
+
+      @media (min-width: 900px) {
+        .order-field-label {
+          display: none;
+        }
+      }
+
+      .order-field-value {
+        overflow-wrap: anywhere;
+      }
+
+      .order-field-value--legacy {
+        font-style: italic;
+        color: #6b7280;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        border: 1px solid transparent;
+      }
+
+      .status-received {
+        background: #e7edf1;
+        color: var(--color-navy);
+        border-color: #c7d3db;
+      }
+
+      .status-processing {
+        background: #fff2d9;
+        color: #93650a;
+        border-color: #f3d38a;
+      }
+
+      .status-shipped {
+        background: #dbeafe;
+        color: #1e4c9a;
+        border-color: #b8d3fb;
+      }
+
+      .status-delivered {
+        background: #dcf5e5;
+        color: #17693c;
+        border-color: #b6e6c9;
+      }
+
+      .status-cancelled {
+        background: #fbe1de;
+        color: #93261e;
+        border-color: #f3bdb7;
+      }
+
+      .order-row-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+
+      .order-row-actions button {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.7rem;
+      }
+
+      /* ---- Detail drawer / modals ---- */
+      .admin-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 44, 64, 0.55);
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        z-index: 50;
+      }
+
+      .admin-overlay:not([hidden]) {
+        display: flex;
+      }
+
+      .admin-detail-panel {
+        background: #fff;
+        border-radius: 14px;
+        max-width: 560px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 2rem 1.5rem 1.5rem;
+        position: relative;
+      }
+
+      .admin-panel-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.9rem;
+        background: none;
+        border: none;
+        font-size: 1.6rem;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--color-navy);
+        padding: 0.2rem 0.4rem;
+      }
+
+      .admin-modal {
+        background: #fff;
+        border-radius: 14px;
+        max-width: 420px;
+        width: 100%;
+        padding: 1.75rem;
+      }
+
+      .admin-modal-heading {
+        margin: 0 0 0.5rem;
+        font-family: var(--font-heading);
+        color: var(--color-navy);
+      }
+
+      .admin-modal-copy {
+        margin: 0 0 1rem;
+        color: #4b5563;
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+
+      .admin-modal-notice {
+        margin: 0.75rem 0 0;
+        padding: 0.6rem 0.75rem;
+        background: #fff2d9;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #93650a;
+        font-weight: 700;
+      }
+
+      #admin-shipped-form label {
+        display: block;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-top: 0.75rem;
+      }
+
+      #admin-shipped-form input {
+        width: 100%;
+        margin-top: 0.3rem;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid #d8cdb8;
+        border-radius: 8px;
+        font-size: 0.95rem;
+      }
+
+      .admin-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.6rem;
+        margin-top: 1.25rem;
+      }
+
+      .detail-section-label {
+        margin: 1.1rem 0 0.35rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #9ca3af;
+      }
+
+      .detail-value {
+        margin: 0 0 0.2rem;
+        overflow-wrap: anywhere;
+        font-size: 0.95rem;
+      }
+
+      .detail-internal-box {
+        margin-top: 1.1rem;
+        padding: 0.75rem;
+        background: #f3f4f6;
+        border-radius: 8px;
+        border: 1px dashed #cbd5e1;
+      }
+
+      .detail-internal-label {
+        margin: 0 0 0.3rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #6b7280;
+      }
+
+      .detail-copy-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .detail-copy-button {
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        border-radius: 6px;
+        padding: 0.15rem 0.5rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+    </style>
+
+    <script>
+      import { loginAdmin, logoutAdmin, getAdminSessionStatus, fetchAdminOrders, fetchAdminOrder, updateAdminOrder, resendAdminOrderConfirmation } from '../../lib/admin-api.js';
+      import { getAvailableActions } from '../../lib/admin-order-transitions.js';
+      import {
+        isLegacyOrder,
+        LEGACY_ORDER_LABEL,
+        LEGACY_ORDER_ACTIONS_COPY,
+        formatOrderAmount,
+        computeOrderSummary,
+        buildShippedPatchBody,
+        SHIPPED_NOTICE_COPY,
+        CANCEL_NOTICE_COPY,
+        STALE_ORDER_COPY,
+        normalizeOrderStatusForDisplay,
+      } from '../../lib/admin-order-display.js';
+      import { filterAdminOrders } from '../../lib/admin-order-filter.js';
+
+      const STATUS_LABELS: Record<string, string> = {
+        received: 'Received',
+        processing: 'Processing',
+        shipped: 'Shipped',
+        delivered: 'Delivered',
+        cancelled: 'Cancelled',
+      };
+
+      function statusLabel(status: string | undefined): string {
+        return STATUS_LABELS[normalizeOrderStatusForDisplay(status)];
+      }
+
+      const liveRegion = document.getElementById('admin-live-region');
+      function announce(message: string): void {
+        if (liveRegion) liveRegion.textContent = message;
+      }
+
+      // ---- View switching ----
+      const loginView = document.getElementById('admin-login-view');
+      const dashboardView = document.getElementById('admin-dashboard-view');
+
+      function showLogin(): void {
+        if (loginView) loginView.hidden = false;
+        if (dashboardView) dashboardView.hidden = true;
+      }
+
+      function showDashboard(): void {
+        if (loginView) loginView.hidden = true;
+        if (dashboardView) dashboardView.hidden = false;
+      }
+
+      // ---- Login form ----
+      const loginForm = document.getElementById('admin-login-form') as HTMLFormElement | null;
+      const usernameInput = document.getElementById('admin-username') as HTMLInputElement | null;
+      const passwordInput = document.getElementById('admin-password') as HTMLInputElement | null;
+      const loginSubmit = document.getElementById('admin-login-submit') as HTMLButtonElement | null;
+      const loginError = document.getElementById('admin-login-error');
+
+      loginForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!usernameInput || !passwordInput || !loginSubmit) return;
+
+        loginSubmit.disabled = true;
+        if (loginError) {
+          loginError.hidden = true;
+          loginError.textContent = '';
+        }
+        announce('Signing in…');
+
+        const result = await loginAdmin({ username: usernameInput.value, password: passwordInput.value });
+        passwordInput.value = ''; // never retained, on success or failure
+        loginSubmit.disabled = false;
+
+        if (!result.ok) {
+          if (loginError) {
+            loginError.textContent = 'Invalid username or password.';
+            loginError.hidden = false;
+          }
+          announce('Invalid username or password.');
+          return;
+        }
+
+        announce('Signed in.');
+        await enterDashboard();
+      });
+
+      // ---- Logout ----
+      const logoutButton = document.getElementById('admin-logout-button');
+      logoutButton?.addEventListener('click', async () => {
+        if (logoutButton instanceof HTMLButtonElement) logoutButton.disabled = true;
+        await logoutAdmin();
+        if (logoutButton instanceof HTMLButtonElement) logoutButton.disabled = false;
+        announce('Logged out.');
+        showLogin();
+      });
+
+      // ---- Order state ----
+      interface AdminOrderItem {
+        title: string | null;
+        quantity: number | null;
+        unitPrice: number | null;
+        lineTotal: number | null;
+      }
+      interface AdminOrderAddress {
+        line1: string | null;
+        line2: string | null;
+        city: string | null;
+        state: string | null;
+        postal_code: string | null;
+        country: string | null;
+      }
+      interface AdminOrder {
+        orderNumber: string | null;
+        date: string | null;
+        items: AdminOrderItem[];
+        amount: number | null;
+        shippingMethod: string | null;
+        address: AdminOrderAddress | null;
+        orderStatus: string;
+        carrier: string | null;
+        trackingNumber: string | null;
+        shippedAt: string | null;
+        deliveredAt: string | null;
+        cancelledAt: string | null;
+        name: string | null;
+        email: string | null;
+        stripeSessionId: string | null;
+      }
+
+      let allOrders: AdminOrder[] = [];
+
+      // ---- Summary ----
+      function renderSummary(orders: AdminOrder[]): void {
+        const summary = computeOrderSummary(orders);
+        const setText = (id: string, text: string) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = text;
+        };
+        setText('admin-summary-total', String(summary.total));
+        setText('admin-summary-received', String(summary.received));
+        setText('admin-summary-processing', String(summary.processing));
+        setText('admin-summary-shipped', String(summary.shipped));
+        setText('admin-summary-delivered', String(summary.delivered));
+        setText('admin-summary-revenue', formatOrderAmount(summary.revenueCents));
+      }
+
+      // ---- List rendering ----
+      const ordersLoading = document.getElementById('admin-orders-loading');
+      const ordersErrorEl = document.getElementById('admin-orders-error');
+      const ordersEmpty = document.getElementById('admin-orders-empty');
+      const ordersList = document.getElementById('admin-orders-list');
+      const searchInput = document.getElementById('admin-search-input') as HTMLInputElement | null;
+      const statusFilter = document.getElementById('admin-status-filter') as HTMLSelectElement | null;
+      const retryButton = document.getElementById('admin-orders-retry');
+
+      function formatDate(dateValue: string | null): string {
+        if (!dateValue) return '';
+        const parsed = new Date(dateValue);
+        if (Number.isNaN(parsed.getTime())) return '';
+        return parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+
+      function buildField(label: string, valueText: string, extraClass = ''): HTMLElement {
+        const wrap = document.createElement('div');
+        const labelEl = document.createElement('span');
+        labelEl.className = 'order-field-label';
+        labelEl.textContent = label;
+        const valueEl = document.createElement('span');
+        valueEl.className = `order-field-value ${extraClass}`.trim();
+        valueEl.textContent = valueText;
+        wrap.append(labelEl, valueEl);
+        return wrap;
+      }
+
+      function renderOrderRow(order: AdminOrder): HTMLLIElement {
+        const li = document.createElement('li');
+        li.className = 'admin-order-row';
+
+        const legacy = isLegacyOrder(order);
+        li.appendChild(buildField('Order', legacy ? LEGACY_ORDER_LABEL : (order.orderNumber ?? ''), legacy ? 'order-field-value--legacy' : ''));
+        li.appendChild(buildField('Date', formatDate(order.date)));
+        li.appendChild(buildField('Customer', [order.name, order.email].filter(Boolean).join(' · ')));
+
+        const itemsText = order.items.map((item) => item.title).filter(Boolean).join(', ');
+        li.appendChild(buildField('Items', itemsText));
+        li.appendChild(buildField('Total', formatOrderAmount(order.amount)));
+        li.appendChild(buildField('Shipping', order.shippingMethod ?? ''));
+
+        const statusWrap = document.createElement('div');
+        const statusLabelEl = document.createElement('span');
+        statusLabelEl.className = 'order-field-label';
+        statusLabelEl.textContent = 'Status';
+        const badge = document.createElement('span');
+        const normalized = normalizeOrderStatusForDisplay(order.orderStatus);
+        badge.className = `status-badge status-${normalized}`;
+        badge.textContent = statusLabel(order.orderStatus);
+        statusWrap.append(statusLabelEl, badge);
+        li.appendChild(statusWrap);
+
+        const actionsWrap = document.createElement('div');
+        actionsWrap.className = 'order-row-actions';
+        if (legacy) {
+          const note = document.createElement('span');
+          note.className = 'order-field-value order-field-value--legacy';
+          note.textContent = LEGACY_ORDER_ACTIONS_COPY;
+          actionsWrap.appendChild(note);
+        } else {
+          const viewButton = document.createElement('button');
+          viewButton.type = 'button';
+          viewButton.className = 'admin-button admin-button--ghost';
+          viewButton.textContent = 'View';
+          viewButton.setAttribute('aria-label', `View details for ${order.orderNumber}`);
+          viewButton.addEventListener('click', () => openDetail(order.orderNumber as string));
+          actionsWrap.appendChild(viewButton);
+        }
+        li.appendChild(actionsWrap);
+
+        return li;
+      }
+
+      function renderList(): void {
+        if (!ordersList || !ordersEmpty) return;
+        const query = searchInput?.value ?? '';
+        const status = statusFilter?.value ?? 'all';
+        const filtered = filterAdminOrders(allOrders, { query, status });
+
+        ordersList.textContent = '';
+        if (filtered.length === 0) {
+          ordersList.hidden = true;
+          ordersEmpty.hidden = false;
+          return;
+        }
+        ordersEmpty.hidden = true;
+        ordersList.hidden = false;
+        for (const order of filtered) {
+          ordersList.appendChild(renderOrderRow(order));
+        }
+      }
+
+      searchInput?.addEventListener('input', renderList);
+      statusFilter?.addEventListener('change', renderList);
+
+      async function loadOrders(): Promise<void> {
+        if (ordersLoading) ordersLoading.hidden = false;
+        if (ordersErrorEl) ordersErrorEl.hidden = true;
+        if (ordersList) ordersList.hidden = true;
+        if (ordersEmpty) ordersEmpty.hidden = true;
+
+        const result = await fetchAdminOrders();
+        if (ordersLoading) ordersLoading.hidden = true;
+
+        if (!result.ok) {
+          if (result.status === 401) {
+            showLogin();
+            return;
+          }
+          if (ordersErrorEl) ordersErrorEl.hidden = false;
+          return;
+        }
+
+        allOrders = result.orders as AdminOrder[];
+        renderSummary(allOrders);
+        renderList();
+      }
+
+      retryButton?.addEventListener('click', () => void loadOrders());
+
+      // ---- Detail drawer ----
+      const detailOverlay = document.getElementById('admin-detail-overlay');
+      const detailContent = document.getElementById('admin-detail-content');
+      const detailClose = document.getElementById('admin-detail-close');
+      let currentDetailOrder: AdminOrder | null = null;
+      let lastFocusedTrigger: HTMLElement | null = null;
+
+      function closeDetail(): void {
+        if (detailOverlay) detailOverlay.hidden = true;
+        currentDetailOrder = null;
+        lastFocusedTrigger?.focus();
+      }
+
+      detailClose?.addEventListener('click', closeDetail);
+      detailOverlay?.addEventListener('click', (event) => {
+        if (event.target === detailOverlay) closeDetail();
+      });
+
+      function buildSectionLabel(text: string): HTMLElement {
+        const label = document.createElement('p');
+        label.className = 'detail-section-label';
+        label.textContent = text;
+        return label;
+      }
+
+      function buildDetailValue(text: string): HTMLElement {
+        const p = document.createElement('p');
+        p.className = 'detail-value';
+        p.textContent = text;
+        return p;
+      }
+
+      function buildActionButton(status: string, label: string): HTMLButtonElement {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `admin-button ${status === 'cancelled' ? 'admin-button--danger' : 'admin-button--primary'}`;
+        button.textContent = label;
+        button.addEventListener('click', () => handleStatusAction(status));
+        return button;
+      }
+
+      function renderDetail(order: AdminOrder): void {
+        if (!detailContent) return;
+        detailContent.textContent = '';
+        currentDetailOrder = order;
+
+        const heading = document.createElement('h2');
+        heading.id = 'admin-detail-heading';
+        heading.className = 'detail-section-label';
+        heading.style.fontSize = '1.1rem';
+        heading.style.color = 'var(--color-navy)';
+        heading.textContent = order.orderNumber ?? LEGACY_ORDER_LABEL;
+        detailContent.appendChild(heading);
+
+        const dateText = formatDate(order.date);
+        if (dateText) detailContent.appendChild(buildDetailValue(dateText));
+
+        const badge = document.createElement('span');
+        const normalized = normalizeOrderStatusForDisplay(order.orderStatus);
+        badge.className = `status-badge status-${normalized}`;
+        badge.textContent = statusLabel(order.orderStatus);
+        detailContent.appendChild(badge);
+
+        detailContent.appendChild(buildSectionLabel('Customer'));
+        detailContent.appendChild(buildDetailValue(order.name ?? '—'));
+        detailContent.appendChild(buildDetailValue(order.email ?? '—'));
+
+        detailContent.appendChild(buildSectionLabel('Books'));
+        for (const item of order.items) {
+          const parts = [item.title ?? 'Item'];
+          if (typeof item.quantity === 'number') parts.push(`Qty ${item.quantity}`);
+          if (typeof item.unitPrice === 'number') parts.push(`${formatOrderAmount(item.unitPrice)} each`);
+          if (typeof item.lineTotal === 'number') parts.push(formatOrderAmount(item.lineTotal));
+          detailContent.appendChild(buildDetailValue(parts.join(' · ')));
+        }
+
+        const totalRow = document.createElement('p');
+        totalRow.className = 'detail-value';
+        totalRow.style.fontWeight = '700';
+        totalRow.textContent = `Order Total: ${formatOrderAmount(order.amount)}`;
+        detailContent.appendChild(totalRow);
+
+        if (order.address) {
+          detailContent.appendChild(buildSectionLabel('Shipping'));
+          const addr = order.address;
+          const addressText = [
+            addr.line1,
+            addr.line2,
+            [addr.city, addr.state, addr.postal_code].filter(Boolean).join(', '),
+            addr.country,
+          ]
+            .filter((part) => Boolean(part && part.trim()))
+            .join(' · ');
+          if (addressText) detailContent.appendChild(buildDetailValue(addressText));
+          if (order.shippingMethod) detailContent.appendChild(buildDetailValue(order.shippingMethod));
+        }
+
+        if (order.carrier || order.trackingNumber || order.shippedAt) {
+          detailContent.appendChild(buildSectionLabel('Tracking'));
+          if (order.carrier) detailContent.appendChild(buildDetailValue(`Carrier: ${order.carrier}`));
+          if (order.trackingNumber) {
+            const row = document.createElement('div');
+            row.className = 'detail-copy-row';
+            const text = document.createElement('p');
+            text.className = 'detail-value';
+            text.textContent = `Tracking #: ${order.trackingNumber}`;
+            const copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.className = 'detail-copy-button';
+            copyBtn.textContent = 'Copy';
+            copyBtn.addEventListener('click', async () => {
+              try {
+                await navigator.clipboard.writeText(order.trackingNumber ?? '');
+                announce('Tracking number copied.');
+              } catch {
+                announce('Could not copy tracking number.');
+              }
+            });
+            row.append(text, copyBtn);
+            detailContent.appendChild(row);
+          }
+          if (order.shippedAt) detailContent.appendChild(buildDetailValue(`Shipped: ${formatDate(order.shippedAt)}`));
+          if (order.deliveredAt) detailContent.appendChild(buildDetailValue(`Delivered: ${formatDate(order.deliveredAt)}`));
+        }
+
+        if (order.cancelledAt) {
+          detailContent.appendChild(buildSectionLabel('Cancellation'));
+          detailContent.appendChild(buildDetailValue(`Cancelled: ${formatDate(order.cancelledAt)}`));
+        }
+
+        // Status-management actions — only ever the transitions the
+        // backend actually allows from this order's current status.
+        const actions = getAvailableActions(order.orderStatus);
+        if (actions.length > 0) {
+          detailContent.appendChild(buildSectionLabel('Update Status'));
+          const actionsRow = document.createElement('div');
+          actionsRow.className = 'order-row-actions';
+          for (const action of actions) {
+            actionsRow.appendChild(buildActionButton(action.status, action.label));
+          }
+          detailContent.appendChild(actionsRow);
+        }
+
+        const resendRow = document.createElement('div');
+        resendRow.style.marginTop = '1rem';
+        const resendButton = document.createElement('button');
+        resendButton.type = 'button';
+        resendButton.className = 'admin-button admin-button--ghost';
+        resendButton.textContent = 'Resend Confirmation Email';
+        resendButton.addEventListener('click', () => handleResendConfirmation());
+        resendRow.appendChild(resendButton);
+        detailContent.appendChild(resendRow);
+
+        // Internal / troubleshooting section — clearly labeled, Stripe
+        // Session ID only, never any credential/env var.
+        const internalBox = document.createElement('div');
+        internalBox.className = 'detail-internal-box';
+        const internalLabel = document.createElement('p');
+        internalLabel.className = 'detail-internal-label';
+        internalLabel.textContent = 'Internal — Troubleshooting Only';
+        internalBox.appendChild(internalLabel);
+        internalBox.appendChild(buildDetailValue(`Stripe Session ID: ${order.stripeSessionId ?? '—'}`));
+        detailContent.appendChild(internalBox);
+      }
+
+      async function openDetail(orderNumber: string): Promise<void> {
+        if (!detailOverlay) return;
+        lastFocusedTrigger = document.activeElement as HTMLElement | null;
+
+        const result = await fetchAdminOrder(orderNumber);
+        if (!result.ok) {
+          if (result.status === 401) {
+            showLogin();
+            return;
+          }
+          announce('Unable to load this order.');
+          return;
+        }
+
+        renderDetail(result.order as AdminOrder);
+        detailOverlay.hidden = false;
+        detailClose?.focus();
+      }
+
+      async function refreshAfterUpdate(orderNumber: string): Promise<void> {
+        const result = await fetchAdminOrder(orderNumber);
+        if (result.ok) {
+          renderDetail(result.order as AdminOrder);
+          await loadOrders();
+        }
+      }
+
+      // ---- Shipped modal ----
+      const shippedOverlay = document.getElementById('admin-shipped-overlay');
+      const shippedForm = document.getElementById('admin-shipped-form') as HTMLFormElement | null;
+      const shippedCarrier = document.getElementById('admin-shipped-carrier') as HTMLInputElement | null;
+      const shippedTracking = document.getElementById('admin-shipped-tracking') as HTMLInputElement | null;
+      const shippedCancel = document.getElementById('admin-shipped-cancel');
+      const shippedError = document.getElementById('admin-shipped-error');
+
+      function closeShippedModal(): void {
+        if (shippedOverlay) shippedOverlay.hidden = true;
+        if (shippedForm) shippedForm.reset();
+        if (shippedError) {
+          shippedError.hidden = true;
+          shippedError.textContent = '';
+        }
+      }
+
+      shippedCancel?.addEventListener('click', closeShippedModal);
+      shippedOverlay?.addEventListener('click', (event) => {
+        if (event.target === shippedOverlay) closeShippedModal();
+      });
+
+      shippedForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!currentDetailOrder?.orderNumber) return;
+
+        const patchBody = buildShippedPatchBody({
+          carrier: shippedCarrier?.value ?? '',
+          trackingNumber: shippedTracking?.value ?? '',
+        });
+        const orderNumber = currentDetailOrder.orderNumber;
+        const result = await updateAdminOrder(orderNumber, patchBody);
+
+        if (!result.ok) {
+          if (result.status === 401) {
+            showLogin();
+            return;
+          }
+          if (result.status === 409) {
+            closeShippedModal();
+            announce(STALE_ORDER_COPY);
+            await refreshAfterUpdate(orderNumber);
+            return;
+          }
+          if (shippedError) {
+            shippedError.textContent = result.error;
+            shippedError.hidden = false;
+          }
+          return;
+        }
+
+        closeShippedModal();
+        announce('Order marked shipped. The customer has been notified by email.');
+        await refreshAfterUpdate(orderNumber);
+      });
+
+      // ---- Generic confirm modal (Delivered / Cancel / Resend) ----
+      const confirmOverlay = document.getElementById('admin-confirm-overlay');
+      const confirmHeading = document.getElementById('admin-confirm-heading');
+      const confirmBody = document.getElementById('admin-confirm-body');
+      const confirmError = document.getElementById('admin-confirm-error');
+      const confirmCancelButton = document.getElementById('admin-confirm-cancel');
+      const confirmActionButton = document.getElementById('admin-confirm-action') as HTMLButtonElement | null;
+
+      function closeConfirmModal(): void {
+        if (confirmOverlay) confirmOverlay.hidden = true;
+        if (confirmError) {
+          confirmError.hidden = true;
+          confirmError.textContent = '';
+        }
+      }
+
+      confirmCancelButton?.addEventListener('click', closeConfirmModal);
+      confirmOverlay?.addEventListener('click', (event) => {
+        if (event.target === confirmOverlay) closeConfirmModal();
+      });
+
+      function openConfirmModal(options: { heading: string; body: string; actionLabel: string; danger?: boolean; onConfirm: () => Promise<void> }): void {
+        if (!confirmOverlay || !confirmHeading || !confirmBody || !confirmActionButton) return;
+        confirmHeading.textContent = options.heading;
+        confirmBody.textContent = options.body;
+        confirmActionButton.textContent = options.actionLabel;
+        confirmActionButton.className = `admin-button ${options.danger ? 'admin-button--danger' : 'admin-button--primary'}`;
+
+        const freshButton = confirmActionButton.cloneNode(true) as HTMLButtonElement;
+        confirmActionButton.replaceWith(freshButton);
+        freshButton.addEventListener('click', async () => {
+          freshButton.disabled = true;
+          await options.onConfirm();
+          freshButton.disabled = false;
+        });
+
+        confirmOverlay.hidden = false;
+      }
+
+      // ---- Status action dispatch ----
+      function handleStatusAction(status: string): void {
+        if (!currentDetailOrder?.orderNumber) return;
+        const orderNumber = currentDetailOrder.orderNumber;
+
+        if (status === 'shipped') {
+          if (shippedOverlay) shippedOverlay.hidden = false;
+          return;
+        }
+
+        if (status === 'processing') {
+          void applyStatusUpdate(orderNumber, { orderStatus: 'processing' }, 'Order marked processing.');
+          return;
+        }
+
+        if (status === 'delivered') {
+          openConfirmModal({
+            heading: 'Mark Order Delivered',
+            body: 'Confirm this order has been delivered.',
+            actionLabel: 'Mark Delivered',
+            onConfirm: async () => {
+              const ok = await applyStatusUpdate(orderNumber, { orderStatus: 'delivered' }, 'Order marked delivered.');
+              if (ok) closeConfirmModal();
+            },
+          });
+          return;
+        }
+
+        if (status === 'cancelled') {
+          openConfirmModal({
+            heading: 'Cancel Order',
+            body: CANCEL_NOTICE_COPY,
+            actionLabel: 'Cancel Order',
+            danger: true,
+            onConfirm: async () => {
+              const ok = await applyStatusUpdate(orderNumber, { orderStatus: 'cancelled' }, 'Order cancelled.');
+              if (ok) closeConfirmModal();
+            },
+          });
+        }
+      }
+
+      async function applyStatusUpdate(orderNumber: string, patchBody: Record<string, string>, successMessage: string): Promise<boolean> {
+        const result = await updateAdminOrder(orderNumber, patchBody);
+
+        if (!result.ok) {
+          if (result.status === 401) {
+            showLogin();
+            return false;
+          }
+          if (result.status === 409) {
+            announce(STALE_ORDER_COPY);
+            await refreshAfterUpdate(orderNumber);
+            return false;
+          }
+          if (confirmError) {
+            confirmError.textContent = result.error;
+            confirmError.hidden = false;
+          }
+          announce(result.error);
+          return false;
+        }
+
+        announce(successMessage);
+        await refreshAfterUpdate(orderNumber);
+        return true;
+      }
+
+      // ---- Resend confirmation ----
+      function handleResendConfirmation(): void {
+        if (!currentDetailOrder?.orderNumber) return;
+        const orderNumber = currentDetailOrder.orderNumber;
+
+        openConfirmModal({
+          heading: 'Resend Confirmation Email',
+          body: "Resend the original order confirmation to the customer's email on file?",
+          actionLabel: 'Resend Email',
+          onConfirm: async () => {
+            const result = await resendAdminOrderConfirmation(orderNumber);
+            if (!result.ok) {
+              if (result.status === 401) {
+                showLogin();
+                return;
+              }
+              announce('Email could not be sent. The order itself was not changed.');
+              if (confirmError) {
+                confirmError.textContent = 'Email could not be sent. The order itself was not changed.';
+                confirmError.hidden = false;
+              }
+              return;
+            }
+            announce('Confirmation email sent.');
+            closeConfirmModal();
+          },
+        });
+      }
+
+      // ---- Escape closes whichever overlay is open ----
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        if (detailOverlay && !detailOverlay.hidden) closeDetail();
+        else if (shippedOverlay && !shippedOverlay.hidden) closeShippedModal();
+        else if (confirmOverlay && !confirmOverlay.hidden) closeConfirmModal();
+      });
+
+      // ---- Initial session check ----
+      async function enterDashboard(): Promise<void> {
+        showDashboard();
+        await loadOrders();
+      }
+
+      async function init(): Promise<void> {
+        const status = await getAdminSessionStatus();
+        if (status.authenticated) {
+          await enterDashboard();
+        } else {
+          showLogin();
+        }
+      }
+
+      void init();
+    </script>
+  </body>
+</html>

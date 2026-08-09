@@ -29,6 +29,10 @@ const { setSessionCookie, readSessionCookie, clearSessionCookie } = require('./l
 const { buildCustomerOrdersFilter, buildCustomerOrderDetailFilter, ORDER_EMAIL_COLLATION } = require('./lib/customer-orders');
 const { normalizeEmail } = require('./lib/normalize-email');
 const { ORDERS_ACCESS_RATE_LIMIT_WINDOW_MS, ORDERS_ACCESS_RATE_LIMIT_MAX } = require('./lib/orders-access-rate-limit');
+const { verifyAdminCredentials } = require('./lib/admin-credentials');
+const { createAdminSession, authenticateAdminSession, deleteAdminSession } = require('./lib/admin-session');
+const { setAdminSessionCookie, readAdminSessionCookie, clearAdminSessionCookie } = require('./lib/admin-session-cookie');
+const { ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS, ADMIN_LOGIN_RATE_LIMIT_MAX } = require('./lib/admin-login-rate-limit');
 const {
   buildOrderConfirmationEmail,
   buildAdminOrderNotificationEmail,
@@ -162,6 +166,20 @@ const customerSessionSchema = new mongoose.Schema({
   expiresAt: { type: Date, required: true }
 });
 const CustomerSession = mongoose.model('CustomerSession', customerSessionSchema);
+
+// Admin sessions for the new /api/admin/* dashboard API (Phase 13F) — a
+// completely separate session system from CustomerSession above. Same
+// hash-only storage pattern (see admin-session.js), but deliberately no
+// identity field: unlike a customer session (which must remember WHICH
+// customer it authenticates), there is only ever one admin identity, so a
+// valid, unexpired session is itself the entire authorization decision.
+// Never stores the raw token, the submitted password, or ADMIN_PASSWORD.
+const adminSessionSchema = new mongoose.Schema({
+  sessionTokenHash: { type: String, required: true, unique: true },
+  createdAt: { type: Date, default: Date.now },
+  expiresAt: { type: Date, required: true }
+});
+const AdminSession = mongoose.model('AdminSession', adminSessionSchema);
 
 const newsletterSchema = new mongoose.Schema({
   email: {
@@ -332,6 +350,15 @@ CustomerSession.collection.createIndex({ sessionTokenHash: 1 }, { unique: true }
 CustomerSession.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
   .then(() => console.log('✅ TTL index created on CustomerSession.expiresAt'))
   .catch(err => console.error('❌ Failed to create CustomerSession TTL index:', err.message));
+
+// 👇 Admin sessions (Phase 13F): same unique + TTL pattern.
+AdminSession.collection.createIndex({ sessionTokenHash: 1 }, { unique: true })
+  .then(() => console.log('✅ Unique index created on AdminSession.sessionTokenHash'))
+  .catch(err => console.error('❌ Failed to create AdminSession sessionTokenHash index:', err.message));
+
+AdminSession.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+  .then(() => console.log('✅ TTL index created on AdminSession.expiresAt'))
+  .catch(err => console.error('❌ Failed to create AdminSession TTL index:', err.message));
 
 // ✅ Admin auth — applied directly to each admin-only route below (never a
 // broad app.use('/api/orders', ...) prefix mount), so it can never shadow
@@ -895,15 +922,109 @@ app.get('/api/orders/export', adminAuth, async (req, res) => {
 });
 
 // ==========================================================================
-// Admin order-management API (Phase 13E) — powers the future private
-// order-management dashboard (Phase 13F). All routes below require the
-// same legacy adminAuth (ADMIN_PASSWORD) middleware as GET /api/orders and
-// GET /api/orders/export above — no new login/session system is
-// introduced here; Phase 13F is responsible for how the dashboard itself
-// obtains/uses that credential without repeating the legacy frontend's
-// unsafe localStorage-credential pattern. New endpoints only — the legacy
-// GET /api/orders and GET /api/orders/export routes above are unchanged
-// and keep working exactly as before.
+// Admin session authentication (Phase 13F) — a secure, cookie-backed
+// session layer purpose-built for the new /api/admin/* dashboard API,
+// replacing the legacy Basic Auth those Phase 13E routes launched with.
+// ADMIN_PASSWORD remains the one master credential; this never introduces
+// a second one. See admin-credentials.js/admin-session.js/
+// admin-session-cookie.js for the actual logic — these routes are thin
+// wiring, per this codebase's existing convention.
+//
+// This is intentionally a SEPARATE system from:
+//   LEGACY ADMIN  GET /api/orders, GET /api/orders/export
+//                 → unchanged, still legacy Basic Auth (ADMIN_PASSWORD),
+//                   kept only for the old dashboard's compatibility.
+//   NEW ADMIN     /api/admin/*
+//                 → this AdminSession cookie system.
+// The two never grant each other's access, and neither grants or is
+// granted by the customer CustomerSession/My Orders system.
+// ==========================================================================
+
+// IP-scoped brute-force protection on the one endpoint that accepts a
+// password guess. req.ip is accurate here because of
+// `app.set('trust proxy', 1)` above. skipSuccessfulRequests means only
+// FAILED attempts count against the limit (see admin-login-rate-limit.js).
+const adminLoginLimiter = rateLimit({
+  windowMs: ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS,
+  max: ADMIN_LOGIN_RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: 'Too many login attempts. Please try again later.' },
+});
+
+// ✅ Admin login. Never logs or returns the submitted password on any
+// path. Always responds with a generic "Invalid username or password."
+// on any credential failure — never distinguishes a bad username from a
+// bad password. If ADMIN_PASSWORD itself isn't configured,
+// verifyAdminCredentials fails closed (configError) instead of throwing —
+// this is what prevents the raw Express stack trace seen during the
+// Phase 13E staging smoke test from ever reaching a visitor again.
+app.post('/api/admin/session/login', adminLoginLimiter, async (req, res) => {
+  const { username, password } = req.body || {};
+  const result = verifyAdminCredentials({ username, password });
+
+  if (result.configError) {
+    console.error('❌ Admin login attempted but ADMIN_PASSWORD is not configured on this server.');
+    return res.status(500).json({ error: 'Admin login is not available right now.' });
+  }
+
+  if (!result.ok) {
+    return res.status(401).json({ error: 'Invalid username or password.' });
+  }
+
+  const { rawToken } = await createAdminSession({ AdminSessionModel: AdminSession });
+  setAdminSessionCookie(req, res, rawToken);
+  console.log('🔐 Admin session created.');
+  res.status(200).json({ ok: true });
+});
+
+// ✅ Admin logout. Idempotent — deletes the server-side session (if any)
+// and clears the cookie either way; calling this with no active session
+// is a normal success, not an error.
+app.post('/api/admin/session/logout', async (req, res) => {
+  const rawToken = readAdminSessionCookie(req);
+  await deleteAdminSession({ rawToken, AdminSessionModel: AdminSession });
+  clearAdminSessionCookie(req, res);
+  console.log('🔐 Admin session logout processed.');
+  res.status(200).json({ ok: true });
+});
+
+// ✅ Lightweight admin session status check for the dashboard's initial
+// render. Always 200s (this route itself isn't gated — it's how the
+// frontend DECIDES whether to show the login screen or the dashboard) —
+// only ever returns the boolean, never a token/hash/password/env var.
+app.get('/api/admin/session', async (req, res) => {
+  const rawToken = readAdminSessionCookie(req);
+  const result = await authenticateAdminSession({ rawToken, AdminSessionModel: AdminSession });
+  res.status(200).json({ authenticated: result.ok });
+});
+
+/**
+ * Route middleware gating every /api/admin/orders* route below on a valid
+ * AdminSession cookie. Always a plain JSON 401 on failure — never a
+ * WWW-Authenticate challenge, so an AJAX dashboard request can never
+ * trigger a native browser Basic Auth popup (that's the legacy Basic
+ * Auth's behavior, deliberately left alone on GET /api/orders/GET
+ * /api/orders/export above, never used here).
+ */
+async function requireAdminSession(req, res, next) {
+  const rawToken = readAdminSessionCookie(req);
+  const result = await authenticateAdminSession({ rawToken, AdminSessionModel: AdminSession });
+  if (!result.ok) {
+    return res.status(401).json({ error: 'Not authenticated.' });
+  }
+  next();
+}
+
+// ==========================================================================
+// Admin order-management API (Phase 13E) — powers the private
+// order-management dashboard (Phase 13F). Every route below now requires
+// the AdminSession cookie above (requireAdminSession), not Basic Auth —
+// the frontend dashboard never carries ADMIN_PASSWORD in any request.
+// The legacy GET /api/orders and GET /api/orders/export routes above are
+// unchanged and keep working exactly as before, on Basic Auth, for the
+// old dashboard's compatibility.
 // ==========================================================================
 
 // ✅ Admin order list — newest first, using the same allow-list exposure
@@ -912,7 +1033,7 @@ app.get('/api/orders/export', adminAuth, async (req, res) => {
 // the legacy GET /api/orders has always worked the same way; adding
 // page/limit query params later is a additive, non-breaking change if
 // volume ever warrants it.
-app.get('/api/admin/orders', adminAuth, async (req, res) => {
+app.get('/api/admin/orders', requireAdminSession, async (req, res) => {
   try {
     const orders = await Order.find().sort({ date: -1 });
     res.status(200).json({ orders: orders.map(toAdminOrderView) });
@@ -927,7 +1048,7 @@ app.get('/api/admin/orders', adminAuth, async (req, res) => {
 // has no way to be opened through this route — it remains visible
 // read-only in the list above; see order-number.js / this phase's report
 // for how Phase 13F should handle that.
-app.get('/api/admin/orders/:orderNumber', adminAuth, async (req, res) => {
+app.get('/api/admin/orders/:orderNumber', requireAdminSession, async (req, res) => {
   try {
     const order = await Order.findOne({ orderNumber: req.params.orderNumber });
     if (!order) {
@@ -951,7 +1072,7 @@ app.get('/api/admin/orders/:orderNumber', adminAuth, async (req, res) => {
 // concurrency guard: if another request already changed this order's
 // status in between, findOneAndUpdate matches nothing and this returns
 // 409 rather than silently overwriting a newer change.
-app.patch('/api/admin/orders/:orderNumber', adminAuth, async (req, res) => {
+app.patch('/api/admin/orders/:orderNumber', requireAdminSession, async (req, res) => {
   try {
     const order = await Order.findOne({ orderNumber: req.params.orderNumber });
     if (!order) {
@@ -1001,7 +1122,7 @@ app.patch('/api/admin/orders/:orderNumber', adminAuth, async (req, res) => {
 // the caller can never supply a destination, so this can't be turned into
 // an arbitrary-email-relay endpoint. Never touches order status, Stripe,
 // or order identity — purely a delivery retry for an admin.
-app.post('/api/admin/orders/:orderNumber/resend-confirmation', adminAuth, async (req, res) => {
+app.post('/api/admin/orders/:orderNumber/resend-confirmation', requireAdminSession, async (req, res) => {
   try {
     const order = await Order.findOne({ orderNumber: req.params.orderNumber });
     if (!order) {
