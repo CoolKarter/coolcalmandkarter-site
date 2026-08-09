@@ -13,7 +13,6 @@ description: >-
   representation, and joy.
 price: 999
 currency: "usd"
-stripePriceId: "price_1RRkfTGhPxJaSGWStZuZP6pI"
 coverImage: "src/assets/books/black-beautiful-baby-cover.webp"
 coverImageAlt: "Black, Beautiful & Baby Cover"
 publishedDate: "April 8, 2024"

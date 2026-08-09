@@ -23,10 +23,13 @@ const { data } = book;
 const cover = resolveCoverImage(data.coverImage);
 const priceDisplay = data.price != null ? `$${(data.price / 100).toFixed(2)}` : null;
 const isAvailable = data.availability === 'available';
-// Only books with checkoutEnabled + a real Stripe Price ID can be added to
-// the cart. This still isn't Stripe Checkout itself (that's a later phase)
-// — it only controls whether the book can enter the local cart at all.
-const canAddToCart = data.checkoutEnabled && Boolean(data.stripePriceId);
+// checkoutEnabled is the single source of truth for whether this book can
+// enter the local cart — the backend independently enforces the real
+// requirement (a configured Stripe Price ID) server-side and rejects any
+// checkout attempt for a product it doesn't have one for, regardless of
+// what this flag says (see server/lib/validate-checkout-items.js), so
+// this is purely a frontend availability signal, never a security boundary.
+const canAddToCart = data.checkoutEnabled;
 const pageTitle = data.seoTitle ?? `${data.title} — Cool, Calm & Karter`;
 const pageDescription = data.seoDescription ?? data.shortDescription ?? data.description;
 const bestSellerSlug = 'black-puerto-rican-and-baby';

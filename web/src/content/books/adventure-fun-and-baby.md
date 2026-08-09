@@ -12,7 +12,6 @@ description: >-
   read is perfect for inspiring little explorers.
 price: 999
 currency: "usd"
-stripePriceId: "price_1RRkgEGhPxJaSGWSZ6Q5rQNn"
 coverImage: "src/assets/books/adventure-fun-and-baby-cover.webp"
 coverImageAlt: "Adventure, Fun & Baby"
 publishedDate: "May 10, 2024"

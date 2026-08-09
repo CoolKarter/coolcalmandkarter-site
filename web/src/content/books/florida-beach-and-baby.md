@@ -14,7 +14,6 @@ description: >-
   fun, and family bonding in a coastal paradise.
 price: 999
 currency: "usd"
-stripePriceId: "price_1RRkdUGhPxJaSGWS2iuIJx1J"
 coverImage: "src/assets/books/florida-beach-and-baby-cover.webp"
 coverImageAlt: "Florida, Beach & Baby Cover"
 publishedDate: "March 5, 2024"

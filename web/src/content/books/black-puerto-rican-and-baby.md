@@ -15,7 +15,6 @@ description: >-
   everywhere.
 price: 999
 currency: "usd"
-stripePriceId: "price_1RRkfwGhPxJaSGWSMGZyeaDW"
 coverImage: "src/assets/books/black-puertorican-and-baby-cover.webp"
 coverImageAlt: "Black, Puerto Rican & Baby"
 publishedDate: "May 2, 2024"

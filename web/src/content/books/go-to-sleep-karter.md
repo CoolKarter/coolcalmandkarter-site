@@ -14,7 +14,6 @@ description: >-
   and bedtime routines.
 price: 999
 currency: "usd"
-stripePriceId: "price_1RRkgaGhPxJaSGWSZAUINxDe"
 coverImage: "src/assets/books/go-to-sleep-karter-cover.webp"
 coverImageAlt: "Go To Sleep, Karter!"
 publishedDate: "May 18, 2024"

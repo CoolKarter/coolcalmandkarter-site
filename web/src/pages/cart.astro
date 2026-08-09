@@ -5,13 +5,13 @@ import { getImage } from 'astro:assets';
 import { resolveCoverImage } from '../lib/images';
 import { visualAssets } from '../data/visualAssets';
 
-// Only books that can actually be added to the cart (checkoutEnabled with a
-// real Stripe Price ID) get a catalog entry here. If a non-purchasable slug
-// ever ends up in localStorage (e.g. via manual devtools edits), the client
-// script below simply won't find it in this catalog and will ignore it.
-const purchasableBooks = (await getCollection('books')).filter(
-  (book) => book.data.checkoutEnabled && Boolean(book.data.stripePriceId),
-);
+// Only checkoutEnabled books get a catalog entry here. If a non-purchasable
+// slug ever ends up in localStorage (e.g. via manual devtools edits), the
+// client script below simply won't find it in this catalog and will ignore
+// it. The backend independently enforces the real requirement (a
+// configured Stripe Price ID) server-side regardless of this flag — see
+// server/lib/validate-checkout-items.js.
+const purchasableBooks = (await getCollection('books')).filter((book) => book.data.checkoutEnabled);
 
 const catalog = await Promise.all(
   purchasableBooks.map(async (book) => {
