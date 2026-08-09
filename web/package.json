@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "node ./node_modules/astro/bin/astro.mjs dev",
-    "build": "node ./node_modules/astro/bin/astro.mjs build && node ./scripts/generate-redirects.mjs",
+    "build": "node ./node_modules/astro/bin/astro.mjs build && node ./scripts/generate-redirects.mjs && node ./scripts/generate-robots.mjs",
     "preview": "node ./node_modules/astro/bin/astro.mjs preview",
     "astro": "node ./node_modules/astro/bin/astro.mjs",
     "test": "node --test"

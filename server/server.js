@@ -33,6 +33,11 @@ const { verifyAdminCredentials } = require('./lib/admin-credentials');
 const { createAdminSession, authenticateAdminSession, deleteAdminSession } = require('./lib/admin-session');
 const { setAdminSessionCookie, readAdminSessionCookie, clearAdminSessionCookie } = require('./lib/admin-session-cookie');
 const { ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS, ADMIN_LOGIN_RATE_LIMIT_MAX } = require('./lib/admin-login-rate-limit');
+const { securityHeaders } = require('./lib/security-headers');
+const { buildErrorResponse } = require('./lib/error-response');
+const { CONTACT_RATE_LIMIT_WINDOW_MS, CONTACT_RATE_LIMIT_MAX } = require('./lib/contact-rate-limit');
+const { NEWSLETTER_RATE_LIMIT_WINDOW_MS, NEWSLETTER_RATE_LIMIT_MAX } = require('./lib/newsletter-rate-limit');
+const { validateContactRequest } = require('./lib/validate-contact-request');
 const {
   buildOrderConfirmationEmail,
   buildAdminOrderNotificationEmail,
@@ -54,6 +59,13 @@ const PORT = process.env.PORT || 3000;
 // the session-cookie __Host- decision), instead of both always resolving
 // to Render's internal proxy address/protocol.
 app.set('trust proxy', 1);
+
+// Never advertise the framework — one line, no dependency needed.
+app.disable('x-powered-by');
+
+// Minimal, dependency-free security-header baseline on every response —
+// see security-headers.js for why no CSP is included yet.
+app.use(securityHeaders);
 
 // ✅ Define Mongo Schemas
 const orderSchema = new mongoose.Schema({
@@ -828,13 +840,32 @@ app.get('/api/newsletter/export', async (req, res) => {
   }
 });
 
-app.post('/api/newsletter', async (req, res) => {
-  const { email } = req.body;
+// IP-scoped abuse protection — this route sends a real Resend welcome
+// email (plus an admin notification) on every genuinely-new signup with
+// no other protection beyond the unique-email duplicate check.
+const newsletterLimiter = rateLimit({
+  windowMs: NEWSLETTER_RATE_LIMIT_WINDOW_MS,
+  max: NEWSLETTER_RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again later.' },
+});
+
+app.post('/api/newsletter', newsletterLimiter, async (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-  if (!email || !email.includes('@')) {
-    return res.status(400).json({ error: 'Invalid email address' });
+  // Reuses the same normalize-email.js validation the customer My Orders
+  // flow already relies on (real format check + length bound + trim +
+  // lowercase) instead of the old `.includes('@')` check — see
+  // validate-contact-request.js's identical reasoning below. Storing the
+  // normalized form also makes the unique-email index actually catch a
+  // mixed-case duplicate resubmission, which the previous raw-string
+  // storage did not.
+  const emailResult = normalizeEmail(req.body?.email);
+  if (!emailResult.ok) {
+    return res.status(400).json({ error: emailResult.error });
   }
+  const email = emailResult.email;
 
   // Persistence and email notification are treated as separate outcomes:
   // once the signup is genuinely saved, a subsequent email-provider failure
@@ -867,12 +898,23 @@ app.post('/api/newsletter', async (req, res) => {
 });
 
 
-app.post('/api/contact', async (req, res) => {
-  const { name, email, reason, subject, message } = req.body;
+// IP-scoped abuse protection — this route sends a real Resend email to
+// ADMIN_EMAIL on every request with no auth and, previously, only a
+// presence check on its input.
+const contactLimiter = rateLimit({
+  windowMs: CONTACT_RATE_LIMIT_WINDOW_MS,
+  max: CONTACT_RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again later.' },
+});
 
-  if (!name || !email || !subject || !message) {
-    return res.status(400).json({ error: 'Please fill out all required fields.' });
+app.post('/api/contact', contactLimiter, async (req, res) => {
+  const validation = validateContactRequest(req.body);
+  if (!validation.ok) {
+    return res.status(400).json({ error: validation.error });
   }
+  const { name, email, reason, subject, message } = validation;
 
   const result = await sendEmail({
     to: process.env.ADMIN_EMAIL,
@@ -1180,6 +1222,27 @@ app.get('/api/session/:id', async (req, res) => {
 // ✅ Homepage route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'));
+});
+
+// ✅ Final error-handling middleware — MUST be registered last, after
+// every other route/middleware above (including the legacy ones). Express
+// 5 automatically forwards a thrown/rejected error from any async route
+// handler here, exactly like an explicit next(err) would — so this alone
+// is what keeps ANY unexpected failure (a bug in a route with no try/catch
+// of its own, a malformed-JSON body-parser failure, a CORS rejection, a
+// Mongo/Stripe/Resend/Twilio error, anything) from ever falling through to
+// Express's own default error handler, which would otherwise render a raw
+// stack trace (including real filesystem paths) straight into the HTTP
+// response whenever NODE_ENV isn't exactly 'production' — this is the
+// systemic version of the exact bug already seen once in staging with a
+// missing ADMIN_PASSWORD, and it protects every route above regardless of
+// whether NODE_ENV happens to be configured correctly on the live server.
+// See error-response.js for the actual client-facing classification —
+// never the raw error message/stack/any subsystem-specific detail.
+app.use((err, req, res, next) => {
+  console.error('❌ Unhandled error:', err.message);
+  const { status, body } = buildErrorResponse(err);
+  res.status(status).json(body);
 });
 
 // ✅ Start server

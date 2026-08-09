@@ -8,12 +8,15 @@ interface Props {
   description?: string;
   /** Homepage only: float the nav transparently over the cinematic hero. */
   heroNav?: boolean;
+  /** For public pages that shouldn't appear in search results (e.g. the magic-link verify utility page) without being fully private like /admin. */
+  noindex?: boolean;
 }
 
 const {
   title,
   description = 'Cool, Calm & Karter — books that feel like home.',
   heroNav = false,
+  noindex = false,
 } = Astro.props;
 ---
 
@@ -22,6 +25,7 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
