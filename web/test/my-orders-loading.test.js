@@ -37,16 +37,20 @@ test('an error result shows a distinct error panel, never silently falls back to
   );
 });
 
-test('the initial load makes exactly one fetchMyOrders() call — no separate preliminary session-check request', () => {
+test('the initial load calls fetchMyOrdersWithRetry() exactly once — the bounded internal retry (Phase 14C1) lives inside that call, this is never a second, separate preliminary session-check request from this file', () => {
   // Excludes comment lines — the single call site is asserted precisely,
-  // not just any textual mention (a doc comment above it also says
-  // "fetchMyOrders()" when explaining why no extra request is needed).
+  // not just any textual mention (a doc comment above it also explains
+  // the retry policy in prose).
   const codeOnly = source
     .split('\n')
     .filter((line) => !line.trim().startsWith('//'))
     .join('\n');
-  const matches = codeOnly.match(/fetchMyOrders\(\)/g) ?? [];
-  assert.equal(matches.length, 1, `expected exactly one fetchMyOrders() call, found ${matches.length}`);
+  const matches = codeOnly.match(/fetchMyOrdersWithRetry\(\)/g) ?? [];
+  assert.equal(matches.length, 1, `expected exactly one fetchMyOrdersWithRetry() call, found ${matches.length}`);
+
+  // And the plain single-attempt fetchMyOrders() is never called from
+  // this file — the retry-aware version is the only one this page uses.
+  assert.doesNotMatch(codeOnly, /[^.]fetchMyOrders\(\)/);
 });
 
 test('the loading panel is revealed only after a short delay, so a fast response never flashes it', () => {
@@ -79,4 +83,19 @@ test('no client-side storage of credentials or session tokens — auth relies so
   assert.doesNotMatch(source, /localStorage/);
   assert.doesNotMatch(source, /sessionStorage/);
   assert.doesNotMatch(source, /document\.cookie/);
+});
+
+// ---- Phase 14C1: rapid double-click / overlapping-request guard ----
+
+test('checkSession() guards against overlapping calls (e.g. a rapid double-click on Try Again) with an in-flight flag', () => {
+  assert.match(source, /let sessionCheckInFlight = false;/);
+  assert.match(source, /if \(sessionCheckInFlight\) return;/);
+  assert.match(source, /sessionCheckInFlight = true;/);
+  assert.match(source, /sessionCheckInFlight = false;/);
+});
+
+test('the Try Again button is disabled while a check is in flight and re-enabled afterward, in a finally block so it is never left stuck disabled', () => {
+  const checkSessionBody = source.match(/async function checkSession\(\)[\s\S]*?void checkSession\(\);/)[0];
+  assert.match(checkSessionBody, /errorRetry\.disabled = true;/);
+  assert.match(checkSessionBody, /\} finally \{[\s\S]*?errorRetry\.disabled = false;/);
 });

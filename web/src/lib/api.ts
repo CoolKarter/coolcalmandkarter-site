@@ -2,7 +2,7 @@
 // should go through here instead of hardcoding the Render URL in page code.
 import { extractCheckoutUrl } from './checkout-response.js';
 import { parseSessionStatusResponse, VERIFICATION_FAILURE } from './session-status-response.js';
-import { loadMyOrdersList } from './orders-access-response.js';
+import { loadMyOrdersList, loadMyOrdersListWithRetry } from './orders-access-response.js';
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL;
 
@@ -255,6 +255,17 @@ export interface MyOrdersListResult {
  */
 export async function fetchMyOrders(): Promise<MyOrdersListResult> {
   return loadMyOrdersList(fetch) as Promise<MyOrdersListResult>;
+}
+
+/**
+ * Same request as fetchMyOrders() above, but with ONE bounded automatic
+ * retry for a transient failure only — see loadMyOrdersListWithRetry() for
+ * the exact policy (Phase 14C1). This is what the My Orders page's
+ * initial load actually calls; fetchMyOrders() remains available as the
+ * plain single-attempt version for any caller that wants it.
+ */
+export async function fetchMyOrdersWithRetry(): Promise<MyOrdersListResult> {
+  return loadMyOrdersListWithRetry(fetch) as Promise<MyOrdersListResult>;
 }
 
 /**

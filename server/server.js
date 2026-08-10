@@ -9,6 +9,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const { Parser } = require('json2csv');
 const { getCatalog } = require('./lib/checkout-catalog');
+const { startServer } = require('./lib/start-server');
 const { validateCheckoutRequest } = require('./lib/validate-checkout-request');
 const { buildCheckoutRedirectUrls } = require('./lib/frontend-url');
 const { getAllowedOrigins } = require('./lib/cors-origins');
@@ -315,10 +316,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// ✅ Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+// ✅ Connect to MongoDB — kicked off here, as early as possible, so the
+// connection attempt runs concurrently with the rest of this file's
+// (synchronous) route/model registration below. The returned promise is
+// awaited by startServer() at the bottom of this file, which gates
+// app.listen() on it succeeding (Phase 14C1B) — no request is ever
+// accepted before the database is actually ready. See
+// server/lib/start-server.js for the startup-decision logic itself.
+const initialMongoConnection = mongoose.connect(process.env.MONGO_URI);
 
   // 👇 Add unique index to newsletter collection (only needs to run once)
 NewsletterEmail.collection.createIndex({ email: 1 }, { unique: true })
@@ -742,6 +747,27 @@ async function getAuthenticatedCustomerEmail(req) {
   return result.ok ? result.emailNormalized : null;
 }
 
+/**
+ * Same as getAuthenticatedCustomerEmail() above, but fails fast — and
+ * throws — if the database connection isn't ready yet, instead of
+ * silently waiting. Without this, a request arriving before Mongoose
+ * finishes connecting (most commonly right after a Render cold start)
+ * sits in Mongoose's internal query buffer for its full default timeout
+ * (~10s) before rejecting on its own, and that rejection previously had
+ * no try/catch around it at either call site — Express 5 auto-forwards it
+ * to the final generic error handler, producing the exact same
+ * indistinguishable 500 as a real application bug (Phase 14C1 root
+ * cause). Callers must wrap this in their own try/catch and respond 503,
+ * never 401 — a database outage is never the same thing as "no valid
+ * session found."
+ */
+async function resolveAuthenticatedCustomerEmailOrThrow(req) {
+  if (mongoose.connection.readyState !== 1) {
+    throw new Error('Database connection not ready.');
+  }
+  return getAuthenticatedCustomerEmail(req);
+}
+
 // ✅ List the authenticated customer's own orders, newest first.
 //
 // GET /api/my-orders
@@ -750,7 +776,25 @@ async function getAuthenticatedCustomerEmail(req) {
 // exposure boundary a future admin dashboard will build on — never
 // stripeSessionId/Mongo _id/__v.
 app.get('/api/my-orders', async (req, res) => {
-  const emailNormalized = await getAuthenticatedCustomerEmail(req);
+  let emailNormalized;
+  try {
+    emailNormalized = await resolveAuthenticatedCustomerEmailOrThrow(req);
+  } catch (err) {
+    // The session itself couldn't be checked at all (most commonly: the
+    // database connection isn't ready yet, e.g. right after a cold start —
+    // see resolveAuthenticatedCustomerEmailOrThrow()). This is NOT "no
+    // valid session found" (that's the ordinary 401 below) and must never
+    // be reported as one, since that would incorrectly tell a genuinely
+    // signed-in customer they're signed out. It's also deliberately kept
+    // out of the generic 500 bucket the final error handler falls back to
+    // (see lib/error-response.js) — 503 signals a distinct, safely
+    // retryable "couldn't check right now" condition, which is what lets
+    // the frontend's bounded automatic retry (Phase 14C1) react to this
+    // specific case without masking a real application bug behind it.
+    console.error('❌ Error resolving customer session for My Orders:', err.message);
+    return res.status(503).json({ error: 'Unable to verify your account right now. Please try again in a moment.' });
+  }
+
   if (!emailNormalized) {
     return res.status(401).json({ error: 'Not authenticated.' });
   }
@@ -778,7 +822,16 @@ app.get('/api/my-orders', async (req, res) => {
 // number that doesn't exist at all, produce the identical 404 — this
 // never confirms that another customer's order exists.
 app.get('/api/my-orders/:orderNumber', async (req, res) => {
-  const emailNormalized = await getAuthenticatedCustomerEmail(req);
+  let emailNormalized;
+  try {
+    emailNormalized = await resolveAuthenticatedCustomerEmailOrThrow(req);
+  } catch (err) {
+    // See the identical branch on GET /api/my-orders above — same
+    // reasoning applies here.
+    console.error('❌ Error resolving customer session for My Orders detail:', err.message);
+    return res.status(503).json({ error: 'Unable to verify your account right now. Please try again in a moment.' });
+  }
+
   if (!emailNormalized) {
     return res.status(401).json({ error: 'Not authenticated.' });
   }
@@ -1245,7 +1298,33 @@ app.use((err, req, res, next) => {
   res.status(status).json(body);
 });
 
-// ✅ Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+// ✅ Start server — gated on the initial MongoDB connection succeeding
+// first (Phase 14C1B). Before this, app.listen() ran unconditionally,
+// immediately, regardless of whether MongoDB had finished connecting — a
+// request needing the database (e.g. GET /api/my-orders) arriving during
+// that window could sit in Mongoose's internal query buffer for its
+// default ~10s timeout before failing with an error indistinguishable
+// from a genuine application bug (see the Phase 14C1 report). Gating
+// app.listen() here means that startup race can no longer happen at all:
+// no request is ever accepted before the database is actually ready. On
+// a connection failure, the process exits (a non-zero exit code) rather
+// than starting Express in a half-working state — see
+// server/lib/start-server.js for the actual decision logic (kept there,
+// not inline here, specifically so it's independently unit-testable —
+// see test/start-server.test.js).
+startServer({
+  connect: () => initialMongoConnection,
+  listen: () => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running at http://localhost:${PORT}`);
+    });
+  },
+  onConnectionError: () => {
+    // Never log the raw error — a MongoDB connection failure's message
+    // can include the connection string itself, which contains real
+    // database credentials. Real detail belongs in MongoDB Atlas/Render's
+    // own logs, not this process's stdout.
+    console.error('❌ MongoDB connection failed at startup — server will not start.');
+    process.exitCode = 1;
+  },
 });

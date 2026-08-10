@@ -759,7 +759,7 @@ const coverMapJson = JSON.stringify(Object.fromEntries(coverEntries)).replace(/<
 <script>
   import {
     requestOrdersAccess,
-    fetchMyOrders,
+    fetchMyOrdersWithRetry,
     fetchMyOrder,
     logoutOrdersAccess,
     type CustomerOrderView,
@@ -1149,38 +1149,61 @@ const coverMapJson = JSON.stringify(Object.fromEntries(coverEntries)).replace(/<
   }
 
   // ---- Initial load ----
-  // fetchMyOrders() is already the single request that determines both
-  // auth state and (when authenticated) the order data itself — there is
-  // no separate preliminary "check session" call to remove here. What
-  // this delay improves is perceived speed: a response that comes back
-  // inside LOADING_REVEAL_DELAY_MS never shows the loading card at all
-  // (the timer is cancelled before it ever fires), so a fast connection
-  // goes straight from a blank panel to the real content. Only a
-  // genuinely slow response — the case this is actually for — shows
-  // "Loading your orders…" at all.
+  // fetchMyOrdersWithRetry() is still the single logical request the
+  // page's initial render depends on — see
+  // web/src/lib/orders-access-response.js's loadMyOrdersListWithRetry()
+  // for the full policy (Phase 14C1). It normally makes exactly one HTTP
+  // request; it makes a second one ONLY when the first came back as a
+  // transient failure (a proxy/backend-not-ready 502/503/504, or a
+  // genuine network-level fetch failure) — never for a normal 401, and
+  // never for an ordinary error status. This is not a redundant
+  // preliminary session check: it's the same request, retried at most
+  // once, only when the first attempt couldn't get a real answer at all.
+  //
+  // What LOADING_REVEAL_DELAY_MS improves is perceived speed: a response
+  // that comes back inside that window never shows the loading card at
+  // all (the timer is cancelled before it ever fires), so a fast
+  // connection goes straight from a blank panel to the real content. If a
+  // transient retry happens, the same generic "Loading your orders…"
+  // stays on screen throughout — the retry is never surfaced as its own
+  // message (no "retrying…", no status codes, no backend detail).
   const LOADING_REVEAL_DELAY_MS = 200;
 
+  // Guards against a rapid double-click on "Try Again" (or any other
+  // future trigger) starting a second, overlapping checkSession() call
+  // while one is already in flight.
+  let sessionCheckInFlight = false;
+
   async function checkSession(): Promise<void> {
+    if (sessionCheckInFlight) return;
+    sessionCheckInFlight = true;
+    if (errorRetry instanceof HTMLButtonElement) errorRetry.disabled = true;
+
     const revealTimer = window.setTimeout(() => {
       showOnly('loading');
       announce('Loading your orders…');
     }, LOADING_REVEAL_DELAY_MS);
 
-    const result = await fetchMyOrders();
-    window.clearTimeout(revealTimer);
+    try {
+      const result = await fetchMyOrdersWithRetry();
+      window.clearTimeout(revealTimer);
 
-    if (result.state === 'signed-out') {
-      showOnly('access');
-      return;
+      if (result.state === 'signed-out') {
+        showOnly('access');
+        return;
+      }
+
+      if (result.state === 'error') {
+        showOnly('error');
+        return;
+      }
+
+      showOnly('authenticated');
+      renderOrders(result.orders);
+    } finally {
+      sessionCheckInFlight = false;
+      if (errorRetry instanceof HTMLButtonElement) errorRetry.disabled = false;
     }
-
-    if (result.state === 'error') {
-      showOnly('error');
-      return;
-    }
-
-    showOnly('authenticated');
-    renderOrders(result.orders);
   }
 
   void checkSession();
