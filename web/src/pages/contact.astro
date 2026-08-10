@@ -147,6 +147,19 @@ const reasons = [
   /* ---- Main two-column composition ---- */
 
   .contact-main {
+    /* .contact-main is a flex item of the shared <main> (see tokens.css's
+       main { display: flex; flex-direction: column; }). Width is a
+       cross-axis property there, governed by align-items: stretch by
+       default — but stretch is disabled whenever an item has an auto
+       cross-axis margin (margin: 0 auto below), so without an explicit
+       width the browser instead sizes this from its own content's
+       preferred width, then only caps that with max-width — which is
+       what pushed this page wider than the viewport on mobile (see the
+       matching fix and full explanation on .product in
+       pages/books/[slug].astro). width: 100% restores the intended
+       behavior: fill the available width up to max-width, then the auto
+       margins center it once the viewport exceeds max-width. */
+    width: 100%;
     max-width: 1040px;
     margin: 0 auto;
     padding: clamp(2.5rem, 6vw, 3.5rem) 1.5rem 4rem;
@@ -154,7 +167,13 @@ const reasons = [
 
   .contact-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    /* Bare `1fr` is shorthand for `minmax(auto, 1fr)` — the implicit
+       `auto` minimum lets .contact-form-panel's content (the widest
+       being the "reason" <select>) force this track wider than the
+       viewport instead of shrinking to fit it, the same failure mode the
+       desktop rule below already avoids with an explicit minmax(0, ...).
+       minmax(0, 1fr) applies that same fix to the mobile single column. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 2rem;
   }
 

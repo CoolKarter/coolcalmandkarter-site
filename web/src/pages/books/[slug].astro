@@ -183,6 +183,21 @@ const relatedBooks = allBooks
 
 <style>
   .product {
+    /* .product is a flex item of the shared <main> (see tokens.css's
+       main { display: flex; flex-direction: column; }). In a column flex
+       container, width is a CROSS-axis property governed by
+       align-items: stretch by default — but stretch is disabled whenever
+       an item has an auto cross-axis margin (margin: 0 auto below, the
+       standard centering pattern), so without an explicit width the
+       browser falls back to sizing .product from its own CONTENT's
+       preferred width instead of the available viewport width. The
+       max-width below then simply caps that (already too-wide) preferred
+       size rather than constraining it to the viewport, which is what
+       actually pushed this whole page wider than 320px on mobile.
+       width: 100% restores the intended behavior: fill the available
+       width up to max-width, then the auto margins center it once the
+       viewport exceeds max-width. */
+    width: 100%;
     max-width: 1080px;
     margin: 0 auto;
     padding: clamp(2.5rem, 6vw, 3.5rem) 1.5rem 1rem;
