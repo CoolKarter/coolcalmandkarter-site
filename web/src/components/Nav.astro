@@ -26,21 +26,42 @@ const links = PRIMARY_NAV_LINKS;
       decoding="async"
     />
   </a>
-  <nav aria-label="Primary">
+
+  <nav aria-label="Primary" class="primary-links">
     {links.map((link) => <a href={link.href}>{link.label}</a>)}
+  </nav>
+
+  <div class="nav-actions">
     <a class="cart-link" href="/cart" aria-label="View cart">
       <img class="cart-icon" src={visualAssets.ui.cartIcon} alt="" width="1024" height="1024" />
       <span class="cart-count" id="cart-count">0</span>
     </a>
+    <button
+      type="button"
+      id="menu-toggle"
+      class="menu-toggle"
+      aria-label="Menu"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+    >
+      <span class="menu-toggle-bar" aria-hidden="true"></span>
+      <span class="menu-toggle-bar" aria-hidden="true"></span>
+      <span class="menu-toggle-bar" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <nav aria-label="Mobile" id="mobile-menu" class="mobile-menu" hidden>
+    {links.map((link) => <a href={link.href}>{link.label}</a>)}
   </nav>
 </header>
 
 <style>
   .site-nav {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.75rem 1rem;
     padding: 0.75rem 1.5rem;
     background-color: var(--color-navy);
@@ -85,33 +106,47 @@ const links = PRIMARY_NAV_LINKS;
       drop-shadow(0 0 14px rgba(255, 246, 222, 0.35));
   }
 
-  nav[aria-label='Primary'] {
+  .primary-links {
     display: flex;
     align-items: center;
     gap: 0.4rem 1.35rem;
     flex-wrap: wrap;
   }
 
-  nav[aria-label='Primary'] a {
+  .primary-links a,
+  .mobile-menu a {
     color: white;
     text-decoration: none;
     font-weight: 700;
     text-shadow: 0 1px 8px rgba(9, 26, 43, 0.45);
     border-radius: 6px;
+  }
+
+  .primary-links a {
     padding: 0.15rem 0.1rem;
   }
 
-  nav[aria-label='Primary'] a:hover,
-  nav[aria-label='Primary'] a:focus-visible {
+  .primary-links a:hover,
+  .primary-links a:focus-visible,
+  .mobile-menu a:hover,
+  .mobile-menu a:focus-visible {
     text-decoration: underline;
     text-underline-offset: 4px;
     text-decoration-thickness: 2px;
     text-decoration-color: var(--color-coral);
   }
 
-  .site-nav a:focus-visible {
+  .site-nav a:focus-visible,
+  .menu-toggle:focus-visible {
     outline: 3px solid #fff;
     outline-offset: 3px;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-shrink: 0;
   }
 
   .cart-link {
@@ -124,6 +159,7 @@ const links = PRIMARY_NAV_LINKS;
     border-radius: 50%;
     background-color: var(--color-cream-light);
     box-shadow: 0 2px 8px rgba(9, 26, 43, 0.35);
+    flex-shrink: 0;
   }
 
   .cart-icon {
@@ -144,9 +180,95 @@ const links = PRIMARY_NAV_LINKS;
     border-radius: 999px;
   }
 
+  /* ---- Mobile hamburger toggle — hidden by default, shown only below
+     the mobile breakpoint (see the media query at the bottom of this
+     file). Built from three plain <span> bars rather than an icon
+     asset/dependency; morphs into an X while the menu is open purely via
+     CSS, driven by the button's own aria-expanded attribute (no extra
+     class needed). ---- */
+  .menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background-color: var(--color-cream-light);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .menu-toggle-bar {
+    width: 20px;
+    height: 2px;
+    background-color: var(--color-navy);
+    border-radius: 2px;
+    transition:
+      transform 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle-bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle-bar:nth-child(2) {
+    opacity: 0;
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle-bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* ---- Mobile dropdown menu panel ----
+     `display: none` here as the unconditional base rule (not just relying
+     on the `hidden` attribute) is what keeps this panel invisible at
+     desktop widths even if JS-open state were somehow left over from a
+     narrower viewport (e.g. a device rotation or a resized browser
+     window while the menu was open) — the media query below is the ONLY
+     place this is ever switched to visible, so there is no way for a
+     stale open state to show anything at desktop widths. */
+  .mobile-menu {
+    display: none;
+  }
+
   @media (max-width: 640px) {
     .brand img {
       height: 40px;
+    }
+
+    .primary-links {
+      display: none;
+    }
+
+    .menu-toggle {
+      display: flex;
+    }
+
+    .mobile-menu:not([hidden]) {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 25;
+      background-color: var(--color-navy);
+      padding: 0.25rem 1.5rem 1rem;
+      box-shadow: 0 12px 24px rgba(9, 26, 43, 0.35);
+    }
+
+    .mobile-menu a {
+      padding: 0.85rem 0.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .mobile-menu a:last-child {
+      border-bottom: none;
     }
   }
 </style>
@@ -163,5 +285,47 @@ const links = PRIMARY_NAV_LINKS;
   window.addEventListener(CART_UPDATED_EVENT, updateCartBadge);
   window.addEventListener('storage', (event) => {
     if (event.key === CART_STORAGE_KEY) updateCartBadge();
+  });
+
+  // ---- Mobile menu ----
+  // A stale "open" state left over from a narrower viewport can never
+  // visually appear at desktop widths regardless of what happens here —
+  // see the .mobile-menu CSS rule's comment — so this stays deliberately
+  // simple: no resize listener, no viewport-width checks in JS at all.
+  const menuToggle = document.getElementById('menu-toggle');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  function closeMenu(): void {
+    if (!menuToggle || !mobileMenu) return;
+    menuToggle.setAttribute('aria-expanded', 'false');
+    mobileMenu.hidden = true;
+  }
+
+  function openMenu(): void {
+    if (!menuToggle || !mobileMenu) return;
+    menuToggle.setAttribute('aria-expanded', 'true');
+    mobileMenu.hidden = false;
+  }
+
+  menuToggle?.addEventListener('click', () => {
+    const isOpen = menuToggle.getAttribute('aria-expanded') === 'true';
+    if (isOpen) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && menuToggle?.getAttribute('aria-expanded') === 'true') {
+      closeMenu();
+      menuToggle.focus();
+    }
+  });
+
+  mobileMenu?.addEventListener('click', (event) => {
+    if (event.target instanceof HTMLElement && event.target.closest('a')) {
+      closeMenu();
+    }
   });
 </script>
