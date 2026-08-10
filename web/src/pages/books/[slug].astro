@@ -4,6 +4,7 @@ import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 import ProductLayout from '../../layouts/ProductLayout.astro';
 import { resolveCoverImage } from '../../lib/images';
+import { isStoreCheckoutEnabled } from '../../lib/store-status.js';
 
 export async function getStaticPaths() {
   const books = await getCollection('books');
@@ -23,13 +24,17 @@ const { data } = book;
 const cover = resolveCoverImage(data.coverImage);
 const priceDisplay = data.price != null ? `$${(data.price / 100).toFixed(2)}` : null;
 const isAvailable = data.availability === 'available';
-// checkoutEnabled is the single source of truth for whether this book can
-// enter the local cart — the backend independently enforces the real
-// requirement (a configured Stripe Price ID) server-side and rejects any
-// checkout attempt for a product it doesn't have one for, regardless of
-// what this flag says (see server/lib/validate-checkout-items.js), so
-// this is purely a frontend availability signal, never a security boundary.
-const canAddToCart = data.checkoutEnabled;
+// checkoutEnabled is the per-book purchase gate; STORE_CHECKOUT_ENABLED is
+// the store-wide one (temporary out-of-stock state — see
+// server/lib/store-checkout-status.js and web/src/lib/store-status.js).
+// A book must pass BOTH to show purchase controls. Neither is a security
+// boundary — the backend independently enforces both requirements
+// server-side and rejects any checkout attempt that doesn't meet them
+// (see server/lib/validate-checkout-items.js and the STORE_CHECKOUT_ENABLED
+// guard on POST /api/checkout/session in server.js), so this is purely a
+// frontend availability signal.
+const STORE_CHECKOUT_ENABLED = isStoreCheckoutEnabled(import.meta.env.PUBLIC_STORE_CHECKOUT_ENABLED);
+const canAddToCart = data.checkoutEnabled && STORE_CHECKOUT_ENABLED;
 const pageTitle = data.seoTitle ?? `${data.title} — Cool, Calm & Karter`;
 const pageDescription = data.seoDescription ?? data.shortDescription ?? data.description;
 const bestSellerSlug = 'black-puerto-rican-and-baby';
@@ -101,9 +106,10 @@ const relatedBooks = allBooks
               <p id="add-to-cart-status" class="add-to-cart-status" role="status" aria-live="polite" />
             </div>
           ) : (
-            <p class="checkout-pending" role="status">
-              Available &mdash; website checkout setup in progress.
-            </p>
+            <div class="out-of-stock" role="status">
+              <p class="out-of-stock-label">Out of Stock</p>
+              <p class="out-of-stock-copy">More copies coming soon.</p>
+            </div>
           )
         }
 
@@ -416,14 +422,30 @@ const relatedBooks = allBooks
     min-height: 1.2em;
   }
 
-  .checkout-pending {
-    display: inline-block;
+  .out-of-stock {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.2rem;
     background: rgba(25, 85, 105, 0.08);
-    color: var(--color-navy);
-    font-weight: 700;
-    padding: 0.75rem 1.25rem;
-    border-radius: 10px;
+    padding: 0.85rem 1.25rem;
+    border-radius: 12px;
     margin: 0 0 0.75rem;
+  }
+
+  .out-of-stock-label {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-coral-deep);
+  }
+
+  .out-of-stock-copy {
+    margin: 0;
+    font-size: 0.92rem;
+    color: #4a4a4a;
   }
 
   .back-to-shop {

@@ -9,6 +9,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const { Parser } = require('json2csv');
 const { getCatalog } = require('./lib/checkout-catalog');
+const { isStoreCheckoutEnabled } = require('./lib/store-checkout-status');
 const { startServer } = require('./lib/start-server');
 const { validateCheckoutRequest } = require('./lib/validate-checkout-request');
 const { buildCheckoutRedirectUrls } = require('./lib/frontend-url');
@@ -50,6 +51,19 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ✅ Global storefront checkout kill-switch (temporary out-of-stock
+// state) — read once at startup, same pattern as PORT above. See
+// lib/store-checkout-status.js for the fail-closed parsing rule: only the
+// exact string "true" enables checkout; anything else (missing, empty,
+// misspelled) disables it. This is deliberately independent of every
+// individual book's own `checkoutEnabled` catalog flag — it overrides all
+// of them at once so a store-wide "we're out of stock" state never
+// requires editing all 12 book content files.
+const STORE_CHECKOUT_ENABLED = isStoreCheckoutEnabled(process.env.STORE_CHECKOUT_ENABLED);
+if (!STORE_CHECKOUT_ENABLED) {
+  console.log('🛑 STORE_CHECKOUT_ENABLED is not "true" — checkout is globally disabled.');
+}
 
 // Render (like Heroku/most PaaS platforms) terminates TLS and forwards
 // every request through exactly one internal reverse-proxy hop. `1` means
@@ -425,6 +439,18 @@ app.post('/calculate-shipping', async (req, res) => {
 // or redesign this route — it must stay behaviorally identical to what
 // production already calls.
 app.post('/create-checkout-session', async (req, res) => {
+  // Global out-of-stock kill-switch — the one deliberate exception to
+  // "do not strengthen, validate, or redesign this route" above: a
+  // store-wide "we refuse to create ANY Stripe Checkout Session right
+  // now" rule has to cover every checkout-creating endpoint, including
+  // this legacy one, or a direct request here would bypass it entirely.
+  // This adds nothing else — no new validation, no behavior change when
+  // enabled — it only ever short-circuits before this route's existing
+  // logic runs.
+  if (!STORE_CHECKOUT_ENABLED) {
+    return res.status(503).json({ error: 'Books are currently out of stock. More copies are coming soon.' });
+  }
+
   try {
     const items = req.body.items;
     const customerEmail = req.body.customerEmail;
@@ -519,6 +545,16 @@ app.post('/create-checkout-session', async (req, res) => {
 // reasonably-shaped, reasonably-sized email address. See
 // server/lib/validate-checkout-request.js for the full rules.
 app.post('/api/checkout/session', async (req, res) => {
+  // Global out-of-stock kill-switch — checked first, before any request
+  // validation or catalog lookup, so this protects against every request
+  // shape at once: a stale cart from before the switch flipped, a direct
+  // API call, a hand-crafted body, all 12 books, all of it. Never a
+  // config/environment detail in the response — same generic message the
+  // frontend shows.
+  if (!STORE_CHECKOUT_ENABLED) {
+    return res.status(503).json({ error: 'Books are currently out of stock. More copies are coming soon.' });
+  }
+
   try {
     const catalog = getCatalog();
     const validation = validateCheckoutRequest(req.body, catalog);

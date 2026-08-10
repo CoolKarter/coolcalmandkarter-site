@@ -7,9 +7,11 @@ interface Props {
   book: CollectionEntry<'books'>;
   /** Slug of the catalog's best seller — gets a badge + elevated treatment. */
   isBestSeller?: boolean;
+  /** Store-wide checkout kill-switch (see pages/shop.astro) — shows an "Out of Stock" badge on an otherwise-available book, independent of that book's own availability/checkoutEnabled data. */
+  storeCheckoutEnabled?: boolean;
 }
 
-const { book, isBestSeller = false } = Astro.props;
+const { book, isBestSeller = false, storeCheckoutEnabled = true } = Astro.props;
 const { data } = book;
 const cover = resolveCoverImage(data.coverImage);
 const priceDisplay = data.price != null ? `$${(data.price / 100).toFixed(2)}` : null;
@@ -46,6 +48,7 @@ const eyebrow = data.hook ?? fallbackEyebrows[book.id];
       {priceDisplay && <span class="book-price">{priceDisplay}</span>}
       {data.ageRange && <span class="book-age">Ages {data.ageRange}</span>}
       {!isAvailable && <span class="book-availability">Coming Soon</span>}
+      {isAvailable && !storeCheckoutEnabled && <span class="book-availability">Out of Stock</span>}
     </div>
     <span class="book-link" aria-hidden="true">See the Book &rarr;</span>
   </div>

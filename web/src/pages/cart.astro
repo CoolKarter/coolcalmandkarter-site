@@ -4,6 +4,13 @@ import { getCollection } from 'astro:content';
 import { getImage } from 'astro:assets';
 import { resolveCoverImage } from '../lib/images';
 import { visualAssets } from '../data/visualAssets';
+import { isStoreCheckoutEnabled } from '../lib/store-status.js';
+
+// Store-wide checkout kill-switch (temporary out-of-stock state) — see
+// server/lib/store-checkout-status.js and web/src/lib/store-status.js.
+// A customer's saved cart is NEVER cleared because of this — see the
+// client script below, which only disables the Checkout action itself.
+const STORE_CHECKOUT_ENABLED = isStoreCheckoutEnabled(import.meta.env.PUBLIC_STORE_CHECKOUT_ENABLED);
 
 // Only checkoutEnabled books get a catalog entry here. If a non-purchasable
 // slug ever ends up in localStorage (e.g. via manual devtools edits), the
@@ -81,7 +88,12 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
       <a class="cta-button" href="/shop">Explore the Books</a>
     </div>
 
-    <div id="cart-summary" class="cart-summary" hidden>
+    <div
+      id="cart-summary"
+      class="cart-summary"
+      hidden
+      data-store-checkout-enabled={STORE_CHECKOUT_ENABLED ? 'true' : 'false'}
+    >
       <div class="cart-items-column">
         <ul id="cart-items" class="cart-items"></ul>
       </div>
@@ -739,6 +751,14 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
   const stickyTotalEl = document.getElementById('sticky-cart-total');
   const liveRegion = document.getElementById('cart-live-region');
 
+  // Store-wide checkout kill-switch (see cart.astro's frontmatter and
+  // server/lib/store-checkout-status.js). Read once from the data
+  // attribute rendered at build time — this only ever disables the
+  // Checkout action below; it never touches readCart()/localStorage, so a
+  // customer's saved selection is preserved untouched until inventory
+  // returns.
+  const storeCheckoutEnabled = summarySection?.dataset.storeCheckoutEnabled === 'true';
+
   function formatPrice(cents: number): string {
     return `$${(cents / 100).toFixed(2)}`;
   }
@@ -900,8 +920,11 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
   const stickyCheckoutStatus = document.getElementById('sticky-checkout-status');
 
   function setCheckoutBusy(busy: boolean): void {
-    if (checkoutButton) checkoutButton.disabled = busy;
-    if (stickyCheckoutButton) stickyCheckoutButton.disabled = busy;
+    // Out of stock always wins — never re-enable the button just because
+    // a (guarded-against, but defensive) checkout attempt finished.
+    const disabled = busy || !storeCheckoutEnabled;
+    if (checkoutButton) checkoutButton.disabled = disabled;
+    if (stickyCheckoutButton) stickyCheckoutButton.disabled = disabled;
   }
 
   function setCheckoutMessage(message: string, isError: boolean): void {
@@ -912,7 +935,33 @@ const catalogJson = JSON.stringify(catalog).replace(/</g, '\\u003c');
     }
   }
 
+  if (!storeCheckoutEnabled) {
+    if (checkoutButton) {
+      checkoutButton.disabled = true;
+      checkoutButton.textContent = 'Out of Stock';
+    }
+    if (stickyCheckoutButton) {
+      stickyCheckoutButton.disabled = true;
+      stickyCheckoutButton.textContent = 'Out of Stock';
+    }
+    // checkout-status is a normal visible line under the full Checkout
+    // button; sticky-checkout-status is intentionally screen-reader-only
+    // (see its visually-hidden class) since the compact mobile bar has no
+    // room for a second visible line — the button's own "Out of Stock"
+    // label already communicates this visually there.
+    if (checkoutStatus) checkoutStatus.textContent = 'Out of Stock. More copies coming soon.';
+    if (stickyCheckoutStatus) stickyCheckoutStatus.textContent = 'Out of Stock. More copies coming soon.';
+  }
+
   async function performCheckout(): Promise<void> {
+    // Belt-and-suspenders: the buttons above are already disabled (so a
+    // real click can't reach this), and the backend independently refuses
+    // to create a Checkout Session regardless of this flag — see
+    // server.js's STORE_CHECKOUT_ENABLED guard. This just avoids a
+    // pointless network round-trip if something (e.g. a programmatic
+    // click) ever bypassed the disabled attribute.
+    if (!storeCheckoutEnabled) return;
+
     // Only slug + quantity ever leave the browser — no Stripe Price ID,
     // title, or price. The server resolves all of that itself from its
     // own catalog (see server/lib/validate-checkout-items.js).

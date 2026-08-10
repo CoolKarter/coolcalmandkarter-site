@@ -76,7 +76,7 @@ test('the quantity stepper and buy button markup is untouched', () => {
   assert.match(source, /class="buy-button"/);
 });
 
-test('checkoutEnabled remains the sole frontend purchase gate — no Stripe Price ID reference introduced', () => {
-  assert.match(source, /const canAddToCart = data\.checkoutEnabled;/);
+test('checkoutEnabled remains part of the frontend purchase gate (now ANDed with the global store switch — see store-checkout-switch.test.js) — no Stripe Price ID reference introduced', () => {
+  assert.match(source, /const canAddToCart = data\.checkoutEnabled && STORE_CHECKOUT_ENABLED;/);
   assert.doesNotMatch(source, /stripePriceId/i);
 });

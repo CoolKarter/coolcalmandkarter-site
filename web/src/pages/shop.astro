@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import BookCard from '../components/BookCard.astro';
 import { getCollection } from 'astro:content';
 import { visualAssets } from '../data/visualAssets';
+import { isStoreCheckoutEnabled } from '../lib/store-status.js';
 
 const books = (await getCollection('books')).sort((a, b) =>
   a.data.title.localeCompare(b.data.title),
@@ -10,6 +11,12 @@ const books = (await getCollection('books')).sort((a, b) =>
 
 // Same fact already established on the homepage — not re-derived or guessed.
 const bestSellerSlug = 'black-puerto-rican-and-baby';
+
+// Store-wide checkout kill-switch (temporary out-of-stock state) — see
+// server/lib/store-checkout-status.js and web/src/lib/store-status.js.
+// Passed down so each card can show an "Out of Stock" badge without
+// touching any individual book's own checkoutEnabled/availability data.
+const STORE_CHECKOUT_ENABLED = isStoreCheckoutEnabled(import.meta.env.PUBLIC_STORE_CHECKOUT_ENABLED);
 ---
 
 <BaseLayout
@@ -42,7 +49,11 @@ const bestSellerSlug = 'black-puerto-rican-and-baby';
       {
         books.map((book) => (
           <li>
-            <BookCard book={book} isBestSeller={book.id === bestSellerSlug} />
+            <BookCard
+              book={book}
+              isBestSeller={book.id === bestSellerSlug}
+              storeCheckoutEnabled={STORE_CHECKOUT_ENABLED}
+            />
           </li>
         ))
       }

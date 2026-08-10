@@ -68,8 +68,8 @@ test('order summary markup (total, checkout button, status region) is present', 
 });
 
 test('the checkout button is not disabled or hidden by default in the markup — only the wrapping summary section starts hidden, pending cart contents', () => {
-  const summaryTag = cartSource.match(/<div id="cart-summary"[^>]*>/)[0];
-  assert.match(summaryTag, /hidden/);
+  const summaryTag = cartSource.match(/<div\s+id="cart-summary"[\s\S]*?>/)[0];
+  assert.match(summaryTag, /\bhidden\b/);
 
   const buttonTag = cartSource.match(/<button type="button" id="checkout-button"[^>]*>/)[0];
   assert.doesNotMatch(buttonTag, /disabled/);
