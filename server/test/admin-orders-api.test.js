@@ -162,7 +162,7 @@ function buildOrder(overrides = {}) {
     email: 'buyer@example.com',
     amount: 2997,
     stripeSessionId: 'cs_test_abc123',
-    items: [{ title: 'Florida, Beach & Baby', slug: 'florida-beach-and-baby', quantity: 3, unitPrice: 999, lineTotal: 2997 }],
+    items: [{ title: 'Beach & Baby', slug: 'florida-beach-and-baby', quantity: 3, unitPrice: 999, lineTotal: 2997 }],
     address: { line1: '1 Main St', city: 'Tampa', state: 'FL', postal_code: '33602', country: 'US' },
     shippingMethod: 'Standard Shipping',
     date: new Date('2026-08-08T12:00:00Z'),

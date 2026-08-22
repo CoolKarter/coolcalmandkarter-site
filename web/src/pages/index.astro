@@ -11,7 +11,7 @@ import { getEntry } from 'astro:content';
 // best seller and always takes the center slot with the visual emphasis —
 // in both the hero stage and the Featured Books section.
 const bestSellerSlug = 'black-puerto-rican-and-baby';
-const featuredSlugs = ['puertorican-boricua-and-baby', bestSellerSlug, 'black-beautiful-and-baby'];
+const featuredSlugs = ['puertorican-boricua-and-baby', bestSellerSlug, 'black-proud-and-baby'];
 const featuredBooks = (
   await Promise.all(featuredSlugs.map((slug) => getEntry('books', slug)))
 ).filter((book) => book !== undefined);

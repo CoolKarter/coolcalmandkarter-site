@@ -112,7 +112,7 @@ test('an unknown slug is rejected regardless of how many real books are configur
 test('a mixed cart of several of the 12 books all resolves correctly in one request', () => {
   const env = buildFakeEnv();
   const catalog = getCatalog(env);
-  const someSlugs = ['florida-beach-and-baby', 'abuelita-and-baby', 'thanksgiving-and-baby'];
+  const someSlugs = ['beach-and-baby', 'abuelita-and-baby', 'thanksgiving-and-baby'];
 
   const result = validateCheckoutItems(
     { items: someSlugs.map((slug) => ({ slug, quantity: 2 })) },

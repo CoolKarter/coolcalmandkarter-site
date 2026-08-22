@@ -1,13 +1,13 @@
 ---
-title: "Florida, Beach & Baby"
+title: "Beach & Baby"
 shortDescription: >-
-  "Florida, Beach & Baby" captures the magic of a day at the beach —
+  "Beach & Baby" captures the magic of a day at the beach —
   sandcastles, seashells, waves, and wonder, all wrapped in a sunny,
   joyful story. Beautifully illustrated and full of coastal charm, it
   celebrates nature, family bonding, and the simple excitement of
   exploring the shore together.
 description: >-
-  "Florida, Beach & Baby" is a sunny, joyful story that captures the magic of
+  "Beach & Baby" is a sunny, joyful story that captures the magic of
   a day at the beach. Perfect for toddlers and young readers, this
   beautifully illustrated book follows Baby’s beachside adventures through
   sandcastles, seashells, waves, and wonder. It’s a celebration of nature,
@@ -15,7 +15,7 @@ description: >-
 price: 999
 currency: "usd"
 coverImage: "src/assets/books/florida-beach-and-baby-cover.webp"
-coverImageAlt: "Florida, Beach & Baby Cover"
+coverImageAlt: "Beach & Baby Cover"
 publishedDate: "March 5, 2024"
 rating: 5
 ageRange: "0–6"

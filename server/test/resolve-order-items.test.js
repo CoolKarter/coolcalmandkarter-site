@@ -8,7 +8,7 @@ function buildTestCatalog() {
   const catalog = new Map();
   catalog.set('florida-beach-and-baby', {
     slug: 'florida-beach-and-baby',
-    title: 'Florida, Beach & Baby',
+    title: 'Beach & Baby',
     stripePriceId: 'price_test_florida',
     enabled: true,
   });
@@ -46,7 +46,7 @@ test('resolves titles/quantities from a fake Stripe line-items response (no netw
   assert.equal(items.length, 2);
   assert.deepEqual(items[0], {
     slug: 'florida-beach-and-baby',
-    title: 'Florida, Beach & Baby',
+    title: 'Beach & Baby',
     quantity: 2,
     unitPrice: null,
     lineTotal: null,
@@ -157,7 +157,7 @@ test('falls back to parsing metadata when the Stripe line-items call fails, with
   const items = await resolveOrderItems({ session, stripeClient: fakeStripeClient, catalog });
 
   assert.equal(items.length, 2);
-  assert.equal(items[0].title, 'Florida, Beach & Baby');
+  assert.equal(items[0].title, 'Beach & Baby');
   assert.equal(items[0].quantity, 2);
   assert.equal(items[0].unitPrice, null);
   assert.equal(items[0].lineTotal, null);
@@ -169,7 +169,7 @@ test('parseMetadataItems resolves titles from the catalog, not from the metadata
   const catalog = buildTestCatalog();
   const items = parseMetadataItems('florida-beach-and-baby:3', catalog);
   assert.deepEqual(items, [
-    { slug: 'florida-beach-and-baby', title: 'Florida, Beach & Baby', quantity: 3, unitPrice: null, lineTotal: null },
+    { slug: 'florida-beach-and-baby', title: 'Beach & Baby', quantity: 3, unitPrice: null, lineTotal: null },
   ]);
 });
 
@@ -185,7 +185,7 @@ test('parseMetadataItems handles an unknown slug and empty/missing input safely'
 test('falls back to the legacy JSON-array metadata format from the legacy route', async () => {
   const catalog = buildTestCatalog();
   const legacyMetadata = JSON.stringify([
-    { price: 'price_test_florida', quantity: 2, title: 'Florida, Beach & Baby' },
+    { price: 'price_test_florida', quantity: 2, title: 'Beach & Baby' },
     { price: 'price_test_karter', quantity: 1, title: 'Go To Sleep, Karter!' },
   ]);
   const session = { id: 'cs_test_legacy', metadata: { items: legacyMetadata } };
@@ -205,7 +205,7 @@ test('falls back to the legacy JSON-array metadata format from the legacy route'
   assert.equal(items.length, 2);
   // Legacy items never carry a slug — they predate the catalog.
   assert.equal(items[0].slug, null);
-  assert.equal(items[0].title, 'Florida, Beach & Baby');
+  assert.equal(items[0].title, 'Beach & Baby');
   assert.equal(items[0].quantity, 2);
   assert.equal(items[0].unitPrice, null);
   assert.equal(items[0].lineTotal, null);

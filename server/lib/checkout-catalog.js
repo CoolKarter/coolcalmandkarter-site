@@ -11,13 +11,24 @@
 // with an unset/empty env var is simply disabled for checkout.
 const CATALOG_DEFINITIONS = [
   {
-    slug: 'florida-beach-and-baby',
-    title: 'Florida, Beach & Baby',
+    // slug/title renamed (formerly "florida-beach-and-baby" /
+    // "Florida, Beach & Baby") to match the Astro content collection's
+    // renamed file (web/src/content/books/beach-and-baby.md) — see the
+    // catalog cover-refresh/title-change report. priceEnvVar is
+    // deliberately UNCHANGED: it is a real, already-configured Render
+    // environment variable name, never renamed just because the
+    // public-facing title/slug changed (see docs comment above
+    // CATALOG_DEFINITIONS and web/.env.example's "never rename one per
+    // environment" rule).
+    slug: 'beach-and-baby',
+    title: 'Beach & Baby',
     priceEnvVar: 'STRIPE_PRICE_FLORIDA_BEACH_AND_BABY',
   },
   {
-    slug: 'black-beautiful-and-baby',
-    title: 'Black, Beautiful & Baby',
+    // slug/title renamed (formerly "black-beautiful-and-baby" /
+    // "Black, Beautiful & Baby") — see the same note above.
+    slug: 'black-proud-and-baby',
+    title: 'Black, Proud & Baby',
     priceEnvVar: 'STRIPE_PRICE_BLACK_BEAUTIFUL_AND_BABY',
   },
   {

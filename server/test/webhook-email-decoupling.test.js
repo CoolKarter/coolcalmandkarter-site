@@ -21,7 +21,7 @@ function buildTestCatalog() {
   const catalog = new Map();
   catalog.set('florida-beach-and-baby', {
     slug: 'florida-beach-and-baby',
-    title: 'Florida, Beach & Baby',
+    title: 'Beach & Baby',
     stripePriceId: 'price_test_florida',
     enabled: true,
   });

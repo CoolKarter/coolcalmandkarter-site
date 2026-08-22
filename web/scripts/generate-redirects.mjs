@@ -14,11 +14,17 @@
 //
 // A misconfigured/missing PUBLIC_API_BASE_URL fails the build loudly
 // (non-zero exit) rather than silently shipping a broken or absent proxy.
+//
+// Also appends the static book-slug rename redirects (see
+// src/lib/book-slug-redirects.js) — permanent 301s from old book URLs to
+// their new renamed-title URLs. These never depend on any environment
+// variable, so they're identical in every build.
 
 import { writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildApiRedirectsRule } from '../src/lib/api-redirects.js';
+import { buildBookSlugRedirectsRule } from '../src/lib/book-slug-redirects.js';
 
 const webRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const distDir = path.join(webRoot, 'dist');
@@ -36,5 +42,9 @@ if (!existsSync(distDir)) {
   process.exit(1);
 }
 
-writeFileSync(path.join(distDir, '_redirects'), result.content, 'utf8');
+const bookRedirects = buildBookSlugRedirectsRule();
+const content = result.content + bookRedirects;
+
+writeFileSync(path.join(distDir, '_redirects'), content, 'utf8');
 console.log(`✅ Generated dist/_redirects — /api/* -> ${result.origin}/api/:splat`);
+console.log(`✅ Added ${bookRedirects.trim().split('\n').length} permanent book-slug redirect(s)`);

@@ -6,9 +6,9 @@ const { validateCheckoutRequest, MAX_EMAIL_LENGTH } = require('../lib/validate-c
 
 function buildTestCatalog() {
   const catalog = new Map();
-  catalog.set('florida-beach-and-baby', {
-    slug: 'florida-beach-and-baby',
-    title: 'Florida, Beach & Baby',
+  catalog.set('beach-and-baby', {
+    slug: 'beach-and-baby',
+    title: 'Beach & Baby',
     stripePriceId: 'price_test_florida',
     enabled: true,
   });
@@ -18,7 +18,7 @@ function buildTestCatalog() {
 test('accepts a request with a valid customerEmail', () => {
   const catalog = buildTestCatalog();
   const result = validateCheckoutRequest(
-    { items: [{ slug: 'florida-beach-and-baby', quantity: 1 }], customerEmail: 'reader@example.com' },
+    { items: [{ slug: 'beach-and-baby', quantity: 1 }], customerEmail: 'reader@example.com' },
     catalog,
   );
   assert.equal(result.ok, true);
@@ -27,7 +27,7 @@ test('accepts a request with a valid customerEmail', () => {
 
 test('accepts a request with customerEmail omitted entirely', () => {
   const catalog = buildTestCatalog();
-  const result = validateCheckoutRequest({ items: [{ slug: 'florida-beach-and-baby', quantity: 1 }] }, catalog);
+  const result = validateCheckoutRequest({ items: [{ slug: 'beach-and-baby', quantity: 1 }] }, catalog);
   assert.equal(result.ok, true);
   assert.equal(result.customerEmail, undefined);
 });
@@ -35,7 +35,7 @@ test('accepts a request with customerEmail omitted entirely', () => {
 test('treats a blank customerEmail the same as omitted, not an error', () => {
   const catalog = buildTestCatalog();
   const result = validateCheckoutRequest(
-    { items: [{ slug: 'florida-beach-and-baby', quantity: 1 }], customerEmail: '   ' },
+    { items: [{ slug: 'beach-and-baby', quantity: 1 }], customerEmail: '   ' },
     catalog,
   );
   assert.equal(result.ok, true);
@@ -45,7 +45,7 @@ test('treats a blank customerEmail the same as omitted, not an error', () => {
 test('rejects a malformed customerEmail', () => {
   const catalog = buildTestCatalog();
   const result = validateCheckoutRequest(
-    { items: [{ slug: 'florida-beach-and-baby', quantity: 1 }], customerEmail: 'not-an-email' },
+    { items: [{ slug: 'beach-and-baby', quantity: 1 }], customerEmail: 'not-an-email' },
     catalog,
   );
   assert.equal(result.ok, false);
@@ -56,7 +56,7 @@ test('rejects an excessively long customerEmail', () => {
   const catalog = buildTestCatalog();
   const longLocalPart = 'a'.repeat(MAX_EMAIL_LENGTH);
   const result = validateCheckoutRequest(
-    { items: [{ slug: 'florida-beach-and-baby', quantity: 1 }], customerEmail: `${longLocalPart}@example.com` },
+    { items: [{ slug: 'beach-and-baby', quantity: 1 }], customerEmail: `${longLocalPart}@example.com` },
     catalog,
   );
   assert.equal(result.ok, false);
@@ -67,7 +67,7 @@ test('rejects unsupported top-level request fields', () => {
   const catalog = buildTestCatalog();
   const result = validateCheckoutRequest(
     {
-      items: [{ slug: 'florida-beach-and-baby', quantity: 1 }],
+      items: [{ slug: 'beach-and-baby', quantity: 1 }],
       customerEmail: 'reader@example.com',
       stripePriceId: 'price_attacker_supplied',
     },

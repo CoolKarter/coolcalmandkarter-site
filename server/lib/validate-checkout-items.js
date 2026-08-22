@@ -1,5 +1,7 @@
 'use strict';
 
+const { resolveLegacySlug } = require('./legacy-slug-aliases');
+
 // Per-line-item cap and whole-cart cap are deliberately conservative for a
 // $9.99 picture-book storefront — generous enough for someone buying gifts
 // for a whole family, small enough to bound abuse of an unauthenticated
@@ -56,11 +58,18 @@ function validateCheckoutItems(body, catalog) {
       };
     }
 
-    const { slug, quantity } = item;
+    const { slug: rawSlug, quantity } = item;
 
-    if (typeof slug !== 'string' || slug.trim() === '') {
+    if (typeof rawSlug !== 'string' || rawSlug.trim() === '') {
       return { ok: false, error: `items[${index}].slug must be a non-empty string.` };
     }
+
+    // Resolved BEFORE the catalog lookup so a stale slug from a customer's
+    // cart saved before a catalog rename (see lib/legacy-slug-aliases.js)
+    // still finds its current product, current Stripe Price ID, and merges
+    // correctly with any other line item already using the new slug —
+    // everything below this point only ever sees the canonical slug.
+    const slug = resolveLegacySlug(rawSlug);
 
     const product = catalog.get(slug);
     if (!product) {

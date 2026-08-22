@@ -10,10 +10,10 @@ function buildFullOrder(overrides = {}) {
     __v: 0,
     name: 'Jane Doe',
     email: 'jane@example.com',
-    bookTitle: 'Florida, Beach & Baby x1',
+    bookTitle: 'Beach & Baby x1',
     shippingMethod: 'Standard Shipping (5–8 Business Days)',
     items: [
-      { slug: 'florida-beach-and-baby', title: 'Florida, Beach & Baby', quantity: 1, unitPrice: 999, lineTotal: 999 },
+      { slug: 'florida-beach-and-baby', title: 'Beach & Baby', quantity: 1, unitPrice: 999, lineTotal: 999 },
     ],
     amount: 999,
     address: { line1: '1 Main St', line2: '', city: 'Tampa', state: 'FL', postal_code: '33602', country: 'US' },
@@ -72,7 +72,7 @@ test('customer view exposes the normalized order status', () => {
 test('customer view exposes items/pricing/shipping/total as documented', () => {
   const view = toCustomerOrderView(buildFullOrder());
   assert.equal(view.orderNumber, 'CCK-20260808-4F2A');
-  assert.equal(view.items[0].title, 'Florida, Beach & Baby');
+  assert.equal(view.items[0].title, 'Beach & Baby');
   assert.equal(view.items[0].unitPrice, 999);
   assert.equal(view.items[0].lineTotal, 999);
   assert.equal(view.amount, 999);
