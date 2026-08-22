@@ -11,8 +11,8 @@ function buildTestOrder(overrides = {}) {
     email: 'jane@example.com',
     amount: 1998,
     items: [
-      { title: 'Florida, Beach & Baby', quantity: 1, unitPrice: 999, lineTotal: 999, slug: 'florida-beach-and-baby' },
-      { title: 'Black, Beautiful & Baby', quantity: 1, unitPrice: 999, lineTotal: 999, slug: 'black-beautiful-and-baby' },
+      { title: 'Beach & Baby', quantity: 1, unitPrice: 999, lineTotal: 999, slug: 'florida-beach-and-baby' },
+      { title: 'Black, Proud & Baby', quantity: 1, unitPrice: 999, lineTotal: 999, slug: 'black-beautiful-and-baby' },
     ],
     address: { line1: '123 Main St', city: 'Tampa', state: 'FL', postal_code: '33602', country: 'US' },
     shippingMethod: 'Standard Shipping',

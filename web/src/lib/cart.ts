@@ -3,6 +3,8 @@
 // This module only manages local cart state — it never calls the backend
 // or Stripe itself (see lib/api.ts for that).
 
+import { migrateCartSlugs } from './legacy-slug-aliases';
+
 export const CART_STORAGE_KEY = 'cart';
 export const CART_UPDATED_EVENT = 'cart:updated';
 
@@ -12,6 +14,17 @@ function isBrowser(): boolean {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 }
 
+/**
+ * Reads the cart, migrating any legacy (pre-rename) slug to its current
+ * canonical one along the way — the actual resolution/merge logic is a
+ * pure function in lib/legacy-slug-aliases.js (kept framework-free there
+ * so it's directly unit-testable). An HTTP redirect protects old
+ * /books/<slug> URLs, but does nothing for a slug already saved in a
+ * customer's cart from before the rename; without this, such an entry
+ * would look "unknown" to every page that builds its product catalog from
+ * the current content collection and get silently pruned (deleted),
+ * losing the customer's saved item.
+ */
 export function readCart(): CartState {
   if (!isBrowser()) return {};
 
@@ -20,13 +33,16 @@ export function readCart(): CartState {
     if (!raw) return {};
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      const cart: CartState = {};
-      for (const [slug, quantity] of Object.entries(parsed)) {
-        const n = Number(quantity);
-        if (typeof slug === 'string' && Number.isFinite(n) && n > 0) {
-          cart[slug] = n;
-        }
+      const { cart, migrated } = migrateCartSlugs(parsed as Record<string, unknown>);
+
+      if (migrated) {
+        // Direct write, not writeCart() — this is a background self-heal
+        // triggered by reading, not a real user action, so it doesn't
+        // dispatch CART_UPDATED_EVENT (same reasoning already used for
+        // the unknown-slug pruning in cart.astro's render()).
+        window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
       }
+
       return cart;
     }
     return {};

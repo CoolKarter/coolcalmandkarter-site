@@ -23,7 +23,7 @@ function buildTestOrder(overrides = {}) {
     email: 'buyer@example.com',
     amount: 2997,
     items: [
-      { title: 'Florida, Beach & Baby', quantity: 3, unitPrice: 999, lineTotal: 2997, slug: 'florida-beach-and-baby' },
+      { title: 'Beach & Baby', quantity: 3, unitPrice: 999, lineTotal: 2997, slug: 'florida-beach-and-baby' },
     ],
     shippingMethod: 'Standard Shipping (5–8 Business Days)',
     address: { line1: '1 Main St', line2: '', city: 'Tampa', state: 'FL', postal_code: '33602', country: 'US' },
@@ -36,7 +36,7 @@ test('order confirmation email includes every field the checklist requires when 
 
   assert.match(subject, /CCK-20260808-4F2A/);
   assert.match(html, /Jamie Buyer/);
-  assert.match(html, /Florida, Beach &amp; Baby/);
+  assert.match(html, /Beach &amp; Baby/);
   assert.match(html, /\$9\.99/); // unit price
   assert.match(html, /\$29\.97/); // line total and order total
   assert.match(html, /Tampa/);
@@ -230,7 +230,7 @@ test('shipping confirmation email includes order number, name, items, and a My O
   assert.match(subject, /Shipped/);
   assert.match(subject, /CCK-20260808-4F2A/);
   assert.match(html, /Jamie Buyer/);
-  assert.match(html, /Florida, Beach &amp; Baby/);
+  assert.match(html, /Beach &amp; Baby/);
   assert.match(html, /href="https:\/\/staging\.example\.com\/my-orders"/);
   assert.match(html, /href="https:\/\/staging\.example\.com\/contact"/);
 });

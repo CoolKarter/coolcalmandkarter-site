@@ -4,7 +4,7 @@ import { filterAdminOrders } from '../src/lib/admin-order-filter.js';
 
 function buildOrders() {
   return [
-    { orderNumber: 'CCK-20260808-4F2A', name: 'Jamie Buyer', email: 'jamie@example.com', orderStatus: 'received', items: [{ title: 'Florida, Beach & Baby' }] },
+    { orderNumber: 'CCK-20260808-4F2A', name: 'Jamie Buyer', email: 'jamie@example.com', orderStatus: 'received', items: [{ title: 'Beach & Baby' }] },
     { orderNumber: 'CCK-20260101-AAAA', name: 'Sam Customer', email: 'sam@example.com', orderStatus: 'shipped', items: [{ title: 'Go To Sleep, Karter' }] },
     { orderNumber: null, name: 'Legacy Person', email: 'legacy@example.com', orderStatus: undefined, items: [{ title: 'Adventure, Fun & Baby' }] },
   ];

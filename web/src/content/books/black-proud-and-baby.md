@@ -1,12 +1,12 @@
 ---
-title: "Black, Beautiful & Baby"
+title: "Black, Proud & Baby"
 shortDescription: >-
-  "Black, Beautiful & Baby" is a heartwarming celebration of identity,
+  "Black, Proud & Baby" is a heartwarming celebration of identity,
   pride, and love, told through rhythm and rhyme. This vibrant picture
   book uplifts Black babies and affirms the beauty in Blackness — a
   joyful story of self-worth, representation, and everyday joy.
 description: >-
-  "Black, Beautiful & Baby" is a heartwarming celebration of identity,
+  "Black, Proud & Baby" is a heartwarming celebration of identity,
   pride, and love. Through rhythm and rhyme, this vibrant picture book
   uplifts Black babies and reminds every reader of the beauty in Blackness.
   It’s a perfect story for any child to hear affirmations of self-worth,
@@ -14,7 +14,7 @@ description: >-
 price: 999
 currency: "usd"
 coverImage: "src/assets/books/black-beautiful-baby-cover.webp"
-coverImageAlt: "Black, Beautiful & Baby Cover"
+coverImageAlt: "Black, Proud & Baby Cover"
 publishedDate: "April 8, 2024"
 rating: 5
 ageRange: "0–6"
@@ -31,6 +31,6 @@ reviews:
     author: "E.N."
   - quote: "As a teacher, I love including this in my classroom library. The kids love it."
     author: "T.G."
-  - quote: "My baby claps every time I say ‘Black, Beautiful & Baby’—we adore this book!"
+  - quote: "My baby claps every time I say ‘Black, Proud & Baby’—we adore this book!"
     author: "C.R."
 ---

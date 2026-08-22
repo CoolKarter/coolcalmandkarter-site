@@ -7,28 +7,44 @@ const { CATALOG_DEFINITIONS, getCatalog, findByPriceId } = require('../lib/check
 test('catalog has exactly the 12 known book slugs', () => {
   const catalog = getCatalog({});
   assert.equal(catalog.size, 12);
-  assert.ok(catalog.has('florida-beach-and-baby'));
+  assert.ok(catalog.has('beach-and-baby'));
   assert.ok(catalog.has('thanksgiving-and-baby'));
 });
 
 test('a book is disabled when its env var is unset', () => {
   const catalog = getCatalog({});
-  const entry = catalog.get('florida-beach-and-baby');
+  const entry = catalog.get('beach-and-baby');
   assert.equal(entry.enabled, false);
   assert.equal(entry.stripePriceId, null);
 });
 
 test('a book is disabled when its env var is an empty string', () => {
   const catalog = getCatalog({ STRIPE_PRICE_FLORIDA_BEACH_AND_BABY: '   ' });
-  const entry = catalog.get('florida-beach-and-baby');
+  const entry = catalog.get('beach-and-baby');
   assert.equal(entry.enabled, false);
 });
 
 test('a book is enabled and carries the configured Price ID when its env var is set', () => {
   const catalog = getCatalog({ STRIPE_PRICE_FLORIDA_BEACH_AND_BABY: 'price_test_florida' });
-  const entry = catalog.get('florida-beach-and-baby');
+  const entry = catalog.get('beach-and-baby');
   assert.equal(entry.enabled, true);
   assert.equal(entry.stripePriceId, 'price_test_florida');
+});
+
+test('the two renamed books carry their new titles, while keeping their original, already-configured Stripe env var names unchanged', () => {
+  const catalog = getCatalog({});
+  const beach = catalog.get('beach-and-baby');
+  const proud = catalog.get('black-proud-and-baby');
+
+  assert.equal(beach.title, 'Beach & Baby');
+  assert.equal(beach.priceEnvVar, 'STRIPE_PRICE_FLORIDA_BEACH_AND_BABY');
+  assert.equal(proud.title, 'Black, Proud & Baby');
+  assert.equal(proud.priceEnvVar, 'STRIPE_PRICE_BLACK_BEAUTIFUL_AND_BABY');
+
+  // The old slugs must no longer resolve at all — this is a rename, not
+  // an alias.
+  assert.equal(catalog.has('florida-beach-and-baby'), false);
+  assert.equal(catalog.has('black-beautiful-and-baby'), false);
 });
 
 test('every catalog definition maps to a unique slug and env var', () => {

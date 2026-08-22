@@ -41,7 +41,7 @@ test('hasRealTrackingInfo is true only when carrier or trackingNumber genuinely 
 });
 
 test('resolveCoverForItem returns the mapped cover for a known slug', () => {
-  const coverMap = { 'florida-beach-and-baby': { src: '/covers/florida.webp', alt: 'Florida, Beach & Baby' } };
+  const coverMap = { 'florida-beach-and-baby': { src: '/covers/florida.webp', alt: 'Beach & Baby' } };
   const result = resolveCoverForItem({ slug: 'florida-beach-and-baby' }, coverMap);
   assert.deepEqual(result, coverMap['florida-beach-and-baby']);
 });
